@@ -9,6 +9,11 @@ more about active objects, see the paper
 <a href="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming." by
 R. Greg Lavender and Douglas C. Schmidt</a>.
 
+\section status Status
+
+The library's API is still experimental, and subject to change as feedback
+and experience clairifies areas which could be improved.
+
 \section download Download
 
 The current source code is availabe via anonymous cvs:
@@ -24,6 +29,12 @@ You can also
 
 The code is licensed under the <a href="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Version 1.0</a>.
 
+\section discussion Discussion
+
+The <a href="http://www.boost.org/more/mailing_lists.htm">boost users and developers mailing lists</a>
+may be used to discuss issues related to the library.
+
 \author Frank Mori Hess <fmhess@users.sourceforge.net>
+
 
 */
