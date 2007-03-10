@@ -14,6 +14,11 @@ R. Greg Lavender and Douglas C. Schmidt</a>.
 The library's API is still experimental, and subject to change as feedback
 and experience clairifies areas which could be improved.
 
+\section dependencies Dependencies
+
+libpoet depends on the <a href="http://www.boost.org">boost C++ libraries</a> and
+<a href="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</a>.
+
 \section download Download
 
 The current source code is availabe via anonymous cvs:
