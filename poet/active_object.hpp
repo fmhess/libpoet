@@ -168,11 +168,11 @@ namespace poet
 	public:
 		/*! Virtual destructor. */
 		virtual ~InOrderActivationQueue() {}
-		virtual void push_back(const boost::shared_ptr<method_request_base> &request);
+		inline virtual void push_back(const boost::shared_ptr<method_request_base> &request);
 		/*! \returns The oldest method request in the queue.  If the oldest method
 		request is not ready to execute, then a null shared_ptr is returned.
 		*/
-		virtual boost::shared_ptr<method_request_base> getRequest();
+		inline virtual boost::shared_ptr<method_request_base> getRequest();
 		virtual void clear()
 		{
 			boost::mutex::scoped_lock lock(_mutex);
@@ -184,7 +184,7 @@ namespace poet
 			return _pendingRequests.size();
 		}
 	protected:
-		boost::shared_ptr<method_request_base> unlockedGetRequest();
+		inline boost::shared_ptr<method_request_base> unlockedGetRequest();
 
 		typedef std::list<boost::shared_ptr<method_request_base> > list_type;
 		list_type _pendingRequests;
@@ -204,7 +204,7 @@ namespace poet
 		virtual ~OutOfOrderActivationQueue() {}
 		/*! \returns The oldest method request in the queue
 		which is currently ready for execution. */
-		virtual boost::shared_ptr<method_request_base> getRequest();
+		inline virtual boost::shared_ptr<method_request_base> getRequest();
 	};
 
 	/*! \brief Base class for schedulers.
@@ -251,18 +251,18 @@ namespace poet
 		/*! The destructor will tell the scheduler's thread to exit.  The current implementation
 		also blocks waiting for the thread to actually exit.  However, this may change in
 		the future to minimize the possibility of deadlock. */
-		virtual ~scheduler();
-		virtual void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest);
-		virtual void wake();
-		virtual void kill();
-		virtual void join();
+		inline virtual ~scheduler();
+		inline virtual void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest);
+		inline virtual void wake();
+		inline virtual void kill();
+		inline virtual void join();
 	private:
 
-		bool dispatch();
-		void dispatcherThreadFunction();
-		bool mortallyWounded() const;
-		bool wakePending() const;
-		void setWakePending(bool value);
+		inline bool dispatch();
+		inline void dispatcherThreadFunction();
+		inline bool mortallyWounded() const;
+		inline bool wakePending() const;
+		inline void setWakePending(bool value);
 
 		boost::shared_ptr<ActivationQueueBase> _activationQueue;
 		poet::detail::condition _wakeCondition;
