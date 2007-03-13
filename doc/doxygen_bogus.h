@@ -8,7 +8,10 @@
 	\class boost::postconstructible
 	\brief boost::postconstructible
 
-	See thread_safe_signals documentation for more information.
+	See the documentation for
+	<a href="http://www.comedi.org/projects/thread_safe_signals/boostbook/boost/postconstructible.html">postconstructible in thread_safe_signals</a>
+	for more information.
+
 */
 /*! \brief boost namespace
 
@@ -21,7 +24,9 @@ namespace boost
   template<typename T, typename D>
   shared_ptr<T> deconstruct_ptr(T *ptr, D deleter);
 /*!
-	See thread_safe_signals documentation for more information.
+	See the documentation for
+	<a href="http://www.comedi.org/projects/thread_safe_signals/boostbook/boost/deconstruct_ptr.html">deconstruct_ptr in thread_safe_signals</a>
+	for more information.
 */
 	template<typename T>
 	shared_ptr<T> deconstruct_ptr(T *ptr);
@@ -30,6 +35,15 @@ namespace boost
 	See boost documentation for more information.
 */
 	template<typename T> class enable_shared_from_this {};
+
+/*!
+See the documentation for the
+<a href="http://www.comedi.org/projects/thread_safe_signals/boostbook/boost/slot.html">slot class in thread_safe_signals</a>
+for more information.
+*/
+	template<typename Signature, typename SlotFunction = boost::function<Signature> >
+	class slot
+	{};
 }
 
 /*! \brief libpoet namespace
@@ -60,9 +74,7 @@ active_function<R (T1, T2, ..., TN)>
 		boost::slot class supports tracking of arbitrary boost::shared_ptr which are associated
 		with the slot.  For example, if the slot is constructed from a non-static member function, the lifetime
 		of the member function's object can be tracked and the slot prevented from running after
-		the object is destroyed.  See the documentation for the
-		<a href="http://www.comedi.org/projects/thread_safe_signals/boostbook/boost/slot.html">slot class in thread_safe_signals</a>
-		for more information.
+		the object is destroyed.
 		\param guard The active_function's scheduler will not execute a method request until
 			the guard returns true and all the input futures are ready.  By default, the guard will always return true.
 		\param scheduler Specify a scheduler object for the active_function to post its method requests to.
