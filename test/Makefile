@@ -16,9 +16,6 @@ LDFLAGS= -lboost_thread -pthread
 
 all: $(PROGRAMS)
 
-doc:
-	cd doc && $(MAKE)
-
 clean:
 	$(RM) $(PROGRAMS)
 
