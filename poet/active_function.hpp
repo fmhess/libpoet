@@ -13,12 +13,12 @@
 #ifndef _POET_ACTIVE_FUNCTION_HPP
 #define _POET_ACTIVE_FUNCTION_HPP
 
-#include <boost/function.hpp>
 #include <boost/preprocessor/arithmetic.hpp>
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/iteration.hpp>
 #include <boost/preprocessor/repetition.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/signals/slot.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/weak_ptr.hpp>
@@ -40,11 +40,10 @@ namespace poet
 	class active_function: public detail::active_functionN<boost::function_traits<Signature>::arity, Signature>::type
 	{
 	public:
-		active_function(const boost::function<Signature> &passive_function,
+		active_function(const typename base_type::passive_slot_type &passive_function,
 			const boost::function<bool ()> &guard = 0,
-			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>(),
-			boost::shared_ptr<void> servant = boost::shared_ptr<void>()):
-			base_type(passive_function, guard, scheduler, servant)
+			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>()):
+			base_type(passive_function, guard, scheduler)
 		{}
 		virtual ~active_function() {}
 	private:

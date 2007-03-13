@@ -57,76 +57,58 @@ namespace poet
 		class POET_ACTIVE_FUNCTION_CLASS_NAME
 		{
 		public:
-			typedef typename boost::function_traits<Signature>::result_type bare_result_type;
-			typedef future<bare_result_type> result_type;
+			typedef typename boost::function_traits<Signature>::result_type passive_result_type;
+			typedef future<passive_result_type> result_type;
+			typedef boost::slot<Signature> passive_slot_type;
 
-			POET_ACTIVE_FUNCTION_CLASS_NAME(const boost::function<Signature> &passiveFunction,
+			POET_ACTIVE_FUNCTION_CLASS_NAME(const passive_slot_type &passive_function,
 				const boost::function<bool ()> &guard,
-				boost::shared_ptr<scheduler_base> scheduler_in,
-				boost::shared_ptr<void> servant):
-				_passiveFunction(passiveFunction), _guard(guard), _scheduler(scheduler_in),
-				_servant(servant), _haveServantPointer(servant)
+				boost::shared_ptr<scheduler_base> scheduler_in):
+				_passive_function(passive_function), _guard(guard), _scheduler(scheduler_in)
 			{
 				if(_scheduler == 0) _scheduler.reset(new scheduler);
 			}
 			virtual ~POET_ACTIVE_FUNCTION_CLASS_NAME() {}
 			result_type operator ()(POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature))
 			{
-				boost::shared_ptr<void> sharedServant;
-				if(_haveServantPointer)
-				{
-					sharedServant = _servant.lock();
-					if(sharedServant == 0)
-					{
-						throw std::runtime_error("Servant no longer exists.");
-					}
-				}
 				result_type returnValue;
 				boost::shared_ptr<active_function_method_request> methodRequest = active_function_method_request::create(
 					returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
-					_passiveFunction, _guard, sharedServant);
+					_passive_function, _guard);
 				_scheduler->post_method_request(methodRequest);
 				return returnValue;
 			}
 			result_type operator ()(POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature)) const
 			{
-				boost::shared_ptr<void> sharedServant;
-				if(_haveServantPointer)
-				{
-					sharedServant = _servant.lock();
-					if(sharedServant == 0)
-					{
-						throw std::runtime_error("Servant no longer exists.");
-					}
-				}
 				result_type returnValue;
 				boost::shared_ptr<active_function_method_request> methodRequest = active_function_method_request::create(
 					returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
-					_passiveFunction, _guard, sharedServant);
+					_passive_function, _guard);
 				_scheduler->post_method_request(methodRequest);
 				return returnValue;
 			}
 			void wake() {_scheduler->wake();}
+			bool expired() const {return _passive_function.expired();}
 		private:
-			class active_function_method_request: public method_request<typename POET_ACTIVE_FUNCTION_CLASS_NAME::bare_result_type>
+			class active_function_method_request: public method_request<typename POET_ACTIVE_FUNCTION_CLASS_NAME::passive_result_type>
 			{
 			public:
-				typedef method_request<typename POET_ACTIVE_FUNCTION_CLASS_NAME::bare_result_type> base_type;
+				typedef method_request<typename POET_ACTIVE_FUNCTION_CLASS_NAME::passive_result_type> base_type;
 				// static factory method
 				static boost::shared_ptr<active_function_method_request> create(POET_ACTIVE_FUNCTION_CLASS_NAME::result_type returnValue,
 					POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
-					const boost::function<Signature> &passiveFunction, const boost::function<bool ()> &guard,
-					boost::shared_ptr<void> servant)
+					const boost::function<Signature> &passive_function, const boost::function<bool ()> &guard)
 				{
 					return deconstruct_ptr(new active_function_method_request(returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg)
-						BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS) passiveFunction, guard, servant));
+						BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS) passive_function, guard));
 				}
 				virtual ~active_function_method_request()
 				{
 				}
 				virtual void run()
 				{
-					this->_returnValue = _passiveFunction(
+					// FIXME catch expired_slot exceptions and forward them to the future
+					this->_returnValue = _passive_function(
 						POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)
 						);
 				}
@@ -144,10 +126,9 @@ namespace poet
 			protected:
 				active_function_method_request(typename POET_ACTIVE_FUNCTION_CLASS_NAME::result_type returnValue,
 					POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
-					const boost::function<Signature> &passiveFunction, const boost::function<bool ()> &guard,
-					boost::shared_ptr<void> servant): base_type(returnValue),
+					const boost::function<Signature> &passive_function, const boost::function<bool ()> &guard): base_type(returnValue),
 					BOOST_PP_ENUM(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_ARG_CONSTRUCTOR, ~) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
-					_passiveFunction(passiveFunction), _guard(guard), _servant(servant)
+					_passive_function(passive_function), _guard(guard)
 				{
 					_lastReadyChanged = ready();
 				}
@@ -203,17 +184,14 @@ namespace poet
 				// ...
 				// typename poet::future<boost::function_traits<Signature>::argN_type> _argN;
 				BOOST_PP_REPEAT(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_ARG_DECLARATION, Signature)
-				boost::function<Signature> _passiveFunction;
+				boost::slot<Signature> _passive_function;
 				boost::function<bool ()> _guard;
-				boost::shared_ptr<void> _servant;
 				bool _lastReadyChanged;
 				mutable boost::mutex _lastReadyChangedMutex;
 			};
-			boost::function<Signature> _passiveFunction;
+			boost::slot<Signature> _passive_function;
 			boost::function<bool ()> _guard;
 			boost::shared_ptr<scheduler_base> _scheduler;
-			boost::weak_ptr<void> _servant;
-			const bool _haveServantPointer;
 		};
 
 		template<unsigned arity, typename Signature> class active_functionN;

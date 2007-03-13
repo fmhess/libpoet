@@ -50,32 +50,30 @@ active_function<R (T1, T2, ..., TN)>
 	{
 	public:
 		/*! R */
-		typedef typename boost::function_traits<Signature>::result_type bare_result_type;
+		typedef typename boost::function_traits<Signature>::result_type passive_result_type;
 		/*! future<R> */
-		typedef poet::future<bare_result_type> result_type;
-		/*! \param passiveFunction The underlying function this active_function object will call.  This
-			parameter will probably be combined with tracking provided by the <em>servant</em> parameter as a single
-			boost::slot argument in the future.
+		typedef poet::future<passive_result_type> result_type;
+		/*! Slot type for the passive function the active_function is constructed from. */
+		typedef boost::slot<Signature> passive_slot_type;
+
+		/*! \param passive_function The underlying function this active_function object will call.  The
+		boost::slot class supports tracking of arbitrary boost::shared_ptr which are associated
+		with the slot.  For example, if the slot is constructed from a non-static member function, the lifetime
+		of the member function's object can be tracked and the slot prevented from running after
+		the object is destroyed.  See the documentation for the
+		<a href="http://www.comedi.org/projects/thread_safe_signals/boostbook/boost/slot.html">slot class in thread_safe_signals</a>
+		for more information.
 		\param guard The active_function's scheduler will not execute a method request until
-			the guard returns true.  By default, the guard will always return true.
+			the guard returns true and all the input futures are ready.  By default, the guard will always return true.
 		\param scheduler Specify a scheduler object for the active_function to post its method requests to.
 		By default, a new Scheduler object is created for the active_function.  If the active_function is
-		providing a method as part of a full active object class, you may wish for all the class' methods
+		providing a method as part of an active object class, you may wish for all the class' methods
 		to share the same scheduler.
-		\param servant Provides tracking of a servant object's lifetime, if <em>servant</em> is non-null.
-			The <em>servant</em> is not null, it will
-			be stored as a boost::weak_ptr.  Whenever operator()() is called, the <em>servant</em>
-			will be converted back into a boost::shared_ptr which will exist until the corresponding
-			method request is dispatched by the scheduler.  If the weak_ptr has already expired, then
-			operator()() will throw an exception.  This
-			parameter will probably be combined with the <em>passiveFunction</em> parameter as a single
-			boost::slot argument in the future.
 		*/
-		active_function(const boost::function<Signature> &passiveFunction,
+		active_function(const passive_slot_type &passive_function,
 			const boost::function<bool ()> &guard = 0,
-			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>(),
-			boost::shared_ptr<void> servant = boost::shared_ptr<void>()):
-			base_type(passiveFunction, guard, scheduler, servant)
+			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>()):
+			base_type(passive_function, guard, scheduler)
 		{}
 		/*! Virtual destructor. */
 		virtual ~active_function() {}
@@ -88,11 +86,14 @@ active_function<R (T1, T2, ..., TN)>
 			Note the active_function takes Futures as arguments, as well as returning a future.  This
 			allows future results to be passed from one active_function to another without waiting
 			for the result to become ready.  Since Futures are constructible from their
-			value types, the active_function will also take values not wrapped in a future as arguments.
+			value types, the active_function can also take values not wrapped in a future as arguments.
 		 */
 		future<R> operator()(future<T1> arg1, future<T2> arg2, ..., future<TN> argN);
 		/*! Calls Scheduler::wake() on the active_function's scheduler. */
 		void wake();
+		/*! Calls the boost::slot::expired() query method on the slot this active_function was constructed
+		from. */
+		bool expired() const;
 	};
 }
 
