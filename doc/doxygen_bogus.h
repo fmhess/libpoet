@@ -15,7 +15,7 @@
 */
 /*! \brief boost namespace
 
-See boost documentation for more information.
+See the thread_safe_signals and boost documentation for more information.
 */
 namespace boost
 {
@@ -36,7 +36,8 @@ namespace boost
 */
 	template<typename T> class enable_shared_from_this {};
 
-/*!
+/*!\brief boost::slot
+
 See the documentation for the
 <a href="http://www.comedi.org/projects/thread_safe_signals/boostbook/boost/slot.html">slot class in thread_safe_signals</a>
 for more information.

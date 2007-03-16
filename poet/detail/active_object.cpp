@@ -108,7 +108,7 @@ poet::scheduler::~scheduler()
 void poet::scheduler::post_method_request(const boost::shared_ptr<method_request_base> &methodRequest)
 {
 	_activationQueue->push_back(methodRequest);
-	methodRequest->connectUpdate(boost::bind(&poet::scheduler::wake, this));
+	methodRequest->connect_update(boost::bind(&poet::scheduler::wake, this));
 	wake();
 }
 

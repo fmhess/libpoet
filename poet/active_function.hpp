@@ -39,6 +39,8 @@ namespace poet
 	template<typename Signature>
 	class active_function: public detail::active_functionN<boost::function_traits<Signature>::arity, Signature>::type
 	{
+	private:
+		typedef typename detail::active_functionN<boost::function_traits<Signature>::arity, Signature>::type base_type;
 	public:
 		active_function(const typename base_type::passive_slot_type &passive_function,
 			const boost::function<bool ()> &guard = 0,
@@ -46,8 +48,6 @@ namespace poet
 			base_type(passive_function, guard, scheduler)
 		{}
 		virtual ~active_function() {}
-	private:
-		typedef typename detail::active_functionN<boost::function_traits<Signature>::arity, Signature>::type base_type;
 	};
 }
 

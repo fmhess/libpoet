@@ -72,7 +72,7 @@ namespace poet
 		/*! Connect a slot to the method request's "update" signal.  The slot
 		will be run whenever the status of the method request
 		changes, for example if it is cancelled, or if its "ready" state changes.  */
-		boost::signalslib::connection connectUpdate(const update_slot_type &slot)
+		boost::signalslib::connection connect_update(const update_slot_type &slot)
 		{
 			return _updateSignal.connect(slot);
 		}
@@ -95,12 +95,12 @@ namespace poet
 		/*! Virtual destructor */
 		virtual ~method_request()
 		{}
-		/*! Calls method_request_base::cancel() and additionally calls future<ResultType>::cancel()
-		on the method_request's return value. */
+		/*! Calls method_request_base::cancel() and additionally cancels
+		the method_request's return value. */
 		virtual void cancel()
 		{
 			method_request_base::cancel();
-			_returnValue.cancel();
+			future<result_type>(_returnValue).cancel();
 		}
 	protected:
 		typedef typename future<ResultType>::update_slot_type future_slot_type;
@@ -115,7 +115,7 @@ namespace poet
 		is cancelled.  Conversely, cancelling <em>returnValue</em> will also cause
 		this method_request to be cancelled.
 		*/
-		method_request(const future<ResultType> &returnValue):
+		method_request(const promise<result_type> &returnValue):
 			_returnValue(returnValue)
 		{}
 		/*! Post-constructor.  Performs some signal-slot connection with automatic
@@ -124,18 +124,18 @@ namespace poet
 		virtual void postconstruct()
 		{
 			boost::shared_ptr<method_request<ResultType> > shared_this = this->shared_from_this();
-			_returnValue.connectUpdate(
+			future<result_type>(_returnValue).connect_update(
 				future_slot_type(&method_request<ResultType>::handleReturnValueUpdate, this).track(shared_this));
 		}
 		void handleReturnValueUpdate()
 		{
-			if(_returnValue.cancelled())
+			if(future<result_type>(_returnValue).has_exception())
 			{
-				cancel();
+				method_request_base::cancel();
 			}
 		}
 
-		future<ResultType> _returnValue;
+		promise<result_type> _returnValue;
 	};
 
 	/*! \brief Base class for activation queues. */

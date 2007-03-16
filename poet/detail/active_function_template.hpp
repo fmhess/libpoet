@@ -71,7 +71,7 @@ namespace poet
 			virtual ~POET_ACTIVE_FUNCTION_CLASS_NAME() {}
 			result_type operator ()(POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature))
 			{
-				result_type returnValue;
+				promise<passive_result_type> returnValue;
 				boost::shared_ptr<active_function_method_request> methodRequest = active_function_method_request::create(
 					returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 					_passive_function, _guard);
@@ -80,7 +80,7 @@ namespace poet
 			}
 			result_type operator ()(POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature)) const
 			{
-				result_type returnValue;
+				promise<passive_result_type> returnValue;
 				boost::shared_ptr<active_function_method_request> methodRequest = active_function_method_request::create(
 					returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 					_passive_function, _guard);
@@ -95,7 +95,8 @@ namespace poet
 			public:
 				typedef method_request<typename POET_ACTIVE_FUNCTION_CLASS_NAME::passive_result_type> base_type;
 				// static factory method
-				static boost::shared_ptr<active_function_method_request> create(POET_ACTIVE_FUNCTION_CLASS_NAME::result_type returnValue,
+				static boost::shared_ptr<active_function_method_request> create(
+					promise<POET_ACTIVE_FUNCTION_CLASS_NAME::passive_result_type> returnValue,
 					POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 					const boost::function<Signature> &passive_function, const boost::function<bool ()> &guard)
 				{
@@ -107,10 +108,15 @@ namespace poet
 				}
 				virtual void run()
 				{
-					// FIXME catch expired_slot exceptions and forward them to the future
-					this->_returnValue = _passive_function(
-						POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)
-						);
+					try
+					{
+						this->_returnValue.fulfill(_passive_function(
+							POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)));
+					}
+					catch(...)
+					{
+						this->_returnValue.renege(current_exception());
+					}
 				}
 				virtual bool ready() const
 				{
@@ -124,7 +130,7 @@ namespace poet
 					return true;
 				}
 			protected:
-				active_function_method_request(typename POET_ACTIVE_FUNCTION_CLASS_NAME::result_type returnValue,
+				active_function_method_request(const promise<POET_ACTIVE_FUNCTION_CLASS_NAME::passive_result_type> &returnValue,
 					POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 					const boost::function<Signature> &passive_function, const boost::function<bool ()> &guard): base_type(returnValue),
 					BOOST_PP_ENUM(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_ARG_CONSTRUCTOR, ~) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
@@ -145,7 +151,7 @@ namespace poet
 						&POET_ACTIVE_FUNCTION_CLASS_NAME::active_function_method_request::futureUpdateSlot, this).track(this->shared_from_this()));
 					*/
 #define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
-	POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).connectUpdate(slot_type( \
+	POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).connect_update(slot_type( \
 		&POET_ACTIVE_FUNCTION_CLASS_NAME::active_function_method_request::futureUpdateSlot, this).track(this->shared_from_this()));
 					BOOST_PP_REPEAT(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_MISC_STATEMENT, _arg)
 #undef POET_ACTIVE_FUNCTION_MISC_STATEMENT
@@ -155,7 +161,7 @@ namespace poet
 				{
 // if(_argn.cancelled()) return true;
 #define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
-	if(POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).cancelled()) return true;
+	if(POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).has_exception()) return true;
 					BOOST_PP_REPEAT(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_MISC_STATEMENT, _arg)
 #undef POET_ACTIVE_FUNCTION_MISC_STATEMENT
 					return false;

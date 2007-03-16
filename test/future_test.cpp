@@ -6,20 +6,20 @@
 #include <vector>
 #include <unistd.h>
 
-static void delayed_increment(poet::future<int> result, poet::future<int> value)
+static void delayed_increment(poet::promise<int> mypromise, poet::future<int> value)
 {
 	sleep(1);
 	int intValue = value;
 	++intValue;
 	std::cerr << "Setting future value to " << intValue << std::endl;
-	result = intValue;
+	mypromise.fulfill(intValue);
 };
 
 static poet::future<int> async_delayed_increment(poet::future<int> value)
 {
-	poet::future<int> future;
-	boost::thread mythread(boost::bind(&delayed_increment, future, value));
-	return future;
+	poet::promise<int> mypromise;
+	boost::thread mythread(boost::bind(&delayed_increment, mypromise, value));
+	return mypromise;
 }
 
 int main()
@@ -49,9 +49,10 @@ int main()
 	myVec.push_back(0.5);
 	myVec.push_back(1.1);
 	std::cerr << "original vector element 1 is " << myVec.at(1) << std::endl;
-	poet::future<std::vector<double> > myVecFuture;
+	poet::promise<std::vector<double> > myVecPromise;
+	poet::future<std::vector<double> > myVecFuture(myVecPromise);
 	poet::future<double> myVecElementFuture(myVecFuture, boost::bind<const double&>(&std::vector<double>::at, _1, 1));
-	myVecFuture = myVec;
+	myVecPromise.fulfill(myVec);
 	double myVecElement = myVecElementFuture;
 	std::cerr << "future vector element 1 is " << myVecElement << std::endl;
 

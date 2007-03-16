@@ -3,75 +3,52 @@
 // Distributed under the Boost Software License, Version 1.0.
 // http://www.boost.org/LICENSE_1_0.txt
 
-#include "exception_ptr.hpp"
+#include <poet/exception_ptr.hpp>
 #include <exception>
 #include <stdexcept>
 
-class _exp_throwable
+#define _CATCH_AND_RETURN( E ) catch( E const & e ) { return poet::exception_ptr( new poet::detail::_exp_throwable_impl< E >( e ) ); }
+#define _CATCH_AND_RETURN_STDEXCEPT( E ) catch( E const & e ) { return poet::exception_ptr( new poet::detail::_exp_throwable_impl< E >( e.what() ) ); }
+
+static poet::exception_ptr _exp_current_exception()
 {
-protected:
+	try
+	{
+		throw;
+	}
 
-    ~_exp_throwable() {}
+	_CATCH_AND_RETURN_STDEXCEPT( std::invalid_argument )
+	_CATCH_AND_RETURN_STDEXCEPT( std::out_of_range )
+	_CATCH_AND_RETURN_STDEXCEPT( std::domain_error )
+	_CATCH_AND_RETURN_STDEXCEPT( std::length_error )
+	_CATCH_AND_RETURN_STDEXCEPT( std::logic_error )
 
-public:
+	_CATCH_AND_RETURN_STDEXCEPT( std::overflow_error )
+	_CATCH_AND_RETURN_STDEXCEPT( std::underflow_error )
+	_CATCH_AND_RETURN_STDEXCEPT( std::range_error )
+	_CATCH_AND_RETURN_STDEXCEPT( std::runtime_error )
 
-    virtual void rethrow() = 0;
-};
+	_CATCH_AND_RETURN( std::bad_alloc )
+	_CATCH_AND_RETURN( std::bad_cast )
+	_CATCH_AND_RETURN( std::bad_typeid )
+	_CATCH_AND_RETURN( std::bad_exception )
 
-template< class E > class _exp_throwable_impl: public _exp_throwable
-{
-private:
+//FIXME add support for libpoet's exception classes, and from thread_safe_signals, and some from boost (bad_weak_ptr, expired_slot)
 
-    E e_;
-
-public:
-
-    _exp_throwable_impl()
-    {
-    }
-
-    template< class A > _exp_throwable_impl( A const & a ): e_( a )
-    {
-    }
-
-    void rethrow()
-    {
-        throw e_;
-    }
-};
-
-#define _CATCH_AND_RETURN( E ) catch( E const & e ) { return exception_ptr( new _exp_throwable_impl< E >( e ) ); }
-
-static exception_ptr _exp_current_exception()
-{
-    try
-    {
-        throw;
-    }
-
-    _CATCH_AND_RETURN( std::invalid_argument )
-    _CATCH_AND_RETURN( std::out_of_range )
-    // ...
-    _CATCH_AND_RETURN( std::logic_error )
-
-    _CATCH_AND_RETURN( std::bad_alloc )
-    _CATCH_AND_RETURN( std::bad_cast )
-    _CATCH_AND_RETURN( std::bad_typeid )
-    _CATCH_AND_RETURN( std::bad_exception )
-
-    catch( std::exception const & e )
-    {
-        return exception_ptr( new _exp_throwable_impl<std::runtime_error>( e.what() ) );
-    }
-    catch( ... )
-    {
-        return exception_ptr( new _exp_throwable_impl<std::bad_exception>() );
-    }
+	// throw std::exception as poet::unknown_exception, since we can't initialize what() string using a std::exception
+	catch( std::exception const & e )
+	{
+		return poet::exception_ptr( new poet::detail::_exp_throwable_impl<poet::unknown_exception>( e.what() ) );
+	}
+	catch( ... )
+	{
+		return poet::exception_ptr( new poet::detail::_exp_throwable_impl<poet::unknown_exception>() );
+	}
 }
 
-static exception_ptr s_bad_alloc( new _exp_throwable_impl< std::bad_alloc > );
+static poet::exception_ptr s_bad_alloc( new poet::detail::_exp_throwable_impl< std::bad_alloc > );
 
-exception_ptr current_exception()
+poet::exception_ptr poet::current_exception()
 {
     try
     {
@@ -83,7 +60,7 @@ exception_ptr current_exception()
     }
 }
 
-void rethrow_exception( exception_ptr p )
+void poet::rethrow_exception( exception_ptr p )
 {
     p->rethrow();
 }

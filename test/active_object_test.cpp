@@ -27,7 +27,7 @@ class ActiveIncrementer
 public:
 	poet::future<int> increment(poet::future<int> value)
 	{
-		poet::future<int> returnValue;
+		poet::promise<int> returnValue;
 		boost::shared_ptr<IncrementRequest> request(new IncrementRequest(&_servant,
 			value, returnValue));
 		_scheduler.post_method_request(request);
@@ -42,17 +42,17 @@ private:
 	class IncrementRequest: public poet::method_request_base
 	{
 	public:
-		IncrementRequest(Servant *servant, poet::future<int> inputValue, poet::future<int> returnValue):
+		IncrementRequest(Servant *servant, poet::future<int> inputValue, poet::promise<int> returnValue):
 			_servant(servant), _inputValue(inputValue), _returnValue(returnValue)
 		{
-			_readyConnection = inputValue.connectUpdate(boost::bind(boost::ref(_updateSignal)));
+			_readyConnection = inputValue.connect_update(boost::bind(boost::ref(_updateSignal)));
 		}
-		virtual void run() {_returnValue = _servant->increment(_inputValue);}
+		virtual void run() {_returnValue.fulfill(_servant->increment(_inputValue));}
 		virtual bool ready() const {return _inputValue.ready();}
 	private:
 		Servant *_servant;
 		poet::future<int> _inputValue;
-		poet::future<int> _returnValue;
+		poet::promise<int> _returnValue;
 		boost::signalslib::scoped_connection _readyConnection;
 	};
 

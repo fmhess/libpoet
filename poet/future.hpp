@@ -25,14 +25,16 @@
 #ifndef _POET_FUTURE_H
 #define _POET_FUTURE_H
 
+#include <boost/assert.hpp>
 #include <boost/bind.hpp>
-#include <cassert>
+#include <boost/optional.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/thread/read_write_mutex.hpp>
+#include <boost/thread/mutex.hpp>
 #include <boost/thread_safe_signal.hpp>
 #include <poet/detail/condition.hpp>
+#include <poet/exception_ptr.hpp>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -40,20 +42,38 @@
 
 namespace poet
 {
+	template <typename T>
+	class future;
+
 	/*!  \brief Exception thrown by a cancelled future.
 
 	This exception is thrown when an attempt to convert a future to
 	its associated value fails due to future::cancel() being called
-	on a future that references the same value.
+	on a future that references the same promise.
 	*/
-	class future_cancelled: public std::runtime_error
+	class cancelled_future: public std::runtime_error
 	{
 	public:
 		/*! Constructor. */
-		future_cancelled(): std::runtime_error("poet::future_cancelled.")
+		cancelled_future(): std::runtime_error("poet::cancelled_future")
 		{}
 		/*! Virtual destructor. */
-		virtual ~future_cancelled() throw() {}
+		virtual ~cancelled_future() throw() {}
+	};
+	/*!  \brief Exception thrown by an uncertain future.
+
+	This exception is thrown when an attempt is made to convert a
+	default-constructed future with no promise into
+	its associated value.
+	*/
+	class uncertain_future: public std::runtime_error
+	{
+	public:
+		/*! Constructor. */
+		uncertain_future(): std::runtime_error("poet::uncertain_future")
+		{}
+		/*! Virtual destructor. */
+		virtual ~uncertain_future() throw() {}
 	};
 
 	namespace detail
@@ -69,8 +89,8 @@ namespace poet
 			virtual bool ready() const = 0;
 			virtual const T& getValue() const = 0;
 			virtual void setValue(const T &value) = 0;
-			virtual void cancel() = 0;
-			virtual bool cancelled() const = 0;
+			virtual void cancel(const poet::exception_ptr &) = 0;
+			virtual bool has_exception() const = 0;
 			boost::signalslib::connection connectUpdate(const update_signal_type::slot_type &slot)
 			{
 				return _updateSignal.connect(slot);
@@ -82,72 +102,67 @@ namespace poet
 		template <typename T> class future_body: public future_body_base<T>
 		{
 		public:
-			future_body():
-				_valueMutex(boost::read_write_scheduling_policy::writer_priority),
-				_readyFlag(false), _cancelled(false)
+			future_body()
 			{}
-			future_body(const T &value): _value(new T(value)),
-			_valueMutex(boost::read_write_scheduling_policy::writer_priority),
-			_readyFlag(true)
+			future_body(const T &value): _value(value)
 			{}
 			virtual ~future_body() {}
 			virtual void setValue(const T &value)
 			{
 				{
-					boost::read_write_mutex::scoped_write_lock lock(_valueMutex);
-					_readyFlag = true;
-					_value.reset(new T(value));
+					boost::mutex::scoped_lock lock(_mutex);
+					_value = value;
 				}
 				_readyCondition.locking_notify_all();
 				this->_updateSignal();
 			}
 			virtual bool ready() const
 			{
-				boost::read_write_mutex::scoped_read_lock lock(_valueMutex);
-				return _readyFlag;
+					boost::mutex::scoped_lock lock(_mutex);
+				return _value;
 			}
 			virtual const T& getValue() const
 			{
 				{
 					_readyCondition.locking_wait(boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
-					if(!ready())
+					if(_exception)
 					{
-						throw future_cancelled();
+						rethrow_exception(_exception);
 					}
 				}
-				boost::read_write_mutex::scoped_read_lock lock(_valueMutex);
-				return *_value;
+				boost::mutex::scoped_lock lock(_mutex);
+				BOOST_ASSERT(_value);
+				return _value.get();
 			}
-			virtual void cancel()
+			virtual void cancel(const poet::exception_ptr &exp)
 			{
 				bool emitSignal = false;
 				{
-					boost::mutex::scoped_lock lock(_cancelledMutex);
-					if(_cancelled = false)
+					boost::mutex::scoped_lock lock(_mutex);
+					if(_exception == 0 )
 					{
 						emitSignal = true;
-						_cancelled = true;
+						_exception = exp;
 					}
 				}
 				if(emitSignal) this->_updateSignal();
 			}
-			virtual bool cancelled() const
+			virtual bool has_exception() const
 			{
-				boost::mutex::scoped_lock lock(_cancelledMutex);
-				return _cancelled;
+				boost::mutex::scoped_lock lock(_mutex);
+				return _exception;
 			}
 		private:
 			bool readyOrCancelled() const
 			{
-				return ready() || cancelled();
+				boost::mutex::scoped_lock lock(_mutex);
+				return _value || _exception;
 			}
 
-			boost::scoped_ptr<T> _value;
-			mutable boost::read_write_mutex _valueMutex;
-			bool _readyFlag;
+			boost::optional<T> _value;
+			mutable boost::mutex _mutex;
 			mutable typename detail::condition _readyCondition;
-			bool _cancelled;
-			mutable boost::mutex _cancelledMutex;
+			poet::exception_ptr _exception;
 		};
 
 		template<typename ProxyType, typename ActualType>
@@ -165,11 +180,9 @@ namespace poet
 			future_body_proxy(boost::shared_ptr<future_body_base<ActualType> > actualFutureBody,
 				const boost::function<ProxyType (const ActualType&)> &conversionFunction):
 				_actualFutureBody(actualFutureBody),
-				_conversionFunction(conversionFunction),
-				_proxyValueMutex(boost::read_write_scheduling_policy::writer_priority)
+				_conversionFunction(conversionFunction)
 			{
-				_readyConnection = _actualFutureBody->connectUpdate(boost::ref(
-					detail::future_body_proxy<ProxyType, ActualType>::_updateSignal));
+				_readyConnection = _actualFutureBody->connectUpdate(this->_updateSignal);
 			}
 			virtual ~future_body_proxy()
 			{
@@ -193,7 +206,7 @@ namespace poet
 			{
 				bool initialized = false;
 				{
-					boost::read_write_mutex::scoped_read_lock read_lock(_proxyValueMutex);
+					boost::mutex::scoped_lock lock(_mutex);
 					if(_proxyValue)
 					{
 						initialized = true;
@@ -202,33 +215,108 @@ namespace poet
 				if(initialized == false)
 				{
 					{
-						boost::read_write_mutex::scoped_write_lock write_lock(_proxyValueMutex);
+						boost::mutex::scoped_lock lock(_mutex);
 						// make sure _proxyValue is still uninitialized after we have write lock
-						if(_proxyValue == 0)
+						if(_proxyValue == false)
 						{
-							_proxyValue.reset(new ProxyType(_conversionFunction(_actualFutureBody->getValue())));
+							_proxyValue = _conversionFunction(_actualFutureBody->getValue());
 						}
 					}// write_lock destructs here
 				}
-				boost::read_write_mutex::scoped_read_lock read_lock(_proxyValueMutex);
-				return *_proxyValue;
+				boost::mutex::scoped_lock lock(_mutex);
+				return _proxyValue.get();
 			}
-			virtual void cancel()
+			virtual void cancel(const poet::exception_ptr &exp)
 			{
-				_actualFutureBody->cancel();
+				_actualFutureBody->cancel(exp);
 			}
-			virtual bool cancelled() const
+			virtual bool has_exception() const
 			{
-				return _actualFutureBody->cancelled();
+				return _actualFutureBody->has_exception();
 			}
 		private:
 			boost::shared_ptr<future_body_base<ActualType> > _actualFutureBody;
 			boost::function<ProxyType (const ActualType&)> _conversionFunction;
 			boost::signalslib::connection _readyConnection;
-			mutable boost::scoped_ptr<ProxyType> _proxyValue;
-			mutable boost::read_write_mutex _proxyValueMutex;
+			mutable boost::optional<ProxyType> _proxyValue;
+			mutable boost::mutex _mutex;
+		};
+
+		template <typename T>
+		class promise_impl
+		{
+		public:
+			void fulfill(const T &value)
+			{
+				future_body->setValue(value);
+			}
+			template <typename E>
+			void renege(const E &exception)
+			{
+				future_body->cancel(poet::copy_exception(exception));
+			}
+			void renege(const exception_ptr &exp)
+			{
+				future_body->cancel(exp);
+			}
+			inline void handle_future_fulfillment(const future<T> &);
+
+			boost::shared_ptr<future_body_base<T> > future_body;
 		};
 	}
+
+	/*! \brief A handle to a promise.
+
+	Promises are used to construct futures and set their values when they
+	become available.  You can also renege on a promise, which transports an exception
+	instead of a value to any futures waiting on the promise.
+
+	Promise objects are handles with shallow copy semantics.
+	*/
+	template <typename T>
+	class promise
+	{
+	public:
+		template <typename U>
+		friend class future;
+
+		typedef T value_type;
+		promise(): _pimpl(new detail::promise_impl<T>)
+		{
+			_pimpl->future_body.reset(new detail::future_body<T>());
+		}
+		/*! Fulfill the promise by giving it a value.  All futures which reference
+		this promise will become ready.  */
+		void fulfill(const T &value)
+		{
+			_pimpl->fulfill(value);
+		}
+		/*! Chain the promise to another promise by giving it a future.  All futures which reference
+		this promise will receive the value from <em>future_value</em> when it becomes ready.
+		If the promise
+		referenced by <em>future_value</em> is broken, this promise will also be broken.
+		*/
+		void fulfill(const future<T> &future_value)
+		{
+			typedef typename future<T>::update_slot_type slot_type;
+			future_value.connect_update(slot_type(&detail::promise_impl<T>::handle_future_fulfillment, _pimpl.get(), future_value).track(_pimpl));
+		}
+		/*! Breaks the promise.  Any futures which reference the promise will throw
+		a copy of <em>exception</em> when they attempt to get their value.
+		*/
+		template <typename E>
+		void renege(const E &exception)
+		{
+			_pimpl->renege(exception);
+		}
+		/*! \overload */
+		void renege(const poet::exception_ptr &exp)
+		{
+			_pimpl->renege(exp);
+		}
+	private:
+		boost::shared_ptr<detail::promise_impl<T> > _pimpl;
+	};
 
 	/*! \brief A handle to a future value.
 
@@ -239,10 +327,8 @@ namespace poet
 	future to determine when a result is ready, or block on the Future waiting
 	for a result.
 
-	\section default_methods Default copy constructor and assignment operator
-
-	The default copy constructor and assignment operator produce two Futures which
-	both refer to the same value.
+	Futures are handles with shallow copy semantics.  Two copies of a future will both refer to
+	the same promise.
 	*/
 	template <typename T> class future
 	{
@@ -253,23 +339,38 @@ namespace poet
 		/*! boost::signal<void ()>::slot_type */
 		typedef typename detail::future_body_base<T>::update_signal_type::slot_type update_slot_type;
 
-		/*! Creates a new future with an uninitialized value. */
-		future(): _futureBody(new detail::future_body<T>())
+		/*! Creates a new future from a promise.  When the promise referenced by <em>promise</em>
+		is fulfilled or broken, the future will become ready.  */
+		future(const promise<T> &promise): _future_body(promise._pimpl->future_body)
 		{}
+		/*! Creates a new future from a promise with a template type <em>OtherType</em> that is
+		implicitly convertible to the future's value_type.  When the promise referenced by <em>promise</em>
+		is fulfilled or broken, the future will become ready. */
+		template <typename OtherType>
+		future(const promise<OtherType> &promise)
+		{
+			future<OtherType> other_future(promise);
+			*this = other_future;
+		}
 		/*! Creates a new Future with an initialized value, and provides
 		implicit conversion from a value to the corresponding Future.
 		*/
-		future(const T &value): _futureBody(new detail::future_body<T>(value))
+		future(const T &value): _future_body(new detail::future_body<T>(value))
 		{}
 		/*! Creates a future from another future with a compatible template type.  The
-		two Futures will both reference the same value. */
+		two Futures will both reference the same promise. */
 		template <typename OtherType> future(const future<OtherType> &other)
 		{
-			assert(typeid(T) != typeid(OtherType));
+			BOOST_ASSERT(typeid(T) != typeid(OtherType));
+			if(other._future_body == 0)
+			{
+				_future_body.reset();
+				return;
+			}
 			boost::function<T (const OtherType&)> typedConversionFunction =
 				boost::bind(&detail::defaultConversionFunction<T, OtherType>, _1);
-			_futureBody.reset(new detail::future_body_proxy<T, OtherType>(
-				other._futureBody, typedConversionFunction));
+			_future_body.reset(new detail::future_body_proxy<T, OtherType>(
+				other._future_body, typedConversionFunction));
 		}
 		/* ConversionFunctionType is a template type instead of
 		boost::function<T (const OtherType&)> because boost::bind has problems
@@ -290,62 +391,86 @@ namespace poet
 		{
 			boost::function<T (const OtherType&)> typedConversionFunction =
 				conversionFunction;
-			_futureBody.reset(new detail::future_body_proxy<T, OtherType>(
-				other._futureBody, typedConversionFunction));
+			_future_body.reset(new detail::future_body_proxy<T, OtherType>(
+				other._future_body, typedConversionFunction));
 		}
+		/*! Creates an uncertain future with no promise.  An attempt to get an
+		uncertain future's
+		value will throw an uncertain_future exception.  An uncertain future
+		may gain
+		promise by assigning it another future with promise.  */
+		future()
+		{}
 		/*! Virtual destructor. */
 		virtual ~future() {}
 		/*! \returns true if the future's value is initialized. */
 		bool ready() const
 		{
-			if(_futureBody == 0) return false;
-			return _futureBody->ready();
+			if(_future_body == 0) return false;
+			return _future_body->ready();
 		}
 		/*! The conversion operator is used to obtain an initialized value from a future.
 		If the future is not ready, the conversion
 		operator will block until the future's value is initialized, or
-		cancel() is called on a future that references the same value.
-		\exception future_cancelled if the conversion fails due to
+		the future's promise is broken.
+		\exception cancelled_future if the conversion fails due to
 		cancellation.
+		\exception unspecified if the future's promise is broken, the conversion operator
+		will throw whatever exception was specified by the promise::renege call.
 		*/
-		operator const T&() const {return _futureBody->getValue();}
-		/*! Assignment from a value initializes the future's value.  This future, and any
-		other which references the same value will become ready.  */
-		const future<T>& operator =(const T &value)
+		operator const T&() const
 		{
-			_futureBody->setValue(value);
-			return *this;
+			if(_future_body == 0)
+			{
+				throw uncertain_future();
+			}
+			return _future_body->getValue();
 		}
 		/*! Assignment from a future<U> is supported if U is implicitly convertible to T.
 		The assignment happens immediately, and does not block waiting for <em>other</em> to become ready. */
 		template <typename OtherType> const future<T>& operator =(const future<OtherType> &other)
 		{
-			assert(typeid(T) != typeid(OtherType));
-			_futureBody.reset(new detail::future_body_proxy<T, OtherType>(other._futureBody));
+			BOOST_ASSERT(typeid(T) != typeid(OtherType));
+			_future_body.reset(new detail::future_body_proxy<T, OtherType>(other._future_body));
 		}
 		/*! Connect a slot to be run when the future's status changes, either because
-		its value has been initialized or the future has been cancelled.
+		its value is ready or its promise has been broken.
 		*/
-		boost::signalslib::connection connectUpdate(const update_slot_type &slot)
+		boost::signalslib::connection connect_update(const update_slot_type &slot) const
 		{
-			if(_futureBody == 0) throw std::invalid_argument("Future doesn't refer to any value yet. Cannot connect slot.");
-			return _futureBody->connectUpdate(slot);
+			if(_future_body == 0) throw std::invalid_argument("Future doesn't refer to any value yet. Cannot connect slot.");
+			return _future_body->connectUpdate(slot);
 		}
-		/*! Cancel a future.  Any Futures doing blocking waits on the value referenced by
-		this future will throw future_cancelled exceptions. */
+		/*! Cancel a future by breaking its promise with a cancelled_future exception. */
 		void cancel()
 		{
-			_futureBody->cancel();
+			_future_body->cancel(poet::copy_exception(cancelled_future()));
 		}
-		/*! \returns true if this future's value has been cancelled.
+		/*! \returns true if this future's promise has been broken.  Attempting to get the
+		future's value
+		will throw an exception that may give more information on why the promise was broken.
 		*/
-		bool cancelled() const
+		bool has_exception() const
 		{
-			return _futureBody->cancelled();
+			if(_future_body == 0) return true;
+			return _future_body->has_exception();
 		}
 	private:
-		boost::shared_ptr<detail::future_body_base<T> > _futureBody;
+		boost::shared_ptr<detail::future_body_base<T> > _future_body;
 	};
+}
+
+template <typename T>
+void poet::detail::promise_impl<T>::handle_future_fulfillment(const future<T> &future_value)
+{
+	try
+	{
+		fulfill(future_value);
+	}
+	catch(...)
+	{
+		renege(current_exception());
+	}
 }
 
 #endif // _POET_FUTURE_H
