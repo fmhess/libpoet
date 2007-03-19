@@ -229,7 +229,10 @@ namespace poet
 		{}
 		/*! Adds <em>methodRequest</em> to the scheduler's activation queue. */
 		virtual void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest) = 0;
-		/*! Manually force the scheduler to wake up and check for runnable method requests. */
+		/*! Manually force the scheduler to wake up and check for runnable method requests.
+		This is usually not required, as schedulers should automatically check
+		there activation queue when post_method_request is called, or when any method request
+		in the activation queue emits its "update" signal. */
 		virtual void wake() = 0;
 		/*! Tells scheduler thread to exit.  The scheduler thread may still be running after
 		this function returns. */
@@ -281,8 +284,8 @@ namespace poet
 
 		\param millisecTimeout Specifies a polling interval for the scheduler to check for any
 		ready method requests in its activation queue.  If millisecTimeout is less than zero,
-		no polling is performed.  Polling is not required, as schedulers will always check
-		there activation queue when post_method_request is called, and when any method request
+		no polling is performed.  Polling is usually not required, as schedulers will always check
+		there activation queue when post_method_request is called, or when any method request
 		in the activation queue emits its "update" signal.
 		\param activationQueue Allows use of a customized activation queue.  By default, an
 		out_of_order_activation_queue is used.

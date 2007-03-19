@@ -285,7 +285,10 @@ namespace poet
 	become available.  You can also renege on a promise, which transports an exception
 	instead of a value to any futures waiting on the promise.
 
-	Promise objects are handles with shallow copy semantics.
+	Promise objects are handles with shallow copy semantics.  Promises are
+	reference-counted, which means a promise will automatically be
+	reneged with an uncertain_future exception if its reference
+	count drops to zero without the promise being fulfilled.
 	*/
 	template <typename T>
 	class promise
@@ -352,12 +355,13 @@ namespace poet
 		typedef typename detail::future_body_base<T>::update_signal_type::slot_type update_slot_type;
 
 		/*! Creates a new future from a promise.  When the promise referenced by <em>promise</em>
-		is fulfilled or broken, the future will become ready.  */
+		is fulfilled, the future will become ready.  */
 		future(const promise<T> &promise): _future_body(promise._pimpl->_future_body)
 		{}
 		/*! Creates a new future from a promise with a template type <em>OtherType</em> that is
 		implicitly convertible to the future's value_type.  When the promise referenced by <em>promise</em>
-		is fulfilled or broken, the future will become ready. */
+		is fulfilled, the future will become ready.
+		*/
 		template <typename OtherType>
 		future(const promise<OtherType> &promise)
 		{
@@ -431,7 +435,7 @@ namespace poet
 			if(_future_body == 0) throw std::invalid_argument("Future doesn't refer to any value yet. Cannot connect slot.");
 			return _future_body->connectUpdate(slot);
 		}
-		/*! Cancel a future by breaking its promise with a cancelled_future exception. */
+		/*! Cancel a future by reneging on its promise with a cancelled_future exception. */
 		void cancel()
 		{
 			_future_body->cancel(poet::copy_exception(cancelled_future()));

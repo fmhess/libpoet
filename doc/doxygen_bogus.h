@@ -78,15 +78,14 @@ active_function<R (T1, T2, ..., TN)>
 		the object is destroyed.
 		\param guard The active_function's scheduler will not execute a method request until
 			the guard returns true and all the input futures are ready.  By default, the guard will always return true.
-		\param scheduler Specify a scheduler object for the active_function to post its method requests to.
+		\param scheduler_ptr Specify a scheduler object for the active_function to post its method requests to.
 		By default, a new Scheduler object is created for the active_function.  If the active_function is
 		providing a method as part of an active object class, you may wish for all the class' methods
 		to share the same scheduler.
 		*/
 		active_function(const passive_slot_type &passive_function,
 			const boost::function<bool ()> &guard = 0,
-			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>()):
-			base_type(passive_function, guard, scheduler)
+			boost::shared_ptr<scheduler_base> scheduler_ptr = boost::shared_ptr<scheduler_base>())
 		{}
 		/*! Virtual destructor. */
 		virtual ~active_function() {}
@@ -96,13 +95,14 @@ active_function<R (T1, T2, ..., TN)>
 			The method request may be cancelled by calling future::cancel() on the returned
 			future.
 
-			Note the active_function takes Futures as arguments, as well as returning a future.  This
+			Note the active_function takes futures as arguments, as well as returning a future.  This
 			allows future results to be passed from one active_function to another without waiting
-			for the result to become ready.  Since Futures are constructible from their
-			value types, the active_function can also take values not wrapped in a future as arguments.
+			for the result to become ready.  Since futures are constructible from their
+			value types, the active_function can also take ordinary values not wrapped
+			futures as arguments.
 		 */
 		future<R> operator()(future<T1> arg1, future<T2> arg2, ..., future<TN> argN);
-		/*! Calls Scheduler::wake() on the active_function's scheduler. */
+		/*! Calls scheduler_base::wake() on the active_function's scheduler. */
 		void wake();
 		/*! Calls the boost::slot::expired() query method on the slot this active_function was constructed
 		from. */

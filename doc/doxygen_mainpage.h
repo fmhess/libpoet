@@ -2,10 +2,14 @@
 
 /*! \mainpage libpoet Documentation
 \section description Parallel Object Execution Threads
-libpoet is a framework intended to make creation of active objects easy
+libpoet is a library whose goal is to make creation of active objects easy
 enough for routine use.  Some of the more important classes in the library
-are poet::future, poet::active_function, and poet::scheduler.  To learn
-more about active objects, see the paper
+are poet::active_function, poet::future, and poet::scheduler.
+
+Active objects achieve concurrency by giving each active object its own
+thread to execute in.  Futures are employed to communicate with active objects
+in a thread-safe manner.  To learn
+more the active object concept, see the paper
 <a href="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming." by
 R. Greg Lavender and Douglas C. Schmidt</a>.
 
@@ -21,7 +25,11 @@ libpoet depends on the <a href="http://www.boost.org">boost C++ libraries</a> an
 
 \section download Download
 
-The current source code is availabe via anonymous cvs:
+The most recent release is available from the
+<a href="http://www.boost-consulting.com/vault/index.php?&direction=0&order=&directory=Concurrent%20Programming">boost vault</a>
+(get the "libpoet-xxxx-xx-xx.tgz" file).
+
+The current source code is also availabe via anonymous cvs:
 \code
 cvs -d :pserver:anonymous@cvs.comedi.org:/cvs/comedi login
 cvs -d :pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet
