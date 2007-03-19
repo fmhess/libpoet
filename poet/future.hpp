@@ -63,8 +63,10 @@ namespace poet
 	/*!  \brief Exception thrown by an uncertain future.
 
 	This exception is thrown when an attempt is made to convert a
-	default-constructed future with no promise into
-	its associated value.
+	future with no promise into its associated value.  This
+	can happen if the future was default-constructed, or
+	its associated promise object has been destroyed without
+	being fulfilled.
 	*/
 	class uncertain_future: public std::runtime_error
 	{
@@ -109,12 +111,20 @@ namespace poet
 			virtual ~future_body() {}
 			virtual void setValue(const T &value)
 			{
+				bool emit_signal = false;
 				{
 					boost::mutex::scoped_lock lock(_mutex);
-					_value = value;
+					if(_exception == 0 && _value == false)
+					{
+						_value = value;
+						emit_signal = true;
+					}
 				}
-				_readyCondition.locking_notify_all();
-				this->_updateSignal();
+				if(emit_signal)
+				{
+					_readyCondition.locking_notify_all();
+					this->_updateSignal();
+				}
 			}
 			virtual bool ready() const
 			{
@@ -123,14 +133,12 @@ namespace poet
 			}
 			virtual const T& getValue() const
 			{
-				{
-					_readyCondition.locking_wait(boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
-					if(_exception)
-					{
-						rethrow_exception(_exception);
-					}
-				}
+				_readyCondition.locking_wait(boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
 				boost::mutex::scoped_lock lock(_mutex);
+				if(_exception)
+				{
+					rethrow_exception(_exception);
+				}
 				BOOST_ASSERT(_value);
 				return _value.get();
 			}
@@ -139,7 +147,7 @@ namespace poet
 				bool emitSignal = false;
 				{
 					boost::mutex::scoped_lock lock(_mutex);
-					if(_exception == 0 )
+					if(_exception == 0 && _value == false)
 					{
 						emitSignal = true;
 						_exception = exp;
@@ -242,26 +250,32 @@ namespace poet
 			mutable boost::mutex _mutex;
 		};
 
-		template <typename T>
-		class promise_impl
+		template <typename T> class promise_body
 		{
 		public:
+			promise_body(): _future_body(new future_body<T>())
+			{}
+			~promise_body()
+			{
+				renege(uncertain_future());
+			}
+
 			void fulfill(const T &value)
 			{
-				future_body->setValue(value);
+				_future_body->setValue(value);
 			}
 			template <typename E>
 			void renege(const E &exception)
 			{
-				future_body->cancel(poet::copy_exception(exception));
+				_future_body->cancel(poet::copy_exception(exception));
 			}
 			void renege(const exception_ptr &exp)
 			{
-				future_body->cancel(exp);
+				_future_body->cancel(exp);
 			}
-			inline void handle_future_fulfillment(const future<T> &);
+			inline void handle_future_fulfillment(const future<T> &future_value);
 
-			boost::shared_ptr<future_body_base<T> > future_body;
+			boost::shared_ptr<future_body_base<T> > _future_body;
 		};
 	}
 
@@ -281,10 +295,8 @@ namespace poet
 		friend class future;
 
 		typedef T value_type;
-		promise(): _pimpl(new detail::promise_impl<T>)
-		{
-			_pimpl->future_body.reset(new detail::future_body<T>());
-		}
+		promise(): _pimpl(new detail::promise_body<T>)
+		{}
 		/*! Fulfill the promise by giving it a value.  All futures which reference
 		this promise will become ready.  */
 		void fulfill(const T &value)
@@ -299,7 +311,7 @@ namespace poet
 		void fulfill(const future<T> &future_value)
 		{
 			typedef typename future<T>::update_slot_type slot_type;
-			future_value.connect_update(slot_type(&detail::promise_impl<T>::handle_future_fulfillment, _pimpl.get(), future_value).track(_pimpl));
+			future_value.connect_update(slot_type(&detail::promise_body<T>::handle_future_fulfillment, _pimpl, future_value));
 		}
 		/*! Breaks the promise.  Any futures which reference the promise will throw
 		a copy of <em>exception</em> when they attempt to get their value.
@@ -315,7 +327,7 @@ namespace poet
 			_pimpl->renege(exp);
 		}
 	private:
-		boost::shared_ptr<detail::promise_impl<T> > _pimpl;
+		boost::shared_ptr<detail::promise_body<T> > _pimpl;
 	};
 
 	/*! \brief A handle to a future value.
@@ -341,7 +353,7 @@ namespace poet
 
 		/*! Creates a new future from a promise.  When the promise referenced by <em>promise</em>
 		is fulfilled or broken, the future will become ready.  */
-		future(const promise<T> &promise): _future_body(promise._pimpl->future_body)
+		future(const promise<T> &promise): _future_body(promise._pimpl->_future_body)
 		{}
 		/*! Creates a new future from a promise with a template type <em>OtherType</em> that is
 		implicitly convertible to the future's value_type.  When the promise referenced by <em>promise</em>
@@ -439,7 +451,7 @@ namespace poet
 }
 
 template <typename T>
-void poet::detail::promise_impl<T>::handle_future_fulfillment(const future<T> &future_value)
+void poet::detail::promise_body<T>::handle_future_fulfillment(const future<T> &future_value)
 {
 	try
 	{
