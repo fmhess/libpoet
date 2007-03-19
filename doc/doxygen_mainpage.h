@@ -13,6 +13,10 @@ more the active object concept, see the paper
 <a href="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming." by
 R. Greg Lavender and Douglas C. Schmidt</a>.
 
+A version of this documentation corresponding to the most recent release should
+be available online at
+<a href="http://www.comedi.org/projects/libpoet/index.html">http://www.comedi.org/projects/libpoet/index.html</a>
+
 \section status Status
 
 The library's API is still experimental, and subject to change as feedback
