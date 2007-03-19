@@ -139,13 +139,13 @@ namespace poet
 	};
 
 	/*! \brief Base class for activation queues. */
-	class ActivationQueueBase
+	class activation_queue_base
 	{
 	public:
 		typedef unsigned long size_type;
 
 		/*! Virtual destructor. */
-		virtual ~ActivationQueueBase() {}
+		virtual ~activation_queue_base() {}
 		/*! Adds a new method request to the activation queue. */
 		virtual void push_back(const boost::shared_ptr<method_request_base> &request) = 0;
 		/*! \returns The next method request which is ready to run.  Returns a null shared_ptr
@@ -162,16 +162,16 @@ namespace poet
 
 	/*! \brief An activation queue which always keeps method requests in FIFO order.
 
-		An InOrderActivationQueue will never skip over method requests that aren't
+		An in_order_activation_queue will never skip over method requests that aren't
 		ready yet.  If you don't require the method requests to be executed in
-		the exact order they were received, use an outOfOrderActivationQueue
+		the exact order they were received, use an out_of_order_activation_queue
 		instead.
 	*/
-	class InOrderActivationQueue: public ActivationQueueBase
+	class in_order_activation_queue: public activation_queue_base
 	{
 	public:
 		/*! Virtual destructor. */
-		virtual ~InOrderActivationQueue() {}
+		virtual ~in_order_activation_queue() {}
 		inline virtual void push_back(const boost::shared_ptr<method_request_base> &request);
 		/*! \returns The oldest method request in the queue.  If the oldest method
 		request is not ready to execute, then a null shared_ptr is returned.
@@ -202,15 +202,15 @@ namespace poet
 
 	/*! \brief An activation queue which can reorder method requests.
 
-	An OutOfOrderActivationQueue will return the oldest method request
+	An out_of_order_activation_queue will return the oldest method request
 	which is currently ready for execution.  Thus, a single method request
 	which is not ready will never prevent other method requests
 	which are ready from running.
 	*/
-	class OutOfOrderActivationQueue: public InOrderActivationQueue
+	class out_of_order_activation_queue: public in_order_activation_queue
 	{
 	public:
-		virtual ~OutOfOrderActivationQueue() {}
+		virtual ~out_of_order_activation_queue() {}
 		/*! \returns The oldest method request in the queue
 		which is currently ready for execution. */
 		inline virtual boost::shared_ptr<method_request_base> getRequest();
@@ -243,7 +243,7 @@ namespace poet
 		class scheduler_impl
 		{
 		public:
-			scheduler_impl(int millisecTimeout, const boost::shared_ptr<ActivationQueueBase> &activationQueue);
+			scheduler_impl(int millisecTimeout, const boost::shared_ptr<activation_queue_base> &activationQueue);
 			~scheduler_impl() {}
 			inline void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest);
 			inline void wake();
@@ -260,7 +260,7 @@ namespace poet
 				return _detached;
 			}
 
-			boost::shared_ptr<ActivationQueueBase> _activationQueue;
+			boost::shared_ptr<activation_queue_base> _activationQueue;
 			poet::detail::condition _wakeCondition;
 			bool _wakePending;
 			mutable boost::mutex _mutex;
@@ -285,10 +285,10 @@ namespace poet
 		there activation queue when post_method_request is called, and when any method request
 		in the activation queue emits its "update" signal.
 		\param activationQueue Allows use of a customized activation queue.  By default, an
-		OutOfOrderActivationQueue is used.
+		out_of_order_activation_queue is used.
 		*/
-		scheduler(int millisecTimeout = -1, const boost::shared_ptr<ActivationQueueBase> &activationQueue =
-			boost::shared_ptr<ActivationQueueBase>(new OutOfOrderActivationQueue));
+		scheduler(int millisecTimeout = -1, const boost::shared_ptr<activation_queue_base> &activationQueue =
+			boost::shared_ptr<activation_queue_base>(new out_of_order_activation_queue));
 		/*! The scheduler thread will continue to run after the scheduler object is destroyed, until
 		all method requests in its activation queue have been dispatched.
 		*/

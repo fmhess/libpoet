@@ -17,19 +17,19 @@
 #include <boost/bind.hpp>
 #include <cassert>
 
-void poet::InOrderActivationQueue::push_back(const boost::shared_ptr<method_request_base> &request)
+void poet::in_order_activation_queue::push_back(const boost::shared_ptr<method_request_base> &request)
 {
 	boost::mutex::scoped_lock lock(_mutex);
 	_pendingRequests.push_back(request);
 }
 
-boost::shared_ptr<poet::method_request_base> poet::InOrderActivationQueue::getRequest()
+boost::shared_ptr<poet::method_request_base> poet::in_order_activation_queue::getRequest()
 {
 	boost::mutex::scoped_lock lock(_mutex);
 	return unlockedGetRequest();
 }
 
-boost::shared_ptr<poet::method_request_base> poet::InOrderActivationQueue::unlockedGetRequest()
+boost::shared_ptr<poet::method_request_base> poet::in_order_activation_queue::unlockedGetRequest()
 {
 	boost::shared_ptr<method_request_base> methodRequest;
 	list_type::iterator it = _pendingRequests.begin();
@@ -48,12 +48,12 @@ boost::shared_ptr<poet::method_request_base> poet::InOrderActivationQueue::unloc
 	return methodRequest;
 }
 
-boost::shared_ptr<poet::method_request_base> poet::OutOfOrderActivationQueue::getRequest()
+boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue::getRequest()
 {
 	boost::mutex::scoped_lock lock(_mutex);
 	/* Optimization: before going through the entire list in reverse, do a quick check
 	of the common case where the request at the front of the queue is ready */
-	boost::shared_ptr<method_request_base> methodRequest = InOrderActivationQueue::unlockedGetRequest();
+	boost::shared_ptr<method_request_base> methodRequest = in_order_activation_queue::unlockedGetRequest();
 	if(methodRequest)
 	{
 		return methodRequest;
@@ -95,7 +95,7 @@ boost::shared_ptr<poet::method_request_base> poet::OutOfOrderActivationQueue::ge
 // scheduler_impl
 
 poet::detail::scheduler_impl::scheduler_impl(int millisecTimeout,
-	const boost::shared_ptr<ActivationQueueBase> &activationQueue):
+	const boost::shared_ptr<activation_queue_base> &activationQueue):
 	_activationQueue(activationQueue), _mortallyWounded(false), _millisecTimeout(millisecTimeout),
 	_detached(false)
 {
@@ -194,7 +194,7 @@ void poet::detail::scheduler_impl::detach()
 // scheduler
 
 poet::scheduler::scheduler(int millisecTimeout,
-	const boost::shared_ptr<ActivationQueueBase> &activationQueue):
+	const boost::shared_ptr<activation_queue_base> &activationQueue):
 	_pimpl(new detail::scheduler_impl(millisecTimeout, activationQueue))
 {
 	_dispatcherThread.reset(new boost::thread(boost::bind(&poet::detail::scheduler_impl::dispatcherThreadFunction, _pimpl)));
