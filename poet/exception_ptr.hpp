@@ -7,6 +7,7 @@
 // http://www.boost.org/LICENSE_1_0.txt
 
 #include <boost/shared_ptr.hpp>
+#include <poet/exceptions.hpp>
 
 namespace poet
 {
@@ -91,22 +92,6 @@ namespace poet
 		exception_ptr exp(new detail::_exp_throwable_impl<E>(e));
 		return exp;
 	}
-	/*!  \brief Exception used as a placeholder for unknown exceptions.
-
-	Exceptions unknown by the current_exception() code are replaced
-	with this class.  It is also used to replace exceptions whose
-	exact type is unknown but which are derived from std::exception, in which
-	case the what() string will be made to match the what() string of the
-	original unknown exception.
-	*/
-	class unknown_exception: public std::runtime_error
-	{
-	public:
-		unknown_exception(const std::string &description = "poet::unknown_exception"):
-			runtime_error(description)
-		{}
-		virtual ~unknown_exception() throw() {}
-	};
 }
 
 #include <poet/exception_ptr.cpp>

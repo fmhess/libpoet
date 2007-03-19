@@ -35,6 +35,7 @@
 #include <boost/thread_safe_signal.hpp>
 #include <poet/detail/condition.hpp>
 #include <poet/exception_ptr.hpp>
+#include <poet/exceptions.hpp>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -44,39 +45,6 @@ namespace poet
 {
 	template <typename T>
 	class future;
-
-	/*!  \brief Exception thrown by a cancelled future.
-
-	This exception is thrown when an attempt to convert a future to
-	its associated value fails due to future::cancel() being called
-	on a future that references the same promise.
-	*/
-	class cancelled_future: public std::runtime_error
-	{
-	public:
-		/*! Constructor. */
-		cancelled_future(): std::runtime_error("poet::cancelled_future")
-		{}
-		/*! Virtual destructor. */
-		virtual ~cancelled_future() throw() {}
-	};
-	/*!  \brief Exception thrown by an uncertain future.
-
-	This exception is thrown when an attempt is made to convert a
-	future with no promise into its associated value.  This
-	can happen if the future was default-constructed, or
-	its associated promise object has been destroyed without
-	being fulfilled.
-	*/
-	class uncertain_future: public std::runtime_error
-	{
-	public:
-		/*! Constructor. */
-		uncertain_future(): std::runtime_error("poet::uncertain_future")
-		{}
-		/*! Virtual destructor. */
-		virtual ~uncertain_future() throw() {}
-	};
 
 	namespace detail
 	{
@@ -289,6 +257,10 @@ namespace poet
 	reference-counted, which means a promise will automatically be
 	reneged with an uncertain_future exception if its reference
 	count drops to zero without the promise being fulfilled.
+
+	The idea of making a seperate promise class from the future class
+	was suggested by Chirtopher Kohlhoff.  The idea of reference
+	counting the promise class was due to Braddock Gaskill.
 	*/
 	template <typename T>
 	class promise
