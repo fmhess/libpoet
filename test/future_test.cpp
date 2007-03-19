@@ -43,18 +43,5 @@ int main()
 		int value = futures.at(i);
 		std::cerr << "value from futures[" << i << "] is " << value << std::endl;
 	}
-
-	std::cerr << "trying to extract future element from future<vector>..." << std::endl;
-	std::vector<double> myVec;
-	myVec.push_back(0.5);
-	myVec.push_back(1.1);
-	std::cerr << "original vector element 1 is " << myVec.at(1) << std::endl;
-	poet::promise<std::vector<double> > myVecPromise;
-	poet::future<std::vector<double> > myVecFuture(myVecPromise);
-	poet::future<double> myVecElementFuture(myVecFuture, boost::bind<const double&>(&std::vector<double>::at, _1, 1));
-	myVecPromise.fulfill(myVec);
-	double myVecElement = myVecElementFuture;
-	std::cerr << "future vector element 1 is " << myVecElement << std::endl;
-
 	return 0;
 }

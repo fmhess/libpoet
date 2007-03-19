@@ -372,28 +372,6 @@ namespace poet
 			_future_body.reset(new detail::future_body_proxy<T, OtherType>(
 				other._future_body, typedConversionFunction));
 		}
-		/* ConversionFunctionType is a template type instead of
-		boost::function<T (const OtherType&)> because boost::bind has problems
-		binding to it otherwise
-		*/
-		/*! Creates a future whose value is obtained
-		by applying <em>conversionFunction</em> to the <em>other</em>'s value when it is
-		ready.  The future is created immediately, without waiting for
-		<em>other</em> to become ready.
-		\param other The value of this future is based on the value referenced
-		by <em>other</em>.
-		\param conversionFunction A function which should be able to take
-		an argument of type OtherType and return a value of type T.
-		*/
-		template <typename OtherType, typename ConversionFunctionType>
-		future(const future<OtherType> &other,
-			ConversionFunctionType conversionFunction)
-		{
-			boost::function<T (const OtherType&)> typedConversionFunction =
-				conversionFunction;
-			_future_body.reset(new detail::future_body_proxy<T, OtherType>(
-				other._future_body, typedConversionFunction));
-		}
 		/*! Creates an uncertain future with no promise.  An attempt to get an
 		uncertain future's
 		value will throw an uncertain_future exception.  An uncertain future
