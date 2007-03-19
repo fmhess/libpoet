@@ -142,6 +142,8 @@ namespace poet
 	class ActivationQueueBase
 	{
 	public:
+		typedef unsigned long size_type;
+
 		/*! Virtual destructor. */
 		virtual ~ActivationQueueBase() {}
 		/*! Adds a new method request to the activation queue. */
@@ -152,8 +154,10 @@ namespace poet
 		virtual boost::shared_ptr<method_request_base> getRequest() = 0;
 		/*! Empties all method requests from the queue. */
 		virtual void clear() = 0;
-		/*! Returns the number of method requests waiting in the queue. */
-		virtual unsigned size() const = 0;
+		/*! \returns the number of method requests waiting in the queue. */
+		virtual size_type size() const = 0;
+		/*! \returns true if size() is zero. */
+		virtual bool empty() const = 0;
 	};
 
 	/*! \brief An activation queue which always keeps method requests in FIFO order.
@@ -178,10 +182,15 @@ namespace poet
 			boost::mutex::scoped_lock lock(_mutex);
 			_pendingRequests.clear();
 		}
-		virtual unsigned size() const
+		virtual size_type size() const
 		{
 			boost::mutex::scoped_lock lock(_mutex);
 			return _pendingRequests.size();
+		}
+		virtual bool empty() const
+		{
+			boost::mutex::scoped_lock lock(_mutex);
+			return _pendingRequests.empty();
 		}
 	protected:
 		inline boost::shared_ptr<method_request_base> unlockedGetRequest();
@@ -229,6 +238,38 @@ namespace poet
 		virtual void join() = 0;
 	};
 
+	namespace detail
+	{
+		class scheduler_impl
+		{
+		public:
+			scheduler_impl(int millisecTimeout, const boost::shared_ptr<ActivationQueueBase> &activationQueue);
+			~scheduler_impl() {}
+			inline void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest);
+			inline void wake();
+			inline void kill();
+			inline void detach();
+			inline bool mortallyWounded() const;
+			static inline void dispatcherThreadFunction(const boost::shared_ptr<scheduler_impl> &shared_this);
+		private:
+			inline bool dispatch();
+			inline bool wakePending() const;
+			inline void setWakePending(bool value);
+			bool detached() const
+			{
+				return _detached;
+			}
+
+			boost::shared_ptr<ActivationQueueBase> _activationQueue;
+			poet::detail::condition _wakeCondition;
+			bool _wakePending;
+			mutable boost::mutex _mutex;
+			bool _mortallyWounded;
+			int _millisecTimeout;
+			bool _detached;
+		};
+	}
+
 	/*! \brief Execute method requests in a separate thread.
 	*/
 	class scheduler: public scheduler_base
@@ -239,8 +280,8 @@ namespace poet
 		will execute method requests.
 
 		\param millisecTimeout Specifies a polling interval for the scheduler to check for any
-		ready method requests in its activation queue.  If millisecTimeout is less than or
-		equal to zero, no polling is performed.  Polling is not required, as schedulers will always check
+		ready method requests in its activation queue.  If millisecTimeout is less than zero,
+		no polling is performed.  Polling is not required, as schedulers will always check
 		there activation queue when post_method_request is called, and when any method request
 		in the activation queue emits its "update" signal.
 		\param activationQueue Allows use of a customized activation queue.  By default, an
@@ -248,30 +289,29 @@ namespace poet
 		*/
 		scheduler(int millisecTimeout = -1, const boost::shared_ptr<ActivationQueueBase> &activationQueue =
 			boost::shared_ptr<ActivationQueueBase>(new OutOfOrderActivationQueue));
-		/*! The destructor will tell the scheduler's thread to exit.  The current implementation
-		also blocks waiting for the thread to actually exit.  However, this may change in
-		the future to minimize the possibility of deadlock. */
-		inline virtual ~scheduler();
-		inline virtual void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest);
-		inline virtual void wake();
-		inline virtual void kill();
+		/*! The scheduler thread will continue to run after the scheduler object is destroyed, until
+		all method requests in its activation queue have been dispatched.
+		*/
+		virtual ~scheduler()
+		{
+			_pimpl->detach();
+		}
+		virtual void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest)
+		{
+			_pimpl->post_method_request(methodRequest);
+		}
+		virtual void wake()
+		{
+			_pimpl->wake();
+		}
+		virtual void kill()
+		{
+			_pimpl->kill();
+		}
 		inline virtual void join();
 	private:
-
-		inline bool dispatch();
-		inline void dispatcherThreadFunction();
-		inline bool mortallyWounded() const;
-		inline bool wakePending() const;
-		inline void setWakePending(bool value);
-
-		boost::shared_ptr<ActivationQueueBase> _activationQueue;
-		poet::detail::condition _wakeCondition;
-		bool _wakePending;
-		mutable boost::mutex _wakePendingMutex;
-		bool _mortallyWounded;
-		mutable boost::mutex _mortalWoundMutex;
+		boost::shared_ptr<detail::scheduler_impl> _pimpl;
 		boost::shared_ptr<boost::thread> _dispatcherThread;
-		int _millisecTimeout;
 	};
 }
 
