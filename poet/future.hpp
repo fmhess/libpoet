@@ -121,7 +121,11 @@ namespace poet
 						_exception = exp;
 					}
 				}
-				if(emitSignal) this->_updateSignal();
+				if(emitSignal)
+				{
+					_readyCondition.locking_notify_all();
+					this->_updateSignal();
+				}
 			}
 			virtual bool has_exception() const
 			{
@@ -268,6 +272,7 @@ namespace poet
 	public:
 		template <typename U>
 		friend class future;
+		friend class promise<void>;
 
 		typedef T value_type;
 		promise(): _pimpl(new detail::promise_body<T>)
@@ -305,6 +310,28 @@ namespace poet
 		boost::shared_ptr<detail::promise_body<T> > _pimpl;
 	};
 
+	// void specialization
+	template<>
+	class promise<void>: private promise<int>
+	{
+	private:
+		typedef promise<int> base_type;
+	public:
+		template <typename U>
+		friend class future;
+
+		typedef void value_type;
+
+		promise()
+		{}
+		void fulfill()
+		{
+			base_type::fulfill(0);
+		}
+		inline void fulfill(const future<void> &future_value);
+		using base_type::renege;
+	};
+
 	/*! \brief A handle to a future value.
 
 	Futures are wrappers around values which may not exist yet.  They are used to support asyncronous
@@ -321,6 +348,8 @@ namespace poet
 	{
 	public:
 		template <typename OtherType> friend class future;
+		friend class future<void>;
+
 		/*! T */
 		typedef T value_type;
 		/*! boost::signal<void ()>::slot_type */
@@ -398,6 +427,7 @@ namespace poet
 		{
 			BOOST_ASSERT(typeid(T) != typeid(OtherType));
 			_future_body.reset(new detail::future_body_proxy<T, OtherType>(other._future_body));
+			return *this;
 		}
 		/*! Connect a slot to be run when the future's status changes, either because
 		its value is ready or its promise has been broken.
@@ -424,6 +454,63 @@ namespace poet
 	private:
 		boost::shared_ptr<detail::future_body_base<T> > _future_body;
 	};
+
+	// void specialization
+	template <>
+	class future<void>: private future<int>
+	{
+	private:
+		typedef future<int> base_type;
+	public:
+		template <typename OtherType> friend class future;
+		friend class promise<void>;
+
+		typedef void value_type;
+		typedef base_type::update_slot_type update_slot_type;
+
+		future(const promise<void> &promise_in): base_type(reinterpret_cast<const promise<int> &>(promise_in))
+		{}
+		template <typename OtherType>
+		future(const promise<OtherType> &promise)
+		{
+			future<OtherType> other_future(promise);
+			*this = other_future;
+		}
+		template <typename OtherType> future(const future<OtherType> &other)
+		{
+			BOOST_ASSERT(typeid(void) != typeid(OtherType));
+			if(other._future_body == 0)
+			{
+				_future_body.reset();
+				return;
+			}
+			boost::function<void (const OtherType&)> typedConversionFunction =
+				boost::bind(&detail::defaultConversionFunction<void, OtherType>, _1);
+			_future_body.reset(new detail::future_body_proxy<void, OtherType>(
+				other._future_body, typedConversionFunction));
+		}
+		future()
+		{}
+		virtual ~future() {}
+		operator void () const
+		{
+			if(_future_body == 0)
+			{
+				throw uncertain_future();
+			}
+			_future_body->getValue();
+		}
+		template <typename OtherType> const future<void>& operator =(const future<OtherType> &other)
+		{
+			BOOST_ASSERT(typeid(void) != typeid(OtherType));
+			_future_body.reset(new detail::future_body_proxy<void, OtherType>(other._future_body));
+			return *this;
+		}
+		using base_type::ready;
+		using base_type::connect_update;
+		using base_type::cancel;
+		using base_type::has_exception;
+	};
 }
 
 template <typename T>
@@ -437,6 +524,13 @@ void poet::detail::promise_body<T>::handle_future_fulfillment(const future<T> &f
 	{
 		renege(current_exception());
 	}
+}
+
+void poet::promise<void>::fulfill(const future<void> &future_value)
+{
+	typedef future<void>::update_slot_type slot_type;
+	future_value.connect_update(slot_type(&detail::promise_body<int>::handle_future_fulfillment, _pimpl,
+		reinterpret_cast<const future<int> &>(future_value)));
 }
 
 #endif // _POET_FUTURE_H

@@ -110,8 +110,8 @@ namespace poet
 				{
 					try
 					{
-						this->_returnValue.fulfill(_passive_function(
-							POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)));
+						passive_result_type *resolver = 0;
+						m_run(resolver);
 					}
 					catch(...)
 					{
@@ -184,6 +184,17 @@ namespace poet
 					/* We don't need to worry about cancellation through the return value here,
 					as that is already handled by method_request<> base class. */
 				};
+				void m_run(const void *)
+				{
+					_passive_function(
+						POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg));
+					this->_returnValue.fulfill();
+				}
+				void m_run(...)
+				{
+					this->_returnValue.fulfill(_passive_function(
+						POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)));
+				}
 
 				// typename poet::future<boost::function_traits<Signature>::arg1_type> _arg1;
 				// typename poet::future<boost::function_traits<Signature>::arg2_type> _arg2;
@@ -195,6 +206,7 @@ namespace poet
 				bool _lastReadyChanged;
 				mutable boost::mutex _lastReadyChangedMutex;
 			};
+
 			boost::slot<Signature> _passive_function;
 			boost::function<bool ()> _guard;
 			boost::shared_ptr<scheduler_base> _scheduler;
