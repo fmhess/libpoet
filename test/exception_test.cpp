@@ -62,6 +62,7 @@ int main()
 		try
 		{
 			result.get();
+			BOOST_ASSERT(false);
 		}
 		catch(const std::runtime_error &err)
 		{
@@ -79,6 +80,7 @@ int main()
 		try
 		{
 			int retval = result;
+			BOOST_ASSERT(false);
 			std::cout << "retval is " << retval << std::endl;
 		}
 		catch(const std::logic_error &err)
@@ -97,6 +99,7 @@ int main()
 		try
 		{
 			int retval = result.get();
+			BOOST_ASSERT(false);
 			std::cout << "retval is " << retval << std::endl;
 		}
 		catch(const std::out_of_range &err)
@@ -116,6 +119,7 @@ int main()
 		try
 		{
 			static_cast<void>(result);
+			BOOST_ASSERT(false);
 		}
 		catch(const poet::unknown_exception &err)
 		{
@@ -134,6 +138,7 @@ int main()
 		try
 		{
 			static_cast<void>(result);
+			BOOST_ASSERT(false);
 		}
 		catch(const poet::unknown_exception &err)
 		{
