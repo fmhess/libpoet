@@ -184,13 +184,14 @@ namespace poet
 					/* We don't need to worry about cancellation through the return value here,
 					as that is already handled by method_request<> base class. */
 				};
-				void m_run(const void *)
+				void m_run(void *)
 				{
 					_passive_function(
 						POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg));
 					this->_returnValue.fulfill();
 				}
-				void m_run(...)
+				template <typename U>
+				void m_run(U *)
 				{
 					this->_returnValue.fulfill(_passive_function(
 						POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)));
