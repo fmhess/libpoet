@@ -16,10 +16,19 @@
 // for expired_slot
 #include <boost/signals/slot.hpp>
 
+namespace poet
+{
+	namespace detail
+	{
+		static poet::exception_ptr _exp_current_exception();
+		static poet::exception_ptr s_bad_alloc( new poet::detail::_exp_throwable_impl< std::bad_alloc > );
+	}
+}
+
 #define _CATCH_AND_RETURN( E ) catch( E const & e ) { return poet::exception_ptr( new poet::detail::_exp_throwable_impl< E >( e ) ); }
 #define _CATCH_AND_RETURN_WHAT( E ) catch( E const & e ) { return poet::exception_ptr( new poet::detail::_exp_throwable_impl< E >( e.what() ) ); }
 
-static poet::exception_ptr _exp_current_exception()
+static poet::exception_ptr poet::detail::_exp_current_exception()
 {
 	try
 	{
@@ -62,17 +71,15 @@ static poet::exception_ptr _exp_current_exception()
 	}
 }
 
-static poet::exception_ptr s_bad_alloc( new poet::detail::_exp_throwable_impl< std::bad_alloc > );
-
 poet::exception_ptr poet::current_exception()
 {
     try
     {
-        return _exp_current_exception();
+        return detail::_exp_current_exception();
     }
     catch( std::bad_alloc const & )
     {
-        return s_bad_alloc;
+        return detail::s_bad_alloc;
     }
 }
 
