@@ -17,10 +17,11 @@ int throw_logic_error()
 	return 0;
 }
 
-void throw_out_of_range()
+int throw_out_of_range()
 {
 	std::cerr << __FUNCTION__ << std::endl;
 	throw std::out_of_range("this std::out_of_range exception was transported to a future.");
+	return 0;
 }
 
 class custom_exception: public std::exception
@@ -56,7 +57,7 @@ int main()
 		poet::future<void> result = thrower();
 		try
 		{
-			static_cast<void>(result);
+			result.get();
 		}
 		catch(const std::runtime_error &err)
 		{
@@ -87,11 +88,12 @@ int main()
 	}
 
 	{
-		poet::active_function<void ()> thrower(&throw_out_of_range);
-		poet::future<void> result = thrower();
+		poet::active_function<int ()> thrower(&throw_out_of_range);
+		poet::future<int> result = thrower();
 		try
 		{
-			static_cast<void>(result);
+			int retval = result.get();
+			std::cout << "retval is " << retval << std::endl;
 		}
 		catch(const std::out_of_range &err)
 		{

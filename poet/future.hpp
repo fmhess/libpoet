@@ -405,22 +405,32 @@ namespace poet
 			if(_future_body == 0) return false;
 			return _future_body->ready();
 		}
-		/*! The conversion operator is used to obtain an initialized value from a future.
-		If the future is not ready, the conversion
-		operator will block until the future's value is initialized, or
-		the future's promise is broken.
+		/*!
+		get() is used to obtain an initialized value from a future.
+		If the future is not ready, then
+		get() will block until the future's value is initialized, or
+		the future's promise is broken.  The future's value may also
+		be obtained without an explicit call to get(), through the
+		conversion operator.
 		\exception cancelled_future if the conversion fails due to
 		cancellation.
 		\exception unspecified if the future's promise is broken, the conversion operator
 		will throw whatever exception was specified by the promise::renege call.
+		\returns the future's value.
 		*/
-		operator const T&() const
+		const T& get() const
 		{
 			if(_future_body == 0)
 			{
 				throw uncertain_future();
 			}
 			return _future_body->getValue();
+		}
+		/*! The conversion operator provides implicit conversions to values.  It has
+		the same effects as the explicit get() function. */
+		operator const T&() const
+		{
+			return get();
 		}
 		/*! Assignment from a future<U> is supported if U is implicitly convertible to T.
 		The assignment happens immediately, and does not block waiting for <em>other</em> to become ready. */
@@ -493,13 +503,17 @@ namespace poet
 		future()
 		{}
 		virtual ~future() {}
-		operator void () const
+		void get() const
 		{
 			if(_future_body == 0)
 			{
 				throw uncertain_future();
 			}
 			_future_body->getValue();
+		}
+		operator void () const
+		{
+			get();
 		}
 		template <typename OtherType> const future<void>& operator =(const future<OtherType> &other)
 		{
