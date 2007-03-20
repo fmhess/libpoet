@@ -306,7 +306,8 @@ namespace poet
 		{
 			_pimpl->renege(exp);
 		}
-	private:
+	protected:
+		// _pimpl is protected instead of private because g++  3.3.5 doesn't recognize promise<void> as friend
 		boost::shared_ptr<detail::promise_body<T> > _pimpl;
 	};
 
