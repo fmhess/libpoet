@@ -2,8 +2,7 @@
 // 2 dimensional vectors concurrently using 4 threads.
 // A real program more concerned with performance
 // would perform less trivial operations in the active_functions,
-// to reduce the overhead of passing values between active_functions
-// with futures.
+// to reduce the active_function calling overhead.
 
 // Copyright (C) Frank Mori Hess 2007
 //  Distributed under the Boost Software License, Version 1.0. (See
