@@ -7,7 +7,8 @@ CC=$(CXX)
 RM=rm -f
 LD=g++
 
-PROGRAMS = active_function_test active_object_test exception_test future_test promise_count_test
+PROGRAMS = active_function_test active_object_test exception_test future_test promise_count_test \
+	undead_active_function_test
 
 CPPFLAGS= -pthread -I.. -I$(THREAD_SAFE_SIGNALS_DIR)
 CXXFLAGS= -O0 -g -Wall
