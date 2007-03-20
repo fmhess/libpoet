@@ -6,10 +6,10 @@ libpoet is a library whose goal is to make creation of active objects easy
 enough for routine use.  Some of the more important classes in the library
 are poet::active_function, poet::future, and poet::scheduler.
 
-Concurrency is achieved with active objects by giving each active object its own
-thread to execute in.  Futures are employed to communicate with active objects
+Active objects provide concurrency, since each active object executes in its own
+thread.  Futures are employed to communicate with active objects
 in a thread-safe manner.  To learn
-more the active object concept, see the paper
+more about the active object concept, see the paper
 <a href="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming." by
 R. Greg Lavender and Douglas C. Schmidt</a>.
 
