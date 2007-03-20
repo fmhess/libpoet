@@ -90,7 +90,7 @@ boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue
 
 poet::detail::scheduler_impl::scheduler_impl(int millisecTimeout,
 	const boost::shared_ptr<activation_queue_base> &activationQueue):
-	_activationQueue(activationQueue), _mortallyWounded(false), _millisecTimeout(millisecTimeout),
+	_activationQueue(activationQueue), _wakePending(false), _mortallyWounded(false), _millisecTimeout(millisecTimeout),
 	_detached(false)
 {
 }
