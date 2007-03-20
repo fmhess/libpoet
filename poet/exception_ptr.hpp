@@ -1,6 +1,7 @@
 #ifndef POET_EXCEPTION_PTR_HPP_INCLUDED
 #define POET_EXCEPTION_PTR_HPP_INCLUDED
 
+// Copyright (c) 2007 Frank Mori Hess
 // Copyright (c) 2007 Peter Dimov
 //
 // Distributed under the Boost Software License, Version 1.0.
