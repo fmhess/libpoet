@@ -111,5 +111,5 @@ active_function<R (T1, T2, ..., TN)>
 }
 
 /*!
-	\example active_function_test.cpp
+	\example pipeline.cpp
 */
