@@ -7,10 +7,10 @@ CC=$(CXX)
 RM=rm -f
 LD=g++
 
-PROGRAMS = future_test active_object_test active_function_test
+PROGRAMS = future_test exception_test active_object_test active_function_test
 
 CPPFLAGS= -pthread -I.. -I$(THREAD_SAFE_SIGNALS_DIR)
-CXXFLAGS= -O3 -Wall
+CXXFLAGS= -O0 -g -Wall
 LDFLAGS= -lboost_thread -pthread
 .PHONY: all clean dep
 
