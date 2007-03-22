@@ -123,9 +123,8 @@ namespace poet
 		to the need for a shared_ptr from <em>this</em>. */
 		virtual void postconstruct()
 		{
-			boost::shared_ptr<method_request<ResultType> > shared_this = this->shared_from_this();
 			future<result_type>(_returnValue).connect_update(
-				future_slot_type(&method_request<ResultType>::handleReturnValueUpdate, this).track(shared_this));
+				future_slot_type(&method_request<ResultType>::handleReturnValueUpdate, this).track(this->shared_from_this()));
 		}
 		void handleReturnValueUpdate()
 		{
