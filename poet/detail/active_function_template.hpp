@@ -114,7 +114,13 @@ namespace poet
 				}
 				virtual bool ready() const
 				{
-					/* We return ready when all the future arguments are ready, and the guard is true. */
+					/* We return ready if any of the future inputs has an exception. */
+					// if(_argn.has_exception() == true) return true;
+#define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
+	if(POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).has_exception() == true) return true;
+					BOOST_PP_REPEAT(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_MISC_STATEMENT, _arg)
+#undef POET_ACTIVE_FUNCTION_MISC_STATEMENT
+					/* We also return ready when all the future inputs are ready, and the guard is true. */
 // if(_argn.ready() == false) return false;
 #define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
 	if(POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).ready() == false) return false;
@@ -134,6 +140,7 @@ namespace poet
 				}
 				virtual void postconstruct()
 				{
+					base_type::postconstruct();
 					typedef typename boost::slot<void (void)> slot_type;
 					/*
 					_arg1.connectUpdate(slot_type(
