@@ -16,9 +16,15 @@
 
 int increment(int value)
 {
+// 	std::cerr << __FUNCTION__ << std::endl;
 	// sleep for a bit to simulate doing something nontrivial
 	sleep(1);
 	return ++value;
+}
+
+bool black_knight()
+{
+	return false;
 }
 
 bool myGuard()
@@ -47,5 +53,18 @@ int main()
 		int value = results.at(i);
 		std::cerr << "value from results[" << i << "] is " << value << std::endl;
 	}
+
+	// test cancellation
+	boost::shared_ptr<poet::out_of_order_activation_queue> queue(new poet::out_of_order_activation_queue());
+	boost::shared_ptr<poet::scheduler> sched(new poet::scheduler(-1, queue));
+	poet::active_function<int (int)> cancelme(&increment, &black_knight, sched);
+	poet::future<int> result = cancelme(0);
+	BOOST_ASSERT(queue->empty() == false);
+	BOOST_ASSERT(result.has_exception() == false);
+	result.cancel();
+	BOOST_ASSERT(result.has_exception() == true);
+	sleep(1);
+	BOOST_ASSERT(queue->empty() == true);
+
 	return 0;
 }
