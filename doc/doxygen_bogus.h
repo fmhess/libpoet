@@ -113,3 +113,7 @@ active_function<R (T1, T2, ..., TN)>
 /*!
 	\example pipeline.cpp
 */
+
+/*!
+	\example active_object_example.cpp
+*/
