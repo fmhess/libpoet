@@ -37,6 +37,8 @@ int main()
 
 	// input data, assigned actual values later
 	std::vector<boost::array<poet::promise<double>, 2> > promises;
+	// we push the promises on onto the std::vector one at a time to make
+	// sure the std::vector doesn't copy-construct them from each other.
 	for(i = 0; i < num_vectors; ++i)
 	{
 		promises.push_back(boost::array<poet::promise<double>, 2>());
