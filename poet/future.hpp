@@ -78,7 +78,7 @@ namespace poet
 				bool emit_signal = false;
 				{
 					boost::mutex::scoped_lock lock(_mutex);
-					if(_exception == 0 && _value == false)
+					if(_exception == 0 && !_value)
 					{
 						_value = value;
 						emit_signal = true;
@@ -116,7 +116,7 @@ namespace poet
 				bool emitSignal = false;
 				{
 					boost::mutex::scoped_lock lock(_mutex);
-					if(_exception == 0 && _value == false)
+					if(_exception == 0 && !_value)
 					{
 						emitSignal = true;
 						_exception = exp;
