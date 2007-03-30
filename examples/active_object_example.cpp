@@ -1,7 +1,10 @@
 // An example showing how a full active object class can be built
 // from a servant class, a scheduler, and active_functions.
-// The "chunkifier" is a fifo that takes single elements as inputs
-// and outputs chunks of N elements accumulated in a std::vector
+// The "chunkifier" is a queue that takes single elements as inputs
+// and outputs chunks of N elements accumulated in a std::vector.
+// The elements in the output chunks are added to a chunk as
+// they became ready, not necessarily in the order their futures
+// were added to the chunkifier.
 
 // Copyright (C) Frank Mori Hess 2007
 //  Distributed under the Boost Software License, Version 1.0. (See
