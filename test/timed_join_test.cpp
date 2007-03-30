@@ -32,5 +32,6 @@ int main()
 	timeout.sec = timeout.sec + 1;
 	result = fut.timed_join(timeout);
 	BOOST_ASSERT(result == true);
+	std::cout << "Test passed." << std::endl;
 	return 0;
 }
