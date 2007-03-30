@@ -178,12 +178,9 @@ namespace poet
 			virtual void setValue(const ProxyType &value)
 			{
 				std::ostringstream message;
-				message << __FUNCTION__ << ": sorry, can't set Future's value of type_info.name()=" <<
-					typeid(ActualType).name() << " through a proxy with a type_info.name()=" <<
-					typeid(ProxyType).name() << " .\n" <<
-					"Try the c++filt utility to convert the type_info names into a human-readable format.";
-				std::cerr << message.str() << std::endl;
-				throw std::runtime_error(message.str());
+				message << __FUNCTION__ << ": sorry, can't fulfill() a promise with a non-void template type "
+					"through a promise<void>.";
+				throw std::invalid_argument(message.str());
 			}
 			virtual bool ready() const
 			{
@@ -283,6 +280,8 @@ namespace poet
 	public:
 		template <typename U>
 		friend class future;
+		template <typename U>
+		friend class promise;
 		friend class promise<void>;
 
 		typedef T value_type;
@@ -317,8 +316,7 @@ namespace poet
 		{
 			_pimpl->renege(exp);
 		}
-	protected:
-		// _pimpl is protected instead of private because g++  3.3.5 doesn't recognize promise<void> as friend
+	private:
 		boost::shared_ptr<detail::promise_body<T> > _pimpl;
 	};
 
@@ -336,12 +334,34 @@ namespace poet
 
 		promise()
 		{}
+		promise(const promise<void> &other)
+		{
+			_pimpl = other._pimpl;
+		}
+		// allow conversion from a promise with any template type to a promise<void>
+		template <typename OtherType>
+		promise(const promise<OtherType> &other)
+		{
+			boost::function<int (const OtherType&)> conversion_function =
+				boost::bind(&detail::null_conversion_function<OtherType>, _1);
+			_pimpl->_future_body.reset(new detail::future_body_proxy<int, OtherType>(
+				other._pimpl->_future_body, conversion_function));
+		}
+
 		void fulfill()
 		{
 			base_type::fulfill(0);
 		}
 		inline void fulfill(const future<void> &future_value);
-		using base_type::renege;
+		template <typename E>
+		void renege(const E &exception)
+		{
+			base_type::renege(exception);
+		}
+		void renege(const poet::exception_ptr &exp)
+		{
+			base_type::renege(exp);
+		}
 	};
 
 	/*! \brief A handle to a future value.

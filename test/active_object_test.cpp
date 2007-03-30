@@ -60,13 +60,13 @@ int main()
 	std::vector<poet::future<int> > results(10);
 	unsigned i;
 	std::cerr << "getting Futures..." << std::endl;
-	for(i = 0; i < 10; ++i)
+	for(i = 0; i < 2; ++i)
 	{
 		poet::future<int> temp = inc1.increment(i);
 		results.at(i) = inc2.increment(temp);
 	}
 	std::cerr << "converting Futures to values..." << std::endl;
-	for(i = 0; i < 10; ++i)
+	for(i = 0; i < 2; ++i)
 	{
 		int value = results.at(i);
 		std::cerr << "value from results[" << i << "] is " << value << std::endl;

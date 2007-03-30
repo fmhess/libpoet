@@ -5,6 +5,8 @@
 
 #include <poet/future.hpp>
 #include <iostream>
+#include <stdexcept>
+
 int main()
 {
 	{
@@ -18,6 +20,24 @@ int main()
 		poet::future<void> void_uncertain_fut = uncertain_fut;
 		BOOST_ASSERT(void_uncertain_fut.ready() == false);
 		BOOST_ASSERT(void_uncertain_fut.has_exception());
+	}
+	{
+		poet::promise<int> mypromise;
+		poet::promise<void> void_promise = mypromise;
+		poet::promise<void> void_promise_too = void_promise;
+		poet::future<int> fut(mypromise);
+		BOOST_ASSERT(fut.ready() == false);
+		BOOST_ASSERT(fut.has_exception() == false);
+		try
+		{
+			void_promise.fulfill();
+			BOOST_ASSERT(false);
+		}
+		catch(const std::invalid_argument &err)
+		{}
+		void_promise_too.renege(std::runtime_error("reneged on promise"));
+		BOOST_ASSERT(fut.ready() == false);
+		BOOST_ASSERT(fut.has_exception() == true);
 	}
 	std::cout << "Test passed." << std::endl;
 	return 0;
