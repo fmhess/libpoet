@@ -26,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/xtime.hpp>
 #include <boost/thread_safe_signal.hpp>
 #include <poet/detail/condition.hpp>
 #include <poet/exception_ptr.hpp>
@@ -52,6 +53,7 @@ namespace poet
 			virtual ~future_body_base() {}
 			virtual bool ready() const = 0;
 			virtual const T& getValue() const = 0;
+			virtual bool timed_join(const boost::xtime &absolute_time) const = 0;
 			virtual void setValue(const T &value) = 0;
 			virtual void cancel(const poet::exception_ptr &) = 0;
 			virtual bool has_exception() const = 0;
@@ -103,6 +105,11 @@ namespace poet
 				}
 				BOOST_ASSERT(_value);
 				return _value.get();
+			}
+			virtual bool timed_join(const boost::xtime &absolute_time) const
+			{
+				_readyCondition.locking_timed_wait(absolute_time, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
+				return readyOrCancelled();
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{
@@ -426,6 +433,10 @@ namespace poet
 		{
 			return get();
 		}
+		bool timed_join(const boost::xtime &absolute_time) const
+		{
+			return _future_body->timed_join(absolute_time);
+		}
 		/*! Assignment from a future<U> is supported if U is implicitly convertible to T.
 		The assignment happens immediately, and does not block waiting for <em>other</em> to become ready. */
 		template <typename OtherType> const future<T>& operator =(const future<OtherType> &other)
@@ -515,6 +526,7 @@ namespace poet
 			_future_body.reset(new detail::future_body_proxy<void, OtherType>(other._future_body));
 			return *this;
 		}
+		using base_type::timed_join;
 		using base_type::ready;
 		using base_type::connect_update;
 		using base_type::cancel;

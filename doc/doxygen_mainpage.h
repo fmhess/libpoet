@@ -26,6 +26,7 @@ and experience clairifies areas which could be improved.
 
 libpoet depends on the <a href="http://www.boost.org">boost C++ libraries</a> and
 <a href="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</a>.
+It requires linking to libboost_thread.
 
 \section download Download
 

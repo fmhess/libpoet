@@ -19,7 +19,7 @@ template <typename T>
 class passive_chunkifier
 {
 public:
-	passive_chunkifier(unsigned chunk_size = 10): _chunk_size(chunk_size)
+	passive_chunkifier(unsigned chunk_size): _chunk_size(chunk_size)
 	{}
 	void add_element(const T& value)
 	{
