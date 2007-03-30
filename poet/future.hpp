@@ -147,10 +147,16 @@ namespace poet
 		};
 
 		template<typename ProxyType, typename ActualType>
-		static ProxyType defaultConversionFunction(const ActualType& actualValue)
+		static ProxyType default_conversion_function(const ActualType& actualValue)
 		{
 			return ProxyType(actualValue);
 		}
+		template<typename ActualType>
+		static int null_conversion_function(const ActualType& actualValue)
+		{
+			return 0;
+		}
+
 		/* class which monitors another future_body_base<ActualType>, while returning values of type ProxyType.
 		Allows for implicit and explicit conversions between Futures with different template types.
 		*/
@@ -206,6 +212,10 @@ namespace poet
 				}
 				boost::mutex::scoped_lock lock(_mutex);
 				return _proxyValue.get();
+			}
+			virtual bool timed_join(const boost::xtime &absolute_time) const
+			{
+				return _actualFutureBody->timed_join(absolute_time);
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{
@@ -387,7 +397,7 @@ namespace poet
 				return;
 			}
 			boost::function<T (const OtherType&)> typedConversionFunction =
-				boost::bind(&detail::defaultConversionFunction<T, OtherType>, _1);
+				boost::bind(&detail::default_conversion_function<T, OtherType>, _1);
 			_future_body.reset(new detail::future_body_proxy<T, OtherType>(
 				other._future_body, typedConversionFunction));
 		}
@@ -500,9 +510,9 @@ namespace poet
 				_future_body.reset();
 				return;
 			}
-			boost::function<void (const OtherType&)> typedConversionFunction =
-				boost::bind(&detail::defaultConversionFunction<void, OtherType>, _1);
-			_future_body.reset(new detail::future_body_proxy<void, OtherType>(
+			boost::function<int (const OtherType&)> typedConversionFunction =
+				boost::bind(&detail::null_conversion_function<OtherType>, _1);
+			_future_body.reset(new detail::future_body_proxy<int, OtherType>(
 				other._future_body, typedConversionFunction));
 		}
 		future()
