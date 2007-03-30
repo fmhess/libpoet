@@ -334,10 +334,8 @@ namespace poet
 
 		promise()
 		{}
-		promise(const promise<void> &other)
-		{
-			_pimpl = other._pimpl;
-		}
+		promise(const promise<void> &other): promise<int>(other)
+		{}
 		// allow conversion from a promise with any template type to a promise<void>
 		template <typename OtherType>
 		promise(const promise<OtherType> &other)
