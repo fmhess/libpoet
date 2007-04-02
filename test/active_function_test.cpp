@@ -49,19 +49,24 @@ void cancellation_test()
 class myclass
 {
 public:
+	myclass(int value = 1): _value(value)
+	{}
 	int member_function()
 	{
-		return 1;
+		return _value;
 	}
+private:
+	int _value;
 };
 
 void slot_tracking_test()
 {
+	static const int test_value = 5;
 	typedef poet::active_function<int ()> myfunc_type;
-	boost::shared_ptr<myclass> myobj(new myclass());
+	boost::shared_ptr<myclass> myobj(new myclass(test_value));
 	myfunc_type myfunc(myfunc_type::passive_slot_type(&myclass::member_function, myobj.get()).track(myobj));
 	int retval = myfunc();
-	BOOST_ASSERT(retval == 1);
+	BOOST_ASSERT(retval == test_value);
 	myobj.reset();
 	try
 	{
