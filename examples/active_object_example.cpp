@@ -70,7 +70,7 @@ public:
 		_servant(new passive_chunkifier<T>(chunk_size)),
 		_scheduler(new poet::scheduler),
 		add_element(typename add_element_type::passive_slot_type(&passive_chunkifier<T>::add_element, _servant, _1),
-			0, _scheduler),
+			_scheduler),
 		get_chunk(typename get_chunk_type::passive_slot_type(&passive_chunkifier<T>::get_chunk, _servant),
 			boost::bind(&passive_chunkifier<T>::get_chunk_guard, _servant),
 			_scheduler)
