@@ -31,6 +31,50 @@ bool myGuard()
 {
 	return true;
 }
+
+void cancellation_test()
+{
+	boost::shared_ptr<poet::out_of_order_activation_queue> queue(new poet::out_of_order_activation_queue());
+	boost::shared_ptr<poet::scheduler> sched(new poet::scheduler(-1, queue));
+	poet::active_function<int (int)> cancelme(&increment, &black_knight, sched);
+	poet::future<int> result = cancelme(0);
+	BOOST_ASSERT(queue->empty() == false);
+	BOOST_ASSERT(result.has_exception() == false);
+	result.cancel();
+	BOOST_ASSERT(result.has_exception() == true);
+	sleep(1);
+	BOOST_ASSERT(queue->empty() == true);
+}
+
+class myclass
+{
+public:
+	int member_function()
+	{
+		return 1;
+	}
+};
+
+void slot_tracking_test()
+{
+	typedef poet::active_function<int ()> myfunc_type;
+	boost::shared_ptr<myclass> myobj(new myclass());
+	myfunc_type myfunc(myfunc_type::passive_slot_type(&myclass::member_function, myobj.get()).track(myobj));
+	int retval = myfunc();
+	BOOST_ASSERT(retval == 1);
+	myobj.reset();
+	try
+	{
+		int retval;
+		retval = myfunc();
+		BOOST_ASSERT(false);
+	}
+	catch(const boost::expired_slot &err)
+	{
+		std::cout << "Caught expired_slot exception (good!): " << err.what() << std::endl;
+	}
+}
+
 int main()
 {
 	// the bind() is only for illustration and isn't actually needed in this case,
@@ -54,17 +98,8 @@ int main()
 		std::cerr << "value from results[" << i << "] is " << value << std::endl;
 	}
 
-	// test cancellation
-	boost::shared_ptr<poet::out_of_order_activation_queue> queue(new poet::out_of_order_activation_queue());
-	boost::shared_ptr<poet::scheduler> sched(new poet::scheduler(-1, queue));
-	poet::active_function<int (int)> cancelme(&increment, &black_knight, sched);
-	poet::future<int> result = cancelme(0);
-	BOOST_ASSERT(queue->empty() == false);
-	BOOST_ASSERT(result.has_exception() == false);
-	result.cancel();
-	BOOST_ASSERT(result.has_exception() == true);
-	sleep(1);
-	BOOST_ASSERT(queue->empty() == true);
+	cancellation_test();
+	slot_tracking_test();
 
 	return 0;
 }
