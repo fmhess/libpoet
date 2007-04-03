@@ -48,6 +48,13 @@ You can also
 
 The code is licensed under the <a href="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Version 1.0</a>.
 
+\section installation Installation
+
+libpoet is a header-only library.  It may be used by simply unpacking the files and adding the location of
+the top-level directory (which contains the "poet/" subdirectory) to your compiler's include path.
+Alternatively, you may move the "poet/" subdirectory
+into an existing include directory which is already in your include path.
+
 \section discussion Discussion
 
 The <a href="http://www.boost.org/more/mailing_lists.htm">boost users and developers mailing lists</a>

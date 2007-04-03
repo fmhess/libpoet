@@ -68,7 +68,7 @@ namespace poet
 	known exceptions will be captured as the most derived base class which
 	is a known exception.  Other exceptions will only be captured as
 	poet::unknown_exception objects.  If current_exception() can only
-	determine that the exception is derived from std::exception(), then
+	determine that the exception is derived from std::exception, then
 	the exception will also be captured as a poet::unknown_exception,
 	although it will capture the correct std::exception::what() string.
 

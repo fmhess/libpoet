@@ -320,6 +320,11 @@ namespace poet
 		boost::shared_ptr<detail::promise_body<T> > _pimpl;
 	};
 
+	/*! \cond USE_REAL_PROMISE_VOID
+	disable documentation for promise<void> since doxygen 1.4.2 gets it wrong.
+	Instead, we generate promise<void> documentation from doxygen_bogus.h in
+	the doc/ subdirectory.
+	*/
 	// void specialization
 	template<>
 	class promise<void>: private promise<int>
@@ -361,6 +366,9 @@ namespace poet
 			base_type::renege(exp);
 		}
 	};
+	/*! \endcond
+	USE_REAL_PROMISE_VOID
+	*/
 
 	/*! \brief A handle to a future value.
 
@@ -443,8 +451,8 @@ namespace poet
 		conversion operator.
 		\exception cancelled_future if the conversion fails due to
 		cancellation.
-		\exception unspecified if the future's promise is broken, the conversion operator
-		will throw whatever exception was specified by the promise::renege call.
+		\exception unspecified if the future's promise is broken, get()
+		will throw whatever exception was specified by the promise::renege() call.
 		\returns the future's value.
 		*/
 		const T& get() const
@@ -461,6 +469,11 @@ namespace poet
 		{
 			return get();
 		}
+		/*!  timed_join() blocks until \p absolute_time is reached,
+		or either ready() or has_exception() becomes true.
+
+		\returns true if either ready() or has_exception() are true.
+		*/
 		bool timed_join(const boost::xtime &absolute_time) const
 		{
 			return _future_body->timed_join(absolute_time);
@@ -499,7 +512,12 @@ namespace poet
 		boost::shared_ptr<detail::future_body_base<T> > _future_body;
 	};
 
-	// void specialization
+	/*! \cond USE_REAL_FUTURE_VOID
+	disable documentation for future<void> since doxygen 1.4.2 gets it wrong.
+	Instead, we generate future<void> documentation from doxygen_bogus.h in
+	the doc/ subdirectory.
+	*/
+
 	template <>
 	class future<void>: private future<int>
 	{
@@ -560,6 +578,8 @@ namespace poet
 		using base_type::cancel;
 		using base_type::has_exception;
 	};
+	/*! \endcond
+	USE_REAL_FUTURE_VOID */
 }
 
 template <typename T>

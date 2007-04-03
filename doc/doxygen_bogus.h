@@ -15,7 +15,11 @@
 */
 /*! \brief boost namespace
 
-See the thread_safe_signals and boost documentation for more information.
+See the
+<a href="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</a>
+and
+<a href="http://www.boost.org">boost</a>
+documentation for more information.
 */
 namespace boost
 {
