@@ -1,0 +1,68 @@
+<header name="poet/active_function.hpp">
+	<namespace name="poet">
+		<class name="active_function">
+			<template><template-type-parameter name="Signature"/></template>
+			<purpose>Create an active object from an ordinary function or object. </purpose>
+			<description><para>In the following, the active_function is taken to have a signature of: <programlisting>active_function&lt;R (T1, T2, ..., TN)&gt;</programlisting></para></description>
+			<typedef name="passive_result_type">
+				<description><para>R </para></description>
+				<type>boost::function_traits&lt; Signature &gt;::<classname>result_type</classname></type>
+			</typedef>
+			<typedef name="result_type">
+				<description><para>future&lt;R&gt; </para></description>
+				<type><classname>poet::future</classname>&lt; <classname>passive_result_type</classname> &gt;</type>
+			</typedef>
+			<typedef name="passive_slot_type">
+				<description><para>Slot type for the passive function the active_function is constructed from. </para></description>
+				<type><classname>boost::slot</classname>&lt; Signature &gt;</type>
+			</typedef>
+			<method-group name="public member functions">
+				<method name="operator()" cv="const"><type><classname>future</classname>&lt; R &gt;</type>
+					<parameter name="arg1"><paramtype><classname>future</classname>&lt; T1 &gt;</paramtype></parameter>
+					<parameter name="arg2"><paramtype><classname>future</classname>&lt; T2 &gt;</paramtype></parameter>
+					<parameter name=""><paramtype>...</paramtype></parameter>
+					<parameter name="argN"><paramtype><classname>future</classname>&lt; TN &gt;</paramtype></parameter>
+					<description><para>Const overload. </para></description>
+				</method>
+				<method name="operator()" cv=""><type><classname>future</classname>&lt; R &gt;</type>
+					<parameter name="arg1"><paramtype><classname>future</classname>&lt; T1 &gt;</paramtype></parameter>
+					<parameter name="arg2"><paramtype><classname>future</classname>&lt; T2 &gt;</paramtype></parameter>
+					<parameter name=""><paramtype>...</paramtype></parameter>
+					<parameter name="argN"><paramtype><classname>future</classname>&lt; TN &gt;</paramtype></parameter>
+					<description>
+						<para>Invocation creates a method request and sends it to the active_function's scheduler. The method request may be cancelled by calling future::cancel() on the returned future.</para>
+						<para>Note the active_function takes futures as arguments, as well as returning a future. This allows future results to be passed from one active_function to another without waiting for the result to become ready. Since futures are constructible from their value types, the active_function can also take ordinary values not wrapped futures as arguments. </para>
+					</description>
+				</method>
+				<method name="wake" cv="">
+					<type>void</type>
+					<description><para>Calls scheduler_base::wake() on the active_function's scheduler. </para></description>
+				</method>
+				<method name="expired" cv="const">
+					<type>bool</type>
+					<description><para>Calls the boost::slot::expired() query method on the slot this active_function was constructed from. </para></description>
+				</method>
+			</method-group>
+			<constructor>
+				<parameter name="passive_function">
+					<paramtype>const <classname>passive_slot_type</classname> &amp;</paramtype>
+					<description><para>The underlying function this active_function object will call. The boost::slot class supports tracking of arbitrary boost::shared_ptr which are associated with the slot. For example, if the slot is constructed from a non-static member function, the lifetime of the member function's object can be tracked and the slot prevented from running after the object is destroyed. </para></description>
+				</parameter>
+				<parameter name="guard">
+					<paramtype>const boost::function&lt; bool()&gt; &amp;</paramtype>
+					<default>0</default>
+					<description><para>The active_function's scheduler will not execute a method request until the guard returns true and all the input futures are ready. By default, the guard will always return true. </para></description>
+				</parameter>
+				<parameter name="scheduler_ptr">
+					<paramtype>boost::shared_ptr&lt; <classname>scheduler_base</classname> &gt;</paramtype>
+					<default>boost::shared_ptr&lt; scheduler_base &gt;()</default>
+					<description><para>Specify a scheduler object for the active_function to post its method requests to. By default, a new Scheduler object is created for the active_function. If the active_function is providing a method as part of an active object class, you may wish for all the class' methods to share the same scheduler. </para></description>
+				</parameter>
+				<description><para></para></description>
+			</constructor>
+			<destructor>
+				<description><para>Virtual destructor. </para></description>
+			</destructor>
+		</class>
+	</namespace>
+</header>

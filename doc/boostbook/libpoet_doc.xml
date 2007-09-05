@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN"
+	"http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
+
+<library dirname="mydir" name="libpoet">
+	<libraryinfo>
+		<author>
+			<firstname>Frank</firstname>
+			<surname>Hess</surname>
+			<email>fmhess@users.sourceforge.net</email>
+		</author>
+		<copyright>
+			<year>2006</year>
+			<year>2007</year>
+			<holder>Frank Mori Hess</holder>
+		</copyright>
+		<librarypurpose>This is the purpose of my library.</librarypurpose>
+		<librarycategory>Concurrent programming</librarycategory>
+	</libraryinfo>
+	<title>libpoet</title>
+	<section id="main_section">
+			<title>Parallel Object Execution Threads</title>
+		<section>
+			<title>Introduction</title>
+			<para>
+				libpoet is a library whose goal is to make creation of active objects easy
+				enough for routine use.  Some of the more important classes in the library
+				are <classname>poet::active_function</classname>, <classname>poet::future</classname>,
+				and <classname>poet::scheduler</classname>.
+			</para>
+			<para>
+				Active objects provide concurrency, since each active object executes in its own
+				thread.  Futures are employed to communicate with active objects
+				in a thread-safe manner.  To learn
+				more about the active object concept, see the paper
+				<ulink url="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming." by
+				R. Greg Lavender and Douglas C. Schmidt</ulink>.
+			</para>
+			<para>
+				A version of this documentation corresponding to the most recent release should
+				be available online at
+				<ulink url="http://www.comedi.org/projects/libpoet/index.html">http://www.comedi.org/projects/libpoet/index.html</ulink>
+			</para>
+		</section>
+		<section>
+			<title>Status</title>
+			<para>
+				The library's API is still experimental, and subject to change as feedback
+				and experience clairifies areas which could be improved.
+			</para>
+		</section>
+		<section>
+			<title>Dependencies</title>
+			<para>
+				libpoet depends on the <ulink url="http://www.boost.org">boost C++ libraries</ulink> and
+				<ulink url="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</ulink>.
+				It requires linking to libboost_thread.
+			</para>
+		</section>
+		<section>
+			<title>Download</title>
+			<para>
+				The most recent release is available from the
+				<ulink url="http://www.boost-consulting.com/vault/index.php?&amp;direction=0&amp;order=&amp;directory=Concurrent%20Programming/Active%20Objects">
+				boost vault</ulink>
+				(get the "libpoet-xxxx-xx-xx.tgz" file).
+			</para>
+			<para>
+				The current source code is also availabe via anonymous cvs:
+<programlisting>cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi login
+cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
+				When prompted for a password, hit enter.
+			</para>
+			<para>
+				You can also
+				<ulink url="http://www.comedi.org/cgi-bin/viewcvs.cgi/libpoet/">browse the cvs online</ulink>.
+			</para>
+			<para>
+				The code is licensed under the <ulink url="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Version 1.0</ulink>.
+			</para>
+		</section>
+		<section>
+			<title>Installation</title>
+			<para>
+				libpoet is a header-only library.  It may be used by simply unpacking the files and adding the location of
+				the top-level directory (which contains the "poet/" subdirectory) to your compiler's include path.
+				Alternatively, you may move the "poet/" subdirectory
+				into an existing include directory which is already in your include path.
+			</para>
+		</section>
+		<section>
+			<title>Discussion</title>
+			<para>
+				The <ulink url="http://www.boost.org/more/mailing_lists.htm">boost users and developers mailing lists</ulink>
+				may be used to discuss issues related to the library.
+			</para>
+		</section>
+	</section>
+	<xi:include href="libpoet_reference.xml"
+		xmlns:xi="http://www.w3.org/2001/XInclude"/>
+</library>

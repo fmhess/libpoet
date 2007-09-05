@@ -1,0 +1,50 @@
+<header name="poet/exception_ptr.hpp">
+	<namespace name="poet">
+		<typedef name="exception_ptr">
+			<purpose>Transport an arbitrary exception.</purpose>
+			<description>
+				<para>libpoet uses exception_ptr to transport an exception thrown by
+					a passive function being executed inside a scheduler thread to
+					a future waiting on its result.  It is
+					adapted from Peter Dimov's
+					<ulink url="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2179.html">N2179 proposal</ulink>.
+				</para>
+			</description>
+			<type>boost::shared_ptr&lt;detail::_exp_throwable&gt;</type>
+		</typedef>
+		<function name="current_exception">
+			<purpose>Get an exception_ptr corresponding to the current exception.</purpose>
+			<description>
+				<para>
+					current_exception() can be used inside a catch block to get a copy
+					of the current exception.  This is especially useful inside catch(...)
+					blocks where there is no explicit parameter corresponding to the exception.
+				</para>
+				<para>
+					Due to the limitations of exception handling in C++, current_exception()
+					does not work perfectly.  Only exception types specifically known by
+					the implementation are captured correctly.  Exceptions derived from the
+					known exceptions will be captured as the most derived base class which
+					is a known exception.  Other exceptions will only be captured as
+					<classname>poet::unknown_exception</classname> objects.  If current_exception() can only
+					determine that the exception is derived from std::exception, then
+					the exception will also be captured as a <classname>poet::unknown_exception</classname>,
+					although it will capture the correct std::exception::what() string.
+				</para>
+				<para>
+					The implementation knows all the exceptions in &lt;stdexcept&gt;, as
+					well as all the exception classes in libpoet and some of the
+					exceptions specified in thread_safe_signals and boost.
+				</para>
+				<para>
+					libpoet uses current_exception() to transport an exception thrown
+					by a passive function in a method request being run in a
+					scheduler's thread
+					back to a thread waiting on a future corresponding to the method
+					request's return value.
+				</para>
+			</description>
+			<type>exception_ptr</type>
+		</function>
+	</namespace>
+</header>
