@@ -17,7 +17,7 @@ void poet::in_order_activation_queue::push_back(const boost::shared_ptr<method_r
 	_pendingRequests.push_back(request);
 }
 
-boost::shared_ptr<poet::method_request_base> poet::in_order_activation_queue::getRequest()
+boost::shared_ptr<poet::method_request_base> poet::in_order_activation_queue::get_request()
 {
 	boost::mutex::scoped_lock lock(_mutex);
 	return unlockedGetRequest();
@@ -42,7 +42,7 @@ boost::shared_ptr<poet::method_request_base> poet::in_order_activation_queue::un
 	return methodRequest;
 }
 
-boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue::getRequest()
+boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue::get_request()
 {
 	boost::mutex::scoped_lock lock(_mutex);
 	/* Optimization: before going through the entire list in reverse, do a quick check
@@ -110,7 +110,7 @@ void poet::detail::scheduler_impl::wake()
 
 bool poet::detail::scheduler_impl::dispatch()
 {
-	boost::shared_ptr<method_request_base> methodRequest = _activationQueue->getRequest();
+	boost::shared_ptr<method_request_base> methodRequest = _activationQueue->get_request();
 	if(methodRequest) methodRequest->run();
 	return methodRequest;
 }

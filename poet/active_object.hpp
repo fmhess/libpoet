@@ -151,7 +151,7 @@ namespace poet
 		/*! \returns The next method request which is ready to run.  Returns a null shared_ptr
 		if there are no method requests ready.
 		*/
-		virtual boost::shared_ptr<method_request_base> getRequest() = 0;
+		virtual boost::shared_ptr<method_request_base> get_request() = 0;
 		/*! Empties all method requests from the queue. */
 		virtual void clear() = 0;
 		/*! \returns the number of method requests waiting in the queue. */
@@ -176,7 +176,7 @@ namespace poet
 		/*! \returns The oldest method request in the queue.  If the oldest method
 		request is not ready to execute, then a null shared_ptr is returned.
 		*/
-		inline virtual boost::shared_ptr<method_request_base> getRequest();
+		inline virtual boost::shared_ptr<method_request_base> get_request();
 		virtual void clear()
 		{
 			boost::mutex::scoped_lock lock(_mutex);
@@ -213,7 +213,7 @@ namespace poet
 		virtual ~out_of_order_activation_queue() {}
 		/*! \returns The oldest method request in the queue
 		which is currently ready for execution. */
-		inline virtual boost::shared_ptr<method_request_base> getRequest();
+		inline virtual boost::shared_ptr<method_request_base> get_request();
 	};
 
 	/*! \brief Base class for schedulers.
