@@ -124,9 +124,10 @@ namespace poet
 		virtual void postconstruct()
 		{
 			future<result_type>(_returnValue).connect_update(
-				future_slot_type(&method_request<ResultType>::handleReturnValueUpdate, this).track(this->shared_from_this()));
+				future_slot_type(&method_request<ResultType>::handle_return_value_update, this).track(this->shared_from_this()));
 		}
-		void handleReturnValueUpdate()
+	private:
+		void handle_return_value_update()
 		{
 			if(future<result_type>(_returnValue).has_exception())
 			{
