@@ -100,7 +100,7 @@ namespace poet
 		virtual void cancel()
 		{
 			method_request_base::cancel();
-			future<result_type>(_returnValue).cancel();
+			future<result_type>(return_value).cancel();
 		}
 	protected:
 		typedef typename future<ResultType>::update_slot_type future_slot_type;
@@ -116,26 +116,25 @@ namespace poet
 		this method_request to be cancelled.
 		*/
 		method_request(const promise<result_type> &returnValue):
-			_returnValue(returnValue)
+			return_value(returnValue)
 		{}
 		/*! Post-constructor.  Performs some signal-slot connection with automatic
 		lifetime tracking which cannot be performed in the constructor due
 		to the need for a shared_ptr from <em>this</em>. */
 		virtual void postconstruct()
 		{
-			future<result_type>(_returnValue).connect_update(
+			future<result_type>(return_value).connect_update(
 				future_slot_type(&method_request<ResultType>::handle_return_value_update, this).track(this->shared_from_this()));
 		}
+		promise<result_type> return_value;
 	private:
 		void handle_return_value_update()
 		{
-			if(future<result_type>(_returnValue).has_exception())
+			if(future<result_type>(return_value).has_exception())
 			{
 				method_request_base::cancel();
 			}
 		}
-
-		promise<result_type> _returnValue;
 	};
 
 	/*! \brief Base class for activation queues. */

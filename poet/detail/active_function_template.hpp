@@ -81,7 +81,7 @@ namespace poet
 				}
 				catch(...)
 				{
-					this->_returnValue.renege(current_exception());
+					this->return_value.renege(current_exception());
 				}
 			}
 			virtual bool ready() const
@@ -170,12 +170,12 @@ namespace poet
 			{
 				(*_passive_function)(
 					POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg));
-				this->_returnValue.fulfill();
+				this->return_value.fulfill();
 			}
 			template <typename U>
 			void m_run(U *)
 			{
-				this->_returnValue.fulfill((*_passive_function)(
+				this->return_value.fulfill((*_passive_function)(
 					POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)));
 			}
 
