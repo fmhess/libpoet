@@ -2,10 +2,11 @@
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN"
 	"http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
 
-<library dirname="mydir" name="libpoet">
+<library dirname="mydir" name="libpoet" id="libpoet">
 	<libraryinfo>
 		<author>
 			<firstname>Frank</firstname>
+			<othername>Mori</othername>
 			<surname>Hess</surname>
 			<email>fmhess@users.sourceforge.net</email>
 		</author>
@@ -15,12 +16,12 @@
 			<holder>Frank Mori Hess</holder>
 		</copyright>
 		<librarypurpose>This is the purpose of my library.</librarypurpose>
-		<librarycategory>Concurrent programming</librarycategory>
+		<librarycategory>category:concurrent-programming</librarycategory>
 	</libraryinfo>
 	<title>libpoet</title>
-	<section id="main_section">
+	<section id="poet.section.main">
 			<title>Parallel Object Execution Threads</title>
-		<section>
+		<section id="poet.section.introduction">
 			<title>Introduction</title>
 			<para>
 				libpoet is a library whose goal is to make creation of active objects easy
@@ -42,14 +43,14 @@
 				<ulink url="http://www.comedi.org/projects/libpoet/index.html">http://www.comedi.org/projects/libpoet/index.html</ulink>
 			</para>
 		</section>
-		<section>
+		<section id="poet.section.status">
 			<title>Status</title>
 			<para>
 				The library's API is still experimental, and subject to change as feedback
 				and experience clairifies areas which could be improved.
 			</para>
 		</section>
-		<section>
+		<section id="poet.section.dependencies">
 			<title>Dependencies</title>
 			<para>
 				libpoet depends on the <ulink url="http://www.boost.org">boost C++ libraries</ulink> and
@@ -57,7 +58,7 @@
 				It requires linking to libboost_thread.
 			</para>
 		</section>
-		<section>
+		<section id="poet.section.download">
 			<title>Download</title>
 			<para>
 				The most recent release is available from the
@@ -79,7 +80,7 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 				The code is licensed under the <ulink url="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Version 1.0</ulink>.
 			</para>
 		</section>
-		<section>
+		<section id="poet.section.installation">
 			<title>Installation</title>
 			<para>
 				libpoet is a header-only library.  It may be used by simply unpacking the files and adding the location of
@@ -88,7 +89,7 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 				into an existing include directory which is already in your include path.
 			</para>
 		</section>
-		<section>
+		<section id="poet.section.discussion">
 			<title>Discussion</title>
 			<para>
 				The <ulink url="http://www.boost.org/more/mailing_lists.htm">boost users and developers mailing lists</ulink>
@@ -98,4 +99,23 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 	</section>
 	<xi:include href="libpoet_reference.xml"
 		xmlns:xi="http://www.w3.org/2001/XInclude"/>
+	<section id="poet.section.examples">
+		<title>Example Programs</title>
+		<section id="poet.example.pipline.cpp">
+			<title>pipeline.cpp</title>
+			<para>
+				Download <ulink url="../../../examples/pipeline.cpp">pipeline.cpp</ulink>.
+			</para>
+			<programlisting><xi:include href="../../examples/pipeline.cpp"
+					xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+		</section>
+		<section id="poet.example.active_object_example.cpp">
+			<title>active_object_example.cpp</title>
+			<para>
+				Download <ulink url="../../../examples/active_object_example.cpp">active_object_example.cpp</ulink>.
+			</para>
+			<programlisting><xi:include href="../../examples/active_object_example.cpp"
+					xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+		</section>
+	</section>
 </library>

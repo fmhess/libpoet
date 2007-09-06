@@ -25,7 +25,10 @@ doc: html
 .PHONY: html
 html: libpoet_doc.docbook
 	(export XML_CATALOG_FILES="./catalog.xml /etc/xml/catalog";\
-		xsltproc --xinclude --stringparam project.root $(PROJECT_ROOT) -o html/ $(BOOSTBOOK_TOOL_DIR)/xsl/html.xsl $<)
+		xsltproc --xinclude --stringparam project.root $(PROJECT_ROOT) \
+		--stringparam chapters.select.box.show false \
+		--stringparam google.search.box.show false \
+		-o html/ $(BOOSTBOOK_TOOL_DIR)/xsl/html.xsl $<)
 
 libpoet_doc.docbook: $(XML_SRCS)
 	(export XML_CATALOG_FILES="./catalog.xml /etc/xml/catalog";\

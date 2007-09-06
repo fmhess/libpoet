@@ -46,5 +46,16 @@
 			</description>
 			<type>exception_ptr</type>
 		</function>
+    <function name="rethrow_exception">
+			<purpose>Throws the exception held by the exception_ptr</purpose>
+			<type>void</type>
+			<parameter name="p"><paramtype>exception_ptr</paramtype></parameter>
+		</function>
+		<function name="copy_exception">
+			<purpose>Creates an exception_ptr from an exception.</purpose>
+			<template><template-type-parameter name="E"/></template>
+			<parameter name="e"><paramtype>E</paramtype></parameter>
+			<type>exception_ptr</type>
+		</function>
 	</namespace>
 </header>

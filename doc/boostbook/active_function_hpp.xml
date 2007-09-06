@@ -60,7 +60,7 @@
 				</parameter>
 				<description><para></para></description>
 			</constructor>
-			<destructor>
+			<destructor specifiers="virtual">
 				<description><para>Virtual destructor. </para></description>
 			</destructor>
 		</class>

@@ -8,7 +8,7 @@
 			<constructor>
 				<description><para>Constructor. </para></description>
 			</constructor>
-			<destructor>
+			<destructor specifiers="virtual">
 				<description><para>Virtual destructor. </para></description>
 			</destructor>
 		</class>
@@ -20,7 +20,7 @@
 			<constructor>
 				<description><para>Constructor. </para></description>
 			</constructor>
-			<destructor>
+			<destructor specifiers="virtual">
 				<description><para>Virtual destructor. </para></description>
 			</destructor>
 		</class>
@@ -31,7 +31,7 @@
 			<method-group name="public member functions"/>
 			<constructor><parameter name="description"><paramtype>const std::string &amp;</paramtype><default>"poet::unknown_exception"</default></parameter>
 			</constructor>
-			<destructor/>
+			<destructor specifiers="virtual"/>
 		</class>
 	</namespace>
 </header>
