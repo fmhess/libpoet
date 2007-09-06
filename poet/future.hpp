@@ -287,6 +287,7 @@ namespace poet
 		typedef T value_type;
 		promise(): _pimpl(new detail::promise_body<T>)
 		{}
+		virtual ~promise() {}
 		/*! Fulfill the promise by giving it a value.  All futures which reference
 		this promise will become ready.  */
 		void fulfill(const T &value)
@@ -350,7 +351,7 @@ namespace poet
 			_pimpl->_future_body.reset(new detail::future_body_proxy<int, OtherType>(
 				other._pimpl->_future_body, conversion_function));
 		}
-
+		virtual ~promise() {}
 		void fulfill()
 		{
 			base_type::fulfill(0);
