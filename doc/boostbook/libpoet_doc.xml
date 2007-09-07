@@ -68,7 +68,7 @@
 			</para>
 			<para>
 				The current source code is also availabe via anonymous cvs:
-<programlisting>cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi login
+				<programlisting>cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi login
 cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 				When prompted for a password, hit enter.
 			</para>

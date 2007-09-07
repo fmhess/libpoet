@@ -2,42 +2,52 @@
 	<namespace name="poet">
 		<class name="method_request_base" id="method_request_base_id">
 			<purpose>Base class for method requests. </purpose>
-			<typedef name="update_slot_type">
-				<description><para>Slot type used by connectUpdate(). </para></description>
-				<type>boost::signal&lt; void()&gt;::slot_type</type>
-			</typedef>
-			<method-group name="public member functions">
-				<method name="run" cv="" specifiers="virtual">
-					<type>void</type>
-					<description><para>run() is called by schedulers to execute the method request. </para></description>
-				</method>
-				<method name="ready" cv="const" specifiers="virtual">
-					<type>bool</type>
-					<description><para>Schedulers will not execute the method request until ready() returns true. The default implementation always returns true. </para></description>
-				</method>
-				<method name="cancel" cv="" specifiers="virtual"><type>void</type>
-					<description><para>If a method request is still waiting in the scheduler's activation queue, cancel() will cause it to be dropped from the queue without being executed. </para></description>
-				</method>
-				<method name="cancelled" cv="const" specifiers="virtual">
-					<type>bool</type>
-					<description><para></para></description>
-					<returns><code>true</code> if the method request has been cancelled.</returns>
-				</method>
-				<method name="connect_update" cv="">
-					<type>boost::signalslib::connection</type>
-					<parameter name="slot"><paramtype>const update_slot_type &amp;</paramtype></parameter>
-					<description>
-						<para>Connect a slot to the method request's "update" signal. The slot will be run whenever the status of the method request changes, for example if it is cancelled, or if its "ready" state changes. </para>
+			<access name="public">
+				<typedef name="update_slot_type">
+					<description><para>Slot type used by connectUpdate(). </para></description>
+					<type>boost::signal&lt; void()&gt;::slot_type</type>
+				</typedef>
+				<method-group name="public member functions">
+					<method name="run" cv="" specifiers="virtual">
+						<type>void</type>
+						<description><para>run() is called by schedulers to execute the method request. </para></description>
+					</method>
+					<method name="ready" cv="const" specifiers="virtual">
+						<type>bool</type>
+						<description><para>Schedulers will not execute the method request until ready() returns true. The default implementation always returns true. </para></description>
+					</method>
+					<method name="cancel" cv="" specifiers="virtual"><type>void</type>
+						<description><para>If a method request is still waiting in the scheduler's activation queue, cancel() will cause it to be dropped from the queue without being executed. </para></description>
+					</method>
+					<method name="cancelled" cv="const" specifiers="virtual">
+						<type>bool</type>
+						<description><para></para></description>
+						<returns><code>true</code> if the method request has been cancelled.</returns>
+					</method>
+					<method name="connect_update" cv="">
+						<type>boost::signalslib::connection</type>
+						<parameter name="slot"><paramtype>const update_slot_type &amp;</paramtype></parameter>
+						<description>
+							<para>Connect a slot to the method request's "update" signal. The slot will be run whenever the status of the method request changes, for example if it is cancelled, or if its "ready" state changes. </para>
+						</description>
+					</method>
+				</method-group>
+				<constructor>
+					<description><para>Constructor. </para>
 					</description>
-				</method>
-			</method-group>
-			<constructor>
-				<description><para>Constructor. </para>
-				</description>
-			</constructor>
-			<destructor specifiers="virtual">
-				<description><para>Virtual destructor. </para></description>
-			</destructor>
+				</constructor>
+				<destructor specifiers="virtual">
+					<description><para>Virtual destructor. </para></description>
+				</destructor>
+			</access>
+			<access name="protected">
+				<typedef name="update_signal_type">
+					<type>boost::signal&lt;void ()&gt;</type>
+				</typedef>
+				<data-member name="update_signal">
+					<type>update_signal_type</type>
+				</data-member>
+			</access>
 		</class>
 		<class name="method_request">
 			<template>
@@ -47,66 +57,76 @@
 			<inherit access="public">boost::postconstructible</inherit>
 			<inherit access="public">boost::enable_shared_from_this&lt;method_request&lt;ResultType&gt; &gt;</inherit>
 			<purpose>Method request base class with support for cancellation via return value. </purpose>
-			<typedef name="result_type">
-				<description><para>ResultType </para></description>
-				<type>ResultType</type>
-			</typedef>
-			<method-group name="public member functions">
-				<method name="cancel" cv="" specifiers="virtual">
-					<type>void</type>
-					<description><para>Calls method_request_base::cancel() and additionally cancels the method_request's return value. </para></description>
-				</method>
-			</method-group>
-			<destructor specifiers="virtual">
-				<description><para>Virtual destructor </para></description>
-			</destructor>
-			<method-group name="protected member functions">
-				<method name="postconstruct" cv="" specifiers="virtual">
-					<type>void</type>
-					<description>
-						<para>Post-constructor. Performs some signal-slot connection with automatic lifetime tracking which cannot be performed in the constructor due to the need for a shared_ptr from this. </para>
-					</description>
-				</method>
-			</method-group>
-			<constructor>
-				<parameter name="returnValue">
-					<paramtype>const <classname>promise</classname>&lt; result_type &gt; &amp;</paramtype>
-					<description><para>The future which will be cancelled if this method_request is cancelled. Conversely, cancelling returnValue will also cause this method_request to be cancelled. </para></description>
-				</parameter>
-				<description><para>Protected constructor. This class uses a post-constructor provided by the deconstruct_ptr() framework, so derived classes should only be instantiated via calls to boost::deconstruct_ptr(). It is recommended that derived classes use protected/private constructors and provide a static factory method which calls boost::deconstruct_ptr().</para></description>
-			</constructor>
+			<access name="public">
+				<typedef name="result_type">
+					<description><para>ResultType.</para></description>
+					<type>ResultType</type>
+				</typedef>
+				<method-group name="public member functions">
+					<method name="cancel" cv="" specifiers="virtual">
+						<type>void</type>
+						<description><para>Calls method_request_base::cancel() and additionally cancels the method_request's return value. </para></description>
+					</method>
+				</method-group>
+				<destructor specifiers="virtual">
+					<description><para></para></description>
+				</destructor>
+			</access>
+			<access name="protected">
+				<constructor>
+					<parameter name="retval">
+						<paramtype>const <classname>promise</classname>&lt; result_type &gt; &amp;</paramtype>
+						<description><para>The promise which will be fulfilled by this method_request.  It will
+							by reneged if this method_request is cancelled. Conversely, reneging on <code>retval</code>
+							will cause this method_request to be cancelled.</para></description>
+					</parameter>
+					<description><para>Protected constructor. This class uses a post-constructor provided by the deconstruct_ptr() framework, so derived classes should only be instantiated via calls to <functionname>boost::deconstruct_ptr</functionname>(). It is recommended that derived classes use protected/private constructors and provide a static factory method which calls boost::deconstruct_ptr().</para></description>
+				</constructor>
+				<method-group name="protected member functions">
+					<method name="postconstruct" cv="" specifiers="virtual">
+						<type>void</type>
+						<description>
+							<para>Post-constructor. Creates some signal-slot connections with automatic lifetime tracking which cannot be performed in the constructor due to the need for a <classname>boost::shared_ptr</classname> from <code>this</code>. </para>
+						</description>
+					</method>
+				</method-group>
+				<data-member name="return_value">
+					<type>promise&lt;result_type&gt;</type>
+				</data-member>
+			</access>
 		</class>
 		<class name="activation_queue_base">
 			<purpose>Base class for activation queues. </purpose>
-			<typedef name="size_type"><type>unsigned long</type></typedef>
-			<method-group name="public member functions">
-				<method name="push_back" cv="" specifiers="virtual">
-					<type>void</type>
-					<parameter name="request"><paramtype>const boost::shared_ptr&lt; <classname>method_request_base</classname> &gt; &amp;</paramtype></parameter>
-					<description><para>Adds a new method request to the activation queue. </para></description>
-				</method>
-				<method name="get_request" cv="" specifiers="virtual">
-					<type>boost::shared_ptr&lt; <classname>method_request_base</classname> &gt;</type>
-					<description><para></para></description>
-					<returns><para>The next method request which is ready to run. Returns a null shared_ptr if there are no method requests ready. </para></returns>
-				</method>
-				<method name="clear" cv="" specifiers="virtual">
-					<type>void</type>
-					<description><para>Empties all method requests from the queue. </para></description>
-				</method>
-				<method name="size" cv="const" specifiers="virtual">
-					<type>size_type</type>
-					<description><para></para></description>
-					<returns><para>the number of method requests waiting in the queue. </para></returns>
-				</method>
-				<method name="empty" cv="const" specifiers="virtual">
-					<type>bool</type><description><para></para></description>
-					<returns><para>true if size() is zero. </para></returns>
-				</method>
-			</method-group>
-			<destructor specifiers="virtual">
-				<description><para>Virtual destructor. </para></description>
-			</destructor>
+			<access name="public">
+				<typedef name="size_type"><type>unsigned long</type></typedef>
+				<method-group name="public member functions">
+					<method name="push_back" cv="" specifiers="virtual">
+						<type>void</type>
+						<parameter name="request"><paramtype>const boost::shared_ptr&lt; <classname>method_request_base</classname> &gt; &amp;</paramtype></parameter>
+						<description><para>Adds a new method request to the activation queue. </para></description>
+					</method>
+					<method name="get_request" cv="" specifiers="virtual">
+						<type>boost::shared_ptr&lt; <classname>method_request_base</classname> &gt;</type>
+						<description><para></para></description>
+						<returns><para>The next method request which is ready to run. Returns a null shared_ptr if there are no method requests ready. </para></returns>
+					</method>
+					<method name="clear" cv="" specifiers="virtual">
+						<type>void</type>
+						<description><para>Empties all method requests from the queue. </para></description>
+					</method>
+					<method name="size" cv="const" specifiers="virtual">
+						<type>size_type</type>
+						<description><para></para></description>
+						<returns><para>the number of method requests waiting in the queue. </para></returns>
+					</method>
+					<method name="empty" cv="const" specifiers="virtual">
+						<type>bool</type><description><para></para></description>
+						<returns><para>true if size() is zero. </para></returns>
+					</method>
+				</method-group>
+				<destructor specifiers="virtual">
+				</destructor>
+			</access>
 		</class>
 		<class name="in_order_activation_queue">
 			<inherit access="public">poet::activation_queue_base</inherit>
