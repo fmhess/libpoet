@@ -61,7 +61,7 @@ namespace poet
 					_cancelled = true;
 				}
 			}
-			if(emitSignal) _updateSignal();
+			if(emitSignal) update_signal();
 		}
 		/*! \returns true if the method request has been cancelled.  */
 		virtual bool cancelled() const
@@ -74,10 +74,11 @@ namespace poet
 		changes, for example if it is cancelled, or if its "ready" state changes.  */
 		boost::signalslib::connection connect_update(const update_slot_type &slot)
 		{
-			return _updateSignal.connect(slot);
+			return update_signal.connect(slot);
 		}
 	protected:
-		update_signal_type _updateSignal;
+		update_signal_type update_signal;
+	private:
 		mutable boost::mutex _cancelMutex;
 		bool _cancelled;
 	};

@@ -155,12 +155,12 @@ namespace poet
 				if(newReady != _lastReadyChanged)
 				{
 					_lastReadyChanged = newReady;
-					this->_updateSignal();
+					this->update_signal();
 				}
 				if(futureArgIsCancelled())
 				{
 					this->cancel();
-					/* method_request<>::cancel() emits method_request_base::_updateSignal,
+					/* method_request<>::cancel() emits method_request_base::update_signal,
 					and cancels future return value, so there is no need to do it here. */
 				}
 				/* We don't need to worry about cancellation through the return value here,
