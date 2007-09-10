@@ -48,9 +48,9 @@
 			<template>
 				<template-type-parameter name="ResultType"/>
 			</template>
-			<inherit access="public">poet::method_request_base</inherit>
-			<inherit access="public">boost::postconstructible</inherit>
-			<inherit access="public">boost::enable_shared_from_this&lt;method_request&lt;ResultType&gt; &gt;</inherit>
+			<inherit access="public"><classname>poet::method_request_base</classname></inherit>
+			<inherit access="public"><classname>boost::postconstructible</classname></inherit>
+			<inherit access="public"><classname>boost::enable_shared_from_this</classname>&lt;method_request&lt;ResultType&gt; &gt;</inherit>
 			<purpose>Method request base class with support for cancellation via return value. </purpose>
 			<access name="public">
 				<typedef name="result_type">
@@ -124,7 +124,7 @@
 			</access>
 		</class>
 		<class name="in_order_activation_queue">
-			<inherit access="public">poet::activation_queue_base</inherit>
+			<inherit access="public"><classname>poet::activation_queue_base</classname></inherit>
 			<purpose>An activation queue which always keeps method requests in FIFO order. </purpose>
 			<description><para>An in_order_activation_queue will never skip over method requests that aren't ready yet. If you don't require the method requests to be executed in the exact order they were received, use an out_of_order_activation_queue instead. </para></description>
 			<access name="public">
@@ -158,7 +158,7 @@
 			</access>
 		</class>
 		<class name="out_of_order_activation_queue">
-			<inherit access="public">poet::in_order_activation_queue</inherit>
+			<inherit access="public"><classname>poet::in_order_activation_queue</classname></inherit>
 			<purpose>An activation queue which can reorder method requests. </purpose>
 			<description><para>An out_of_order_activation_queue will return the oldest method request which is currently ready for execution. Thus, a single method request which is not ready will never prevent other method requests which are ready from running. </para></description>
 			<access name="public">
@@ -200,7 +200,8 @@
 				</destructor>
 			</access>
 		</class>
-		<class name="scheduler"><inherit access="public">poet::scheduler_base</inherit>
+		<class name="scheduler">
+			<inherit access="public"><classname>poet::scheduler_base</classname></inherit>
 			<purpose>Execute method requests in a separate thread. </purpose>
 			<access name="public">
 				<method-group name="public member functions">
