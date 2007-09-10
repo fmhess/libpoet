@@ -26,7 +26,6 @@
 						<type>const T &amp;</type>
 						<description><para>get() is used to obtain an initialized value from a future. If the future is not ready, then get() will block until the future's value is initialized, or the future's promise is broken. The future's value may also be obtained without an explicit call to get(), through the conversion operator.</para></description>
 						<returns><para>the future's value. </para></returns>
-						<throws><simpara><classname>unspecified</classname> </simpara></throws>
 					</method>
 					<method name="conversion-operator" cv="const">
 						<type>const T &amp;</type>
@@ -126,7 +125,6 @@
 					<method name="get" cv="const">
 						<type>void</type>
 						<description><para>A future&lt;void&gt; has no value, but get() can still be used to block until the future's promise is fulfilled or reneged.</para></description>
-						<throws><simpara><classname>unspecified</classname> </simpara></throws>
 					</method>
 					<method name="conversion-operator" cv="const">
 						<type>void</type>
