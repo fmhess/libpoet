@@ -6,12 +6,12 @@
 			<description><para>In the following, the active_function is taken to have a signature of: <programlisting>active_function&lt;R (T1, T2, ..., TN)&gt;</programlisting></para></description>
 			<access name="public">
 				<typedef name="passive_result_type">
-					<description><para>R </para></description>
-					<type>boost::function_traits&lt; Signature &gt;::<classname>result_type</classname></type>
+					<description><para></para></description>
+					<type>boost::function_traits&lt;Signature&gt;::<classname>result_type</classname></type>
 				</typedef>
 				<typedef name="result_type">
 					<description><para>future&lt;R&gt; </para></description>
-					<type><classname>poet::future</classname>&lt; <classname>passive_result_type</classname> &gt;</type>
+					<type><classname>poet::future</classname>&lt;<classname>passive_result_type</classname>&gt;</type>
 				</typedef>
 				<typedef name="passive_slot_type">
 					<description><para>Slot type for the passive function the active_function is constructed from. </para></description>
@@ -25,17 +25,17 @@
 					<overloaded-method name="operator()" cv="">
 						<signature>
 							<type>result_type</type>
-							<parameter name="arg1"><paramtype><classname>future</classname>&lt; T1 &gt;</paramtype></parameter>
-							<parameter name="arg2"><paramtype><classname>future</classname>&lt; T2 &gt;</paramtype></parameter>
+							<parameter name="arg1"><paramtype><classname>future</classname>&lt;T1&gt;</paramtype></parameter>
+							<parameter name="arg2"><paramtype><classname>future</classname>&lt;T2&gt;</paramtype></parameter>
 							<parameter name=""><paramtype>...</paramtype></parameter>
-							<parameter name="argN"><paramtype><classname>future</classname>&lt; TN &gt;</paramtype></parameter>
+							<parameter name="argN"><paramtype><classname>future</classname>&lt;TN&gt;</paramtype></parameter>
 						</signature>
 						<signature cv="const">
 							<type>result_type</type>
-							<parameter name="arg1"><paramtype><classname>future</classname>&lt; T1 &gt;</paramtype></parameter>
-							<parameter name="arg2"><paramtype><classname>future</classname>&lt; T2 &gt;</paramtype></parameter>
+							<parameter name="arg1"><paramtype><classname>future</classname>&lt;T1&gt;</paramtype></parameter>
+							<parameter name="arg2"><paramtype><classname>future</classname>&lt;T2&gt;</paramtype></parameter>
 							<parameter name=""><paramtype>...</paramtype></parameter>
-							<parameter name="argN"><paramtype><classname>future</classname>&lt; TN &gt;</paramtype></parameter>
+							<parameter name="argN"><paramtype><classname>future</classname>&lt;TN&gt;</paramtype></parameter>
 						</signature>
 						<description>
 							<para>Invocation creates a method request and sends it to the active_function's scheduler. The method request may be cancelled by calling <methodname>future::cancel</methodname>() on the returned <classname>future</classname>.</para>
@@ -61,8 +61,8 @@
 						<description><para>The active_function's scheduler will not execute a method request until the guard returns true and all the input futures are ready.</para></description>
 					</parameter>
 					<parameter name="scheduler">
-						<paramtype>boost::shared_ptr&lt; <classname>scheduler_base</classname> &gt;</paramtype>
-						<default>boost::shared_ptr&lt; scheduler_base &gt;()</default>
+						<paramtype>boost::shared_ptr&lt;<classname>scheduler_base</classname>&gt;</paramtype>
+						<default>boost::shared_ptr&lt;scheduler_base&gt;()</default>
 						<description><para>Specify a scheduler object for the active_function to post its method requests to. By default, a new Scheduler object is created for the active_function. If the active_function is providing a method as part of an active object class, you may wish for all the class' methods to share the same scheduler. </para></description>
 					</parameter>
 					<description><para></para></description>

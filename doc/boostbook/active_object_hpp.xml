@@ -5,7 +5,7 @@
 			<access name="public">
 				<typedef name="update_slot_type">
 					<description><para>Slot type used by connectUpdate(). </para></description>
-					<type>boost::signal&lt; void()&gt;::slot_type</type>
+					<type>update_signal_type::slot_type</type>
 				</typedef>
 				<method-group name="public member functions">
 					<method name="run" cv="" specifiers="virtual">
@@ -32,13 +32,8 @@
 						</description>
 					</method>
 				</method-group>
-				<constructor>
-					<description><para>Constructor. </para>
-					</description>
-				</constructor>
-				<destructor specifiers="virtual">
-					<description><para>Virtual destructor. </para></description>
-				</destructor>
+				<constructor/>
+				<destructor specifiers="virtual"/>
 			</access>
 			<access name="protected">
 				<typedef name="update_signal_type">
@@ -75,7 +70,7 @@
 			<access name="protected">
 				<constructor>
 					<parameter name="retval">
-						<paramtype>const <classname>promise</classname>&lt; result_type &gt; &amp;</paramtype>
+						<paramtype>const <classname>promise</classname>&lt;result_type&gt; &amp;</paramtype>
 						<description><para>The promise which will be fulfilled by this method_request.  It will
 							by reneged if this method_request is cancelled. Conversely, reneging on <code>retval</code>
 							will cause this method_request to be cancelled.</para></description>
@@ -86,7 +81,7 @@
 					<method name="postconstruct" cv="" specifiers="virtual">
 						<type>void</type>
 						<description>
-							<para>Post-constructor. Creates some signal-slot connections with automatic lifetime tracking which cannot be performed in the constructor due to the need for a <classname>boost::shared_ptr</classname> from <code>this</code>. </para>
+							<para>The post-constructor creates some signal-slot connections with automatic lifetime tracking.  This cannot be done in the constructor due to the need for a <classname>boost::shared_ptr</classname> from <code>this</code>. </para>
 						</description>
 					</method>
 				</method-group>
@@ -102,11 +97,11 @@
 				<method-group name="public member functions">
 					<method name="push_back" cv="" specifiers="virtual">
 						<type>void</type>
-						<parameter name="request"><paramtype>const boost::shared_ptr&lt; <classname>method_request_base</classname> &gt; &amp;</paramtype></parameter>
-						<description><para>Adds a new method request to the activation queue. </para></description>
+						<parameter name="request"><paramtype>const boost::shared_ptr&lt;<classname>method_request_base</classname>&gt; &amp;</paramtype></parameter>
+						<description><para>Adds a new method request to the activation queue.</para></description>
 					</method>
 					<method name="get_request" cv="" specifiers="virtual">
-						<type>boost::shared_ptr&lt; <classname>method_request_base</classname> &gt;</type>
+						<type>boost::shared_ptr&lt;<classname>method_request_base</classname>&gt;</type>
 						<description><para></para></description>
 						<returns><para>The next method request which is ready to run. Returns a null shared_ptr if there are no method requests ready. </para></returns>
 					</method>
@@ -136,17 +131,17 @@
 				<method-group name="public member functions">
 					<method name="push_back" cv="" specifiers="virtual">
 						<type>void</type>
-						<parameter name="request"><paramtype>const boost::shared_ptr&lt; <classname>method_request_base</classname> &gt; &amp;</paramtype></parameter>
+						<parameter name="request"><paramtype>const boost::shared_ptr&lt;<classname>method_request_base</classname>&gt; &amp;</paramtype></parameter>
 						<description><para>Adds a new method request to the activation queue. </para></description>
 					</method>
 					<method name="get_request" cv="" specifiers="virtual">
-						<type>boost::shared_ptr&lt; <classname>method_request_base</classname> &gt;</type>
+						<type>boost::shared_ptr&lt;<classname>method_request_base</classname>&gt;</type>
 						<description><para></para></description>
 						<returns><para>The oldest method request in the queue. If the oldest method request is not ready to execute, then a null shared_ptr is returned. </para></returns>
 					</method>
 					<method name="clear" cv="" specifiers="virtual">
 						<type>void</type>
-						<description><para>Empties all method requests from the queue. </para></description>
+						<description><para>Empties all method requests from the queue.</para></description>
 					</method>
 					<method name="size" cv="const" specifiers="virtual">
 						<type>size_type</type>
@@ -159,9 +154,7 @@
 						<returns><para>true if size() is zero. </para></returns>
 					</method>
 				</method-group>
-				<destructor specifiers="virtual">
-					<description><para>Virtual destructor. </para></description>
-				</destructor>
+				<destructor specifiers="virtual"/>
 			</access>
 		</class>
 		<class name="out_of_order_activation_queue">
@@ -171,7 +164,7 @@
 			<access name="public">
 				<method-group name="public member functions">
 					<method name="get_request" cv="" specifiers="virtual">
-						<type>boost::shared_ptr&lt; <classname>method_request_base</classname> &gt;</type>
+						<type>boost::shared_ptr&lt;<classname>method_request_base</classname>&gt;</type>
 						<description><para></para></description>
 						<returns><para>The oldest method request in the queue which is currently ready for execution. </para></returns>
 					</method>
@@ -186,8 +179,8 @@
 				<method-group name="public member functions">
 					<method name="post_method_request" cv="" specifiers="virtual">
 						<type>void</type>
-						<parameter name="request"><paramtype>const boost::shared_ptr&lt; <classname>method_request_base</classname> &gt; &amp;</paramtype></parameter>
-						<description><para>Adds <code>request</code> to the scheduler's activation queue. </para></description>
+						<parameter name="request"><paramtype>const boost::shared_ptr&lt;<classname>method_request_base</classname>&gt; &amp;</paramtype></parameter>
+						<description><para>Adds <code>request</code> to the scheduler's activation queue.</para></description>
 					</method>
 					<method name="wake" cv="" specifiers="virtual">
 						<type>void</type>
@@ -213,7 +206,7 @@
 				<method-group name="public member functions">
 					<method name="post_method_request" cv="" specifiers="virtual">
 						<type>void</type>
-						<parameter name="request"><paramtype>const boost::shared_ptr&lt; <classname>method_request_base</classname> &gt; &amp;</paramtype></parameter>
+						<parameter name="request"><paramtype>const boost::shared_ptr&lt;<classname>method_request_base</classname>&gt; &amp;</paramtype></parameter>
 						<description><para>Adds <code>request</code> to the scheduler's activation queue. </para></description>
 					</method>
 					<method name="wake" cv="" specifiers="virtual">

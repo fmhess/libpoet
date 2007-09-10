@@ -55,18 +55,18 @@
 					</method>
 				</method-group>
 				<constructor>
-					<parameter name="promise"><paramtype>const <classname>promise</classname>&lt; T &gt; &amp;</paramtype></parameter>
+					<parameter name="promise"><paramtype>const <classname>promise</classname>&lt;T&gt; &amp;</paramtype></parameter>
 					<description><para>Creates a new future from a promise. When the promise referenced by promise is fulfilled, the future will become ready. </para></description>
 				</constructor>
 				<constructor><template><template-type-parameter name="OtherType"/></template>
-					<parameter name="promise"><paramtype>const <classname>promise</classname>&lt; OtherType &gt; &amp;</paramtype></parameter>
+					<parameter name="promise"><paramtype>const <classname>promise</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
 					<description><para>Creates a new future from a promise with a template type <code>OtherType</code> that is implicitly convertible to the future's value_type. When the <classname>promise</classname> referenced by <code>promise</code> is fulfilled, the future will become ready. </para></description>
 				</constructor>
 				<constructor><parameter name="value"><paramtype>const T &amp;</paramtype></parameter>
 					<description><para>Creates a new future with an initialized value, and provides implicit conversion from a value to the corresponding future. </para></description>
 				</constructor><constructor>
 					<template><template-type-parameter name="OtherType"/></template>
-					<parameter name="other"><paramtype>const <classname>future</classname>&lt; OtherType &gt; &amp;</paramtype></parameter>
+					<parameter name="other"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
 					<description><para>Creates a future from another future with a compatible template type. The two futures will both reference the same <classname>promise</classname>. </para></description>
 				</constructor>
 				<constructor>
@@ -77,7 +77,7 @@
 				</destructor>
 				<copy-assignment>
 					<template><template-type-parameter name="OtherType"/></template>
-					<parameter name="other"><paramtype>const <classname>future</classname>&lt; OtherType &gt; &amp;</paramtype></parameter>
+					<parameter name="other"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
 					<description><para>Assignment from a future&lt;U&gt; is supported if <code>U</code> is implicitly convertible to
 							<code>T</code>. The assignment happens immediately, and does not block waiting for <code>other</code> to become ready. </para></description>
 				</copy-assignment>
@@ -97,22 +97,22 @@
 				</typedef>
 				<typedef name="update_slot_type">
 					<description><para></para></description>
-					<type>boost::signal&lt; void()&gt;::slot_type</type>
+					<type>boost::signal&lt;void ()&gt;::slot_type</type>
 				</typedef>
 				<constructor>
-					<parameter name="promise_in"><paramtype>const <classname>promise</classname>&lt; void &gt; &amp;</paramtype></parameter>
+					<parameter name="promise_in"><paramtype>const <classname>promise</classname>&lt;void&gt; &amp;</paramtype></parameter>
 					<description><para>Same as the corresponding constructor for an unspecialized <classname>future</classname>.</para></description>
 				</constructor>
 				<constructor>
 					<template>
 						<template-type-parameter name="OtherType"/>
 					</template>
-					<parameter name="promise"><paramtype>const <classname>promise</classname>&lt; OtherType &gt; &amp;</paramtype></parameter>
+					<parameter name="promise"><paramtype>const <classname>promise</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
 					<description><para>A future&lt;void&gt; can be constructed from any type of <classname>promise</classname>.</para></description>
 				</constructor>
 				<constructor>
 					<template><template-type-parameter name="OtherType"/></template>
-					<parameter name="other"><paramtype>const <classname>future</classname>&lt; OtherType &gt; &amp;</paramtype></parameter>
+					<parameter name="other"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
 					<description><para>A future&lt;void&gt; can be constructed from any type of <classname>future</classname>.</para></description>
 				</constructor>
 				<constructor>
@@ -157,7 +157,7 @@
 					<template>
 						<template-type-parameter name="OtherType"/>
 					</template>
-					<parameter name="other"><paramtype>const <classname>future</classname>&lt; OtherType &gt; &amp;</paramtype>
+					<parameter name="other"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype>
 					</parameter>
 					<description><para>A future&lt;void&gt; can be assigned any type of future.</para></description>
 				</copy-assignment>
@@ -183,7 +183,7 @@
 					</method>
 					<method name="fulfill" cv="">
 						<type>void</type>
-						<parameter name="future_value"><paramtype>const <classname>future</classname>&lt; T &gt; &amp;</paramtype></parameter>
+						<parameter name="future_value"><paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype></parameter>
 						<description><para>Chain the promise to another promise by giving it a future. All futures which reference this promise will receive the value from future_value when it becomes ready. If the promise referenced by future_value is broken, this promise will also be broken. </para></description>
 					</method>
 					<overloaded-method name="renege">
@@ -218,13 +218,13 @@
 					<description><para>Same as the corresponding constructor for an unspecialized <classname>promise</classname>.</para></description>
 				</constructor>
 				<constructor>
-					<parameter name="other"><paramtype>const <classname>promise</classname>&lt; void &gt; &amp;</paramtype></parameter>
+					<parameter name="other"><paramtype>const <classname>promise</classname>&lt;void&gt; &amp;</paramtype></parameter>
 					<description><para>Same as the corresponding constructor for an unspecialized <classname>promise</classname>.</para></description>
 				</constructor>
 				<constructor>
 					<template><template-type-parameter name="OtherType"/></template>
 					<parameter name="other">
-						<paramtype>const <classname>promise</classname>&lt; OtherType &gt; &amp;</paramtype>
+						<paramtype>const <classname>promise</classname>&lt;OtherType&gt; &amp;</paramtype>
 					</parameter>
 					<description><para>A promise&lt;void&gt; may be constructed from a promise with any template type, although it cannot fulfill such a promise. It can renege on the promise, however. </para></description>
 				</constructor>
@@ -232,7 +232,7 @@
 				<method-group name="public member functions">
 					<method name="fulfill" cv="">
 						<type>void</type>
-						<parameter name="future_value"><paramtype>const <classname>future</classname>&lt; void &gt; &amp;</paramtype></parameter>
+						<parameter name="future_value"><paramtype>const <classname>future</classname>&lt;void&gt; &amp;</paramtype></parameter>
 						<description><para>Same as the corresponding function for an unspecialized <classname>promise</classname>.</para></description>
 					</method>
 					<method name="fulfill" cv="">
