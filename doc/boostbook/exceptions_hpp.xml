@@ -4,34 +4,37 @@
 			<inherit access="public">std::runtime_error</inherit>
 			<purpose>Exception thrown by a cancelled future. </purpose>
 			<description><para>This exception is thrown when an attempt to convert a future to its associated value fails due to future::cancel() being called on a future that references the same promise. </para></description>
-			<method-group name="public member functions"/>
-			<constructor>
-				<description><para>Constructor. </para></description>
-			</constructor>
-			<destructor specifiers="virtual">
-				<description><para>Virtual destructor. </para></description>
-			</destructor>
+			<access name="public">
+				<constructor>
+					<description><para></para></description>
+				</constructor>
+				<destructor specifiers="virtual">
+					<description><para></para></description>
+				</destructor>
+			</access>
 		</class>
 		<class name="uncertain_future">
 			<inherit access="public">std::runtime_error</inherit>
 			<purpose>Exception thrown by an uncertain future.</purpose>
 			<description><para>This exception is thrown when an attempt is made to convert a future with no promise into its associated value. This can happen if the future was default-constructed, or its associated promise object has been destroyed without being fulfilled. </para></description>
-			<method-group name="public member functions"/>
-			<constructor>
-				<description><para>Constructor. </para></description>
-			</constructor>
-			<destructor specifiers="virtual">
-				<description><para>Virtual destructor. </para></description>
-			</destructor>
+			<access name="public">
+				<constructor>
+					<description><para>Constructor. </para></description>
+				</constructor>
+				<destructor specifiers="virtual">
+					<description><para>Virtual destructor. </para></description>
+				</destructor>
+			</access>
 		</class>
 		<class name="unknown_exception">
 			<inherit access="public">std::runtime_error</inherit>
 			<purpose>Exception used as a placeholder for unknown exceptions. </purpose>
 			<description><para>Exceptions unknown by the current_exception() code are replaced with this class. It is also used to replace exceptions whose exact type is unknown but which are derived from std::exception, in which case the what() string will be made to match the what() string of the original unknown exception. </para></description>
-			<method-group name="public member functions"/>
-			<constructor><parameter name="description"><paramtype>const std::string &amp;</paramtype><default>"poet::unknown_exception"</default></parameter>
-			</constructor>
-			<destructor specifiers="virtual"/>
+			<access name="public">
+				<constructor><parameter name="description"><paramtype>const std::string &amp;</paramtype><default>"poet::unknown_exception"</default></parameter>
+				</constructor>
+				<destructor specifiers="virtual"/>
+			</access>
 		</class>
 	</namespace>
 </header>
