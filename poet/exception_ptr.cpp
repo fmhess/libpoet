@@ -58,8 +58,6 @@ static poet::exception_ptr poet::detail::_exp_current_exception()
 	_CATCH_AND_RETURN( std::bad_typeid )
 	_CATCH_AND_RETURN( std::bad_exception )
 
-//FIXME add support for libpoet's exception classes, and from thread_safe_signals, and some from boost (bad_weak_ptr, expired_slot)
-
 	// throw std::exception as poet::unknown_exception, since we can't initialize what() string using a std::exception
 	catch( std::exception const & e )
 	{

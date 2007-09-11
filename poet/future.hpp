@@ -259,21 +259,6 @@ namespace poet
 		};
 	}
 
-	/*! \brief A handle to a promise.
-
-	Promises are used to construct futures and set their values when they
-	become available.  You can also renege on a promise, which transports an exception
-	instead of a value to any futures waiting on the promise.
-
-	Promise objects are handles with shallow copy semantics.  Promises are
-	reference-counted, which means a promise will automatically be
-	reneged with an uncertain_future exception if its reference
-	count drops to zero without the promise being fulfilled.
-
-	The idea of making a seperate promise class from the future class
-	was suggested by Chirtopher Kohlhoff.  The idea of reference
-	counting the promise class was due to Braddock Gaskill.
-	*/
 	template <typename T>
 	class promise
 	{
@@ -288,31 +273,20 @@ namespace poet
 		promise(): _pimpl(new detail::promise_body<T>)
 		{}
 		virtual ~promise() {}
-		/*! Fulfill the promise by giving it a value.  All futures which reference
-		this promise will become ready.  */
 		void fulfill(const T &value)
 		{
 			_pimpl->fulfill(value);
 		}
-		/*! Chain the promise to another promise by giving it a future.  All futures which reference
-		this promise will receive the value from <em>future_value</em> when it becomes ready.
-		If the promise
-		referenced by <em>future_value</em> is broken, this promise will also be broken.
-		*/
 		void fulfill(const future<T> &future_value)
 		{
 			typedef typename future<T>::update_slot_type slot_type;
 			future_value.connect_update(slot_type(&detail::promise_body<T>::handle_future_fulfillment, _pimpl, future_value));
 		}
-		/*! Breaks the promise.  Any futures which reference the promise will throw
-		a copy of <em>exception</em> when they attempt to get their value.
-		*/
 		template <typename E>
 		void renege(const E &exception)
 		{
 			_pimpl->renege(exception);
 		}
-		/*! \overload */
 		void renege(const poet::exception_ptr &exp)
 		{
 			_pimpl->renege(exp);
@@ -321,11 +295,6 @@ namespace poet
 		boost::shared_ptr<detail::promise_body<T> > _pimpl;
 	};
 
-	/*! \cond USE_REAL_PROMISE_VOID
-	disable documentation for promise<void> since doxygen 1.4.2 gets it wrong.
-	Instead, we generate promise<void> documentation from doxygen_bogus.h in
-	the doc/ subdirectory.
-	*/
 	// void specialization
 	template<>
 	class promise<void>: private promise<int>
@@ -367,54 +336,26 @@ namespace poet
 			base_type::renege(exp);
 		}
 	};
-	/*! \endcond
-	USE_REAL_PROMISE_VOID
-	*/
 
-	/*! \brief A handle to a future value.
-
-	Futures are wrappers around values which may not exist yet.  They are used to support asyncronous
-	function calls.  Since a Future can be
-	returned before any result is actually ready, an asyncronous call can return a Future
-	immediately without blocking the calling thread.  The calling thread can then poll the
-	future to determine when a result is ready, or block on the Future waiting
-	for a result.
-
-	Futures are handles with shallow copy semantics.  Two copies of a future will both refer to
-	the same promise.
-	*/
 	template <typename T> class future
 	{
 	public:
 		template <typename OtherType> friend class future;
 		friend class future<void>;
 
-		/*! T */
 		typedef T value_type;
-		/*! boost::signal<void ()>::slot_type */
 		typedef typename detail::future_body_base<T>::update_signal_type::slot_type update_slot_type;
 
-		/*! Creates a new future from a promise.  When the promise referenced by <em>promise</em>
-		is fulfilled, the future will become ready.  */
 		future(const promise<T> &promise): _future_body(promise._pimpl->_future_body)
 		{}
-		/*! Creates a new future from a promise with a template type <em>OtherType</em> that is
-		implicitly convertible to the future's value_type.  When the promise referenced by <em>promise</em>
-		is fulfilled, the future will become ready.
-		*/
 		template <typename OtherType>
 		future(const promise<OtherType> &promise)
 		{
 			future<OtherType> other_future(promise);
 			*this = other_future;
 		}
-		/*! Creates a new Future with an initialized value, and provides
-		implicit conversion from a value to the corresponding Future.
-		*/
 		future(const T &value): _future_body(new detail::future_body<T>(value))
 		{}
-		/*! Creates a future from another future with a compatible template type.  The
-		two Futures will both reference the same promise. */
 		template <typename OtherType> future(const future<OtherType> &other)
 		{
 			BOOST_ASSERT(typeid(T) != typeid(OtherType));
@@ -428,34 +369,14 @@ namespace poet
 			_future_body.reset(new detail::future_body_proxy<T, OtherType>(
 				other._future_body, typedConversionFunction));
 		}
-		/*! Creates an uncertain future with no promise.  An attempt to get an
-		uncertain future's
-		value will throw an uncertain_future exception.  An uncertain future
-		may gain
-		promise by assigning it another future with promise.  */
 		future()
 		{}
-		/*! Virtual destructor. */
 		virtual ~future() {}
-		/*! \returns true if the future's value is initialized. */
 		bool ready() const
 		{
 			if(_future_body == 0) return false;
 			return _future_body->ready();
 		}
-		/*!
-		get() is used to obtain an initialized value from a future.
-		If the future is not ready, then
-		get() will block until the future's value is initialized, or
-		the future's promise is broken.  The future's value may also
-		be obtained without an explicit call to get(), through the
-		conversion operator.
-		\exception cancelled_future if the conversion fails due to
-		cancellation.
-		\exception unspecified if the future's promise is broken, get()
-		will throw whatever exception was specified by the promise::renege() call.
-		\returns the future's value.
-		*/
 		const T& get() const
 		{
 			if(_future_body == 0)
@@ -464,46 +385,29 @@ namespace poet
 			}
 			return _future_body->getValue();
 		}
-		/*! The conversion operator provides implicit conversions to values.  It has
-		the same effects as the explicit get() function. */
 		operator const T&() const
 		{
 			return get();
 		}
-		/*!  timed_join() blocks until \p absolute_time is reached,
-		or either ready() or has_exception() becomes true.
-
-		\returns true if either ready() or has_exception() are true.
-		*/
 		bool timed_join(const boost::xtime &absolute_time) const
 		{
 			return _future_body->timed_join(absolute_time);
 		}
-		/*! Assignment from a future<U> is supported if U is implicitly convertible to T.
-		The assignment happens immediately, and does not block waiting for <em>other</em> to become ready. */
 		template <typename OtherType> const future<T>& operator =(const future<OtherType> &other)
 		{
 			BOOST_ASSERT(typeid(T) != typeid(OtherType));
 			_future_body.reset(new detail::future_body_proxy<T, OtherType>(other._future_body));
 			return *this;
 		}
-		/*! Connect a slot to be run when the future's status changes, either because
-		its value is ready or its promise has been broken.
-		*/
 		boost::signalslib::connection connect_update(const update_slot_type &slot) const
 		{
 			if(_future_body == 0) throw std::invalid_argument("Future doesn't refer to any value yet. Cannot connect slot.");
 			return _future_body->connectUpdate(slot);
 		}
-		/*! Cancel a future by reneging on its promise with a cancelled_future exception. */
 		void cancel()
 		{
 			_future_body->cancel(poet::copy_exception(cancelled_future()));
 		}
-		/*! \returns true if this future's promise has been broken.  Attempting to get the
-		future's value
-		will throw an exception that may give more information on why the promise was broken.
-		*/
 		bool has_exception() const
 		{
 			if(_future_body == 0) return true;
@@ -512,12 +416,6 @@ namespace poet
 	private:
 		boost::shared_ptr<detail::future_body_base<T> > _future_body;
 	};
-
-	/*! \cond USE_REAL_FUTURE_VOID
-	disable documentation for future<void> since doxygen 1.4.2 gets it wrong.
-	Instead, we generate future<void> documentation from doxygen_bogus.h in
-	the doc/ subdirectory.
-	*/
 
 	template <>
 	class future<void>: private future<int>
@@ -579,8 +477,6 @@ namespace poet
 		using base_type::cancel;
 		using base_type::has_exception;
 	};
-	/*! \endcond
-	USE_REAL_FUTURE_VOID */
 }
 
 template <typename T>
