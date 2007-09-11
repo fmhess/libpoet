@@ -14,7 +14,7 @@
 		</typedef>
 		<function name="current_exception">
 			<type>exception_ptr</type>
-			<purpose>Get an exception_ptr corresponding to the current exception.</purpose>
+			<purpose>Get an exception_ptr which holds the current exception.</purpose>
 			<description>
 				<para>
 					current_exception() can be used inside a catch block to get a copy

@@ -21,9 +21,14 @@
 						<returns><para>true if the future's value is initialized. </para></returns>
 					</method>
 					<method name="get" cv="const">
-						<type>const T &amp;</type>
-						<description><para>get() is used to obtain an initialized value from a future. If the future is not ready, then get() will block until the future's value is initialized, or the future's promise is broken. The future's value may also be obtained without an explicit call to get(), through the conversion operator.</para></description>
+ 						<type>const T &amp;</type>
+						<description><para>get() is used to obtain an initialized value from a future. If the future is not ready, then get() will block until the future's promise is fulfilled or broken. The future's value may also be obtained without an explicit call to get(), through the conversion operator.</para></description>
 						<returns><para>the future's value. </para></returns>
+						<throws><classname>cancelled_future</classname> if the conversion fails due to
+							cancellation. If the future's promise is broken, get() will throw whatever exception
+							was specified by the <methodname>promise::renege</methodname>() call (subject
+							to the limitations of <classname>poet::exception_ptr</classname>).
+						</throws>
 					</method>
 					<method name="conversion-operator" cv="const">
 						<type>const T &amp;</type>
