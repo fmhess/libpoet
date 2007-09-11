@@ -16,7 +16,7 @@
 			<holder>Frank Mori Hess</holder>
 		</copyright>
 		<librarypurpose>This is the purpose of my library.</librarypurpose>
-		<librarycategory>category:concurrent-programming</librarycategory>
+		<librarycategory name="category:concurrent-programming"/>
 	</libraryinfo>
 	<title>libpoet</title>
 	<section id="poet.section.main">

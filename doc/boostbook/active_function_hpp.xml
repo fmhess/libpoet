@@ -6,23 +6,21 @@
 			<description><para>In the following, the active_function is taken to have a signature of: <programlisting>active_function&lt;R (T1, T2, ..., TN)&gt;</programlisting></para></description>
 			<access name="public">
 				<typedef name="passive_result_type">
-					<description><para></para></description>
 					<type>boost::function_traits&lt;Signature&gt;::<classname>result_type</classname></type>
 				</typedef>
 				<typedef name="result_type">
-					<description><para>future&lt;R&gt; </para></description>
 					<type><classname>poet::future</classname>&lt;<classname>passive_result_type</classname>&gt;</type>
 				</typedef>
 				<typedef name="passive_slot_type">
-					<description><para>Slot type for the passive function the active_function is constructed from. </para></description>
 					<type><classname>boost::slot</classname>&lt;Signature&gt;</type>
+					<description><para>Slot type for the passive function the active_function is constructed from.</para></description>
 				</typedef>
 				<typedef name="guard_slot_type">
-					<description><para>Slot type for guard functions.</para></description>
 					<type><classname>boost::slot</classname>&lt;bool ()&gt;</type>
+					<description><para>Slot type for guard functions.</para></description>
 				</typedef>
 				<method-group name="public member functions">
-					<overloaded-method name="operator()" cv="">
+					<overloaded-method name="operator()">
 						<signature>
 							<type>result_type</type>
 							<parameter name="arg1"><paramtype><classname>future</classname>&lt;T1&gt;</paramtype></parameter>

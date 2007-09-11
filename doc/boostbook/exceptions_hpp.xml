@@ -1,7 +1,7 @@
 <header name="poet/exceptions.hpp">
 	<namespace name="poet">
 		<class name="cancelled_future">
-			<inherit access="public"><classname>std::runtime_error</classname></inherit>
+			<inherit access="public"><type><classname>std::runtime_error</classname></type></inherit>
 			<purpose>Exception thrown by a cancelled future. </purpose>
 			<description><para>This exception is thrown when an attempt to convert a future to its associated value fails due to future::cancel() being called on a future that references the same promise. </para></description>
 			<access name="public">
@@ -10,7 +10,7 @@
 			</access>
 		</class>
 		<class name="uncertain_future">
-			<inherit access="public"><classname>std::runtime_error</classname></inherit>
+			<inherit access="public"><type><classname>std::runtime_error</classname></type></inherit>
 			<purpose>Exception thrown by an uncertain future.</purpose>
 			<description><para>This exception is thrown when an attempt is made to convert a future with no promise into its associated value. This can happen if the future was default-constructed, or its associated promise object has been destroyed without being fulfilled. </para></description>
 			<access name="public">
@@ -19,7 +19,7 @@
 			</access>
 		</class>
 		<class name="unknown_exception">
-			<inherit access="public"><classname>std::runtime_error</classname></inherit>
+			<inherit access="public"><type><classname>std::runtime_error</classname></type></inherit>
 			<purpose>Exception used as a placeholder for unknown exceptions. </purpose>
 			<description><para>Exceptions unknown by the current_exception() code are replaced with this class. It is also used to replace exceptions whose exact type is unknown but which are derived from std::exception, in which case the what() string will be made to match the what() string of the original unknown exception. </para></description>
 			<access name="public">

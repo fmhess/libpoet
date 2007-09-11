@@ -10,11 +10,9 @@
 			</description>
 			<access name="public">
 				<typedef name="value_type">
-					<description><para></para></description>
 					<type>T</type>
 				</typedef>
 				<typedef name="update_slot_type">
-					<description><para></para></description>
 					<type>boost::signal&lt;void ()&gt;</type>
 				</typedef>
 				<method-group name="public member functions">
@@ -92,11 +90,9 @@
 			<description><para>future&lt;void&gt; is for futures with no value. For example, it may be used to wait on the completion of an asynchronous function which has no return value. In addition, a future&lt;void&gt; can assigned or constructed from a future&lt;T&gt; where T is any type. This allows a future&lt;void&gt; to be used by code which is only interested in whether the future is ready or has an exception, and is not interested in the future's specific value or template type. </para></description>
 			<access name="public">
 				<typedef name="value_type">
-					<description><para></para></description>
 					<type>void</type>
 				</typedef>
 				<typedef name="update_slot_type">
-					<description><para></para></description>
 					<type>boost::signal&lt;void ()&gt;::slot_type</type>
 				</typedef>
 				<constructor>
@@ -188,8 +184,8 @@
 					</method>
 					<overloaded-method name="renege">
 						<signature>
-							<type>void</type>
 							<template><template-type-parameter name="E"/></template>
+							<type>void</type>
 							<parameter name="exception"><paramtype>const E &amp;</paramtype></parameter>
 						</signature>
 						<signature>
@@ -211,7 +207,6 @@
 			<description><para>promise&lt;void&gt; may be used to create future&lt;void&gt; objects which have no value. In addition, a promise&lt;void&gt; can be constructed from a promise&lt;T&gt; where T is any type. This allows a promise&lt;void&gt; to be used by code which only needs to be able to renege on a promise and not fulfill it. </para></description>
 			<access name="public">
 				<typedef name="value_type">
-					<description><para></para></description>
 					<type>void</type>
 				</typedef>
 				<constructor>
@@ -242,12 +237,13 @@
 					</method>
 					<overloaded-method name="renege">
 						<signature>
-							<type>void</type>
 							<template><template-type-parameter name="E"/></template>
+							<type>void</type>
 							<parameter name="exception"><paramtype>const E &amp;</paramtype></parameter>
 						</signature>
 						<signature>
-							<type>void</type><parameter name="exp"><paramtype>const poet::exception_ptr &amp;</paramtype></parameter>
+							<type>void</type>
+							<parameter name="exp"><paramtype>const poet::exception_ptr &amp;</paramtype></parameter>
 						</signature>
 						<description><para>Same as the corresponding function for an unspecialized <classname>promise</classname>.</para></description>
 					</overloaded-method>

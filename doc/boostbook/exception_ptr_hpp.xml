@@ -1,6 +1,7 @@
 <header name="poet/exception_ptr.hpp">
 	<namespace name="poet">
 		<typedef name="exception_ptr">
+			<type>boost::shared_ptr&lt;detail::_exp_throwable&gt;</type>
 			<purpose>Transport an arbitrary exception.</purpose>
 			<description>
 				<para>libpoet uses exception_ptr to transport an exception thrown by
@@ -10,9 +11,9 @@
 					<ulink url="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2179.html">N2179 proposal</ulink>.
 				</para>
 			</description>
-			<type>boost::shared_ptr&lt;detail::_exp_throwable&gt;</type>
 		</typedef>
 		<function name="current_exception">
+			<type>exception_ptr</type>
 			<purpose>Get an exception_ptr corresponding to the current exception.</purpose>
 			<description>
 				<para>
@@ -44,18 +45,17 @@
 					request's return value.
 				</para>
 			</description>
-			<type>exception_ptr</type>
 		</function>
     <function name="rethrow_exception">
-			<purpose>Throws the exception held by the exception_ptr</purpose>
 			<type>void</type>
 			<parameter name="p"><paramtype>exception_ptr</paramtype></parameter>
+			<purpose>Throws the exception held by the exception_ptr</purpose>
 		</function>
 		<function name="copy_exception">
-			<purpose>Creates an exception_ptr from an exception.</purpose>
 			<template><template-type-parameter name="E"/></template>
-			<parameter name="e"><paramtype>E</paramtype></parameter>
 			<type>exception_ptr</type>
+			<parameter name="e"><paramtype>E</paramtype></parameter>
+			<purpose>Creates an exception_ptr from an exception.</purpose>
 		</function>
 	</namespace>
 </header>
