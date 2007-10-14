@@ -5,7 +5,7 @@
 			<access name="public">
 				<typedef name="update_slot_type">
 					<type>update_signal_type::slot_type</type>
-					<description><para>Slot type used by connectUpdate().</para></description>
+					<description><para>Slot type used by connect_update().</para></description>
 				</typedef>
 				<method-group name="public member functions">
 					<method name="run" cv="" specifiers="virtual">
@@ -22,7 +22,7 @@
 					<method name="cancelled" cv="const" specifiers="virtual">
 						<type>bool</type>
 						<description><para></para></description>
-						<returns><code>true</code> if the method request has been cancelled.</returns>
+						<returns><para><code>true</code> if the method request has been cancelled.</para></returns>
 					</method>
 					<method name="connect_update" cv="">
 						<type>boost::signalslib::connection</type>
