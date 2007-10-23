@@ -17,7 +17,6 @@
 
 namespace boost
 {
-	template<typename T> class shared_ptr;
 	class mutex;
 };
 
@@ -54,21 +53,13 @@ namespace poet
 	class monitor_ptr
 	{
 	public:
-		monitor_ptr(boost::shared_ptr<T> pointer): _pointer(pointer), _mutex(new Mutex)
+		typedef T element_type;
+
+		monitor_ptr(boost::shared_ptr<T> smart_pointer): _pointer(smart_pointer), _mutex(new Mutex)
 		{}
-		monitor_ptr(T *raw_pointer): _pointer(raw_pointer), _mutex(new Mutex)
+		monitor_ptr(T *pointer): _pointer(pointer), _mutex(new Mutex)
 		{}
 		monitor_call_proxy<T, Mutex> operator->() const {return monitor_call_proxy<T, Mutex>(_pointer.get(), _mutex.get());}
-		void set_value(const T &value)
-		{
-			typename Mutex::scoped_lock lock(*_mutex);
-			*_pointer = value;
-		}
-		T get_value() const
-		{
-			typename Mutex::scoped_lock lock(*_mutex);
-			return *_pointer;
-		}
 		// unlocked access
 		const boost::shared_ptr<T>& direct() const {return _pointer;}
 	private:
