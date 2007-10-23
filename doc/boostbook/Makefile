@@ -9,7 +9,8 @@ XML_SRCS=\
 	exceptions_hpp.xml \
 	future_hpp.xml \
 	libpoet_doc.xml \
-	libpoet_reference.xml
+	libpoet_reference.xml \
+	monitor_ptr_hpp.xml
 
 .PHONY: all
 all: doc

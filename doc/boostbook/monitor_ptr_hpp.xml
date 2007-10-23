@@ -1,0 +1,124 @@
+<header name="poet/monitor_ptr.hpp">
+	<namespace name="poet">
+		<class name="monitor_ptr">
+			<template>
+				<template-type-parameter name="T"/>
+				<template-type-parameter name="Mutex">
+					<default>boost::mutex</default>
+				</template-type-parameter>
+			</template>
+			<purpose>A smart pointer which provides locked access to an object.</purpose>
+			<description>
+				<para>
+					<code>monitor_ptr</code> allows for the easy creation of simple monitor objects.  A
+					<code>monitor_ptr</code> provides automatically locked access to an object's members
+					when they are accessed through the overloaded <methodname>operator-&gt;</methodname>.
+					It is based on ideas from
+					<ulink url="http://www.research.att.com/~bs/wrapper.pdf">"Wrapping C++ Member Function Calls"</ulink>
+					by Bjarne Stroustroup.
+				</para>
+				<para>
+					Variants which do "timed locking" or "try locking" could also be provided in the future.
+				</para>
+			</description>
+			<access name="public">
+				<typedef name="element_type">
+					<type>T</type>
+				</typedef>
+				<method-group name="public member functions">
+					<method name="operator->" cv="const">
+						<type><classname>monitor_call_proxy</classname>&lt;T, Mutex&gt;</type>
+						<description>
+							<para>Locks the <code>monitor_ptr</code>'s mutex and returns a <classname>monitor_call_proxy</classname> object.
+								The <code>operator-&gt;()</code> of the returned <classname>monitor_call_proxy</classname> object will be
+								called in turn (overloading <code>operator-&gt;()</code> is special in that way), which will finally
+								forward the call to the underlying pointer.  The mutex is unlocked by the <classname>monitor_call_proxy</classname>
+								destructor.
+							</para>
+						</description>
+					</method>
+					<method name="operator=">
+						<type>monitor_ptr&lt;T, Mutex&gt; &amp;</type>
+						<parameter name="rhs">
+							<paramtype>const monitor_ptr&lt;T, Mutex&gt; &amp;</paramtype>
+						</parameter>
+						<description>
+							<para>After assignment, the two <code>monitor_ptr</code>s will share the same pointer
+								and mutex.
+							</para>
+						</description>
+					</method>
+					<method name="direct" cv="const">
+						<type>const boost::shared_ptr&lt;T&gt; &amp;</type>
+						<description><para>Gives direct unlocked access to the underlying pointer.</para></description>
+					</method>
+				</method-group>
+				<constructor>
+					<parameter name="pointer">
+						<paramtype>T*</paramtype>
+					</parameter>
+					<description>
+						<para>Creates a <code>monitor_ptr</code> which wraps the specified pointer.  The <code>monitor_ptr</code>
+							internally stores <code>pointer</code> in a <classname>boost::shared_ptr</classname>.
+							Thus the pointer will be automatically
+							deleted when the last copy of this <code>monitor_ptr</code> is destroyed.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<parameter name="smart_pointer">
+						<paramtype>boost::shared_ptr&lt;T&gt;</paramtype>
+					</parameter>
+					<description>
+						<para>Creates a <code>monitor_ptr</code> which wraps the specified pointer.
+							This constructor allows the <code>monitor_ptr</code> to be initialized with
+							a <classname>boost::shared_ptr</classname> that has a custom deleter.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<parameter name="other">
+						<paramtype>const monitor_ptr &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>The copy constructor creates a <code>monitor_ptr</code> which shares the same pointer
+							and mutex as the original.
+						</para>
+					</description>
+				</constructor>
+				<destructor>
+					<description>
+						<para>A <code>monitor_ptr</code> and all its copies share ownership of an underlying pointer
+							and a mutex.  The pointer and mutex are be deleted when the last copy of the
+							<code>monitor_ptr</code> is destroyed.  The deleter for the underlying pointer may
+							be customized by using the constructor which takes a <classname>boost::shared_ptr</classname>
+							as its parameter.
+						</para>
+					</description>
+				</destructor>
+			</access>
+		</class>
+		<class name="monitor_call_proxy">
+			<template>
+				<template-type-parameter name="T"/>
+				<template-type-parameter name="Mutex"/>
+			</template>
+			<purpose>Forwards the member access operator and then unlocks
+				<classname>monitor_ptr</classname>'s mutex.</purpose>
+			<description>
+				<para>
+					Objects of this class only exist as temporary objects resulting from
+					<methodname>monitor_ptr::operator-&gt;</methodname> member access calls.
+					They forward member access calls to the <classname>monitor_ptr</classname>'s
+					underlying pointer, and unlock the <classname>monitor_ptr</classname>'s
+					mutex in their destructor.
+				</para>
+			</description>
+			<access name="public">
+				<method name="operator->" cv="const">
+					<type>T *</type>
+				</method>
+			</access>
+		</class>
+	</namespace>
+</header>
