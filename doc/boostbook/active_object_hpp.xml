@@ -204,6 +204,20 @@
 		<class name="scheduler">
 			<inherit access="public"><type><classname>poet::scheduler_base</classname></type></inherit>
 			<purpose>Execute method requests in a separate thread. </purpose>
+			<description>
+				<para>
+					A <code>scheduler</code> object creates a new thread of execution which pulls method
+					requests from an activation queue and executes them.
+				</para>
+				<itemizedlist>
+					<title>Example Code</title>
+					<listitem>
+						<para>
+							<link linkend="poet.example.active_object_example.cpp">active_object_example.cpp</link>
+						</para>
+					</listitem>
+				</itemizedlist>
+			</description>
 			<access name="public">
 				<method-group name="public member functions">
 					<method name="post_method_request" cv="" specifiers="virtual">

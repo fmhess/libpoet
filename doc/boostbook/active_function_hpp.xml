@@ -3,7 +3,27 @@
 		<class name="active_function">
 			<template><template-type-parameter name="Signature"/></template>
 			<purpose>Create an active object from an ordinary function or object. </purpose>
-			<description><para>In the following, the active_function is taken to have a signature of: <programlisting>active_function&lt;R (T1, T2, ..., TN)&gt;</programlisting></para></description>
+			<description>
+				<para>An <code>active_function</code> can be created in one step from an ordinary function
+					or function object.  By default, an <code>active_function</code> is a fully functional active object
+					with its own scheduler.  Multiple <code>active_function</code>s may also share a scheduler and
+					be combined to form more complicated active objects.
+				</para>
+				<para>In the following, the active_function is taken to have a signature of: <programlisting>active_function&lt;R (T1, T2, ..., TN)&gt;</programlisting></para>
+				<itemizedlist>
+					<title>Example Code</title>
+					<listitem>
+						<para>
+							<link linkend="poet.example.pipeline.cpp">pipeline.cpp</link>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<link linkend="poet.example.active_object_example.cpp">active_object_example.cpp</link>
+						</para>
+					</listitem>
+				</itemizedlist>
+			</description>
 			<access name="public">
 				<typedef name="passive_result_type">
 					<type>boost::function_traits&lt;Signature&gt;::<classname>result_type</classname></type>

@@ -27,6 +27,14 @@
 				<para>
 					Variants which do "timed locking" or "try locking" could also be provided in the future.
 				</para>
+				<itemizedlist>
+					<title>Example Code</title>
+					<listitem>
+						<para>
+							<link linkend="poet.example.monitor_demo.cpp">pipeline.cpp</link>
+						</para>
+					</listitem>
+				</itemizedlist>
 			</description>
 			<access name="public">
 				<typedef name="element_type">

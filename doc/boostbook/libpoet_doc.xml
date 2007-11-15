@@ -96,8 +96,8 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 		<section id="poet.section.discussion">
 			<title>Discussion</title>
 			<para>
-				The <ulink url="http://www.boost.org/more/mailing_lists.htm">boost users and developers mailing lists</ulink>
-				may be used to discuss issues related to the library.
+				libpoet now has a <ulink url="http://groups.google.com/group/libpoet">mailing list</ulink> hosted on Google Groups,
+				which may be used to discuss issues related to the library.
 			</para>
 		</section>
 	</section>
@@ -105,12 +105,20 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 		xmlns:xi="http://www.w3.org/2001/XInclude"/>
 	<section id="poet.section.examples">
 		<title>Example Programs</title>
-		<section id="poet.example.pipline.cpp">
+		<section id="poet.example.pipeline.cpp">
 			<title>pipeline.cpp</title>
 			<para>
 				Download <ulink url="../../../examples/pipeline.cpp">pipeline.cpp</ulink>.
 			</para>
 			<programlisting><xi:include href="../../examples/pipeline.cpp"
+					xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+		</section>
+		<section id="poet.example.monitor_demo.cpp">
+			<title>monitor_demo.cpp</title>
+			<para>
+				Download <ulink url="../../../examples/monitor_demo.cpp">monitor_demo.cpp</ulink>.
+			</para>
+			<programlisting><xi:include href="../../examples/monitor_demo.cpp"
 					xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
 		</section>
 		<section id="poet.example.active_object_example.cpp">
