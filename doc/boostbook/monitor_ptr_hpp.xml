@@ -15,7 +15,14 @@
 					when they are accessed through the overloaded <methodname>operator-&gt;</methodname>.
 					It is based on ideas from
 					<ulink url="http://www.research.att.com/~bs/wrapper.pdf">"Wrapping C++ Member Function Calls"</ulink>
-					by Bjarne Stroustroup.
+					by Bjarne Stroustroup and <ulink url="//www.cs.wustl.edu/~schmidt/PDF/monitor.pdf">"Monitor Object:
+					An Object Behavioral Pattern for Concurrent Programming"</ulink> by Douglas C. Schmidt.
+				</para>
+				<para>
+					Although any object may be passed to a <code>monitor_ptr</code>, special support is provided
+					for classes derived from <classname>monitor_base</classname>.  This allows classes derived from
+					<classname>monitor_base</classname> to wait on conditions inside member function calls,
+					releasing the <code>monitor_ptr</code>'s mutex until the condition is met.
 				</para>
 				<para>
 					Variants which do "timed locking" or "try locking" could also be provided in the future.
@@ -43,8 +50,8 @@
 							<paramtype>const monitor_ptr&lt;T, Mutex&gt; &amp;</paramtype>
 						</parameter>
 						<description>
-							<para>After assignment, the two <code>monitor_ptr</code>s will share the same pointer
-								and mutex.
+							<para>After assignment, the two <code>monitor_ptr</code>s will share the same pointer,
+								mutex, and condition variable.
 							</para>
 						</description>
 					</method>
@@ -88,8 +95,9 @@
 				</constructor>
 				<destructor>
 					<description>
-						<para>A <code>monitor_ptr</code> and all its copies share ownership of an underlying pointer
-							and a mutex.  The pointer and mutex are be deleted when the last copy of the
+						<para>A <code>monitor_ptr</code> and all its copies share ownership of an underlying pointer,
+							mutex, and condition variable.  The pointer, mutex, and condition are
+							deleted when the last copy of the
 							<code>monitor_ptr</code> is destroyed.  The deleter for the underlying pointer may
 							be customized by using the constructor which takes a <classname>boost::shared_ptr</classname>
 							as its parameter.

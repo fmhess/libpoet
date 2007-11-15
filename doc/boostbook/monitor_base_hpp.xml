@@ -1,0 +1,65 @@
+<header name="poet/monitor_base.hpp">
+	<namespace name="poet">
+		<class name="monitor_base">
+			<purpose>A base class for monitor objects.</purpose>
+			<description>
+				<para>
+					Deriving from <code>monitor_base</code> allows a class (whose objects are managed by
+					<classname>monitor_ptr</classname>) to wait on conditions inside
+					member functions, releasing the <classname>monitor_ptr</classname>'s mutex until
+					the condition is satisfied.  See <ulink url="//www.cs.wustl.edu/~schmidt/PDF/monitor.pdf">"Monitor Object:
+					An Object Behavioral Pattern for Concurrent Programming"</ulink> by Douglas C. Schmidt
+					for more information on monitor objects.
+				</para>
+				<para>
+					Support for a <code>timed_wait()</code> could be added in the future.
+				</para>
+			</description>
+			<access name="protected">
+			<method-group name="protected member functions">
+					<overloaded-method name="wait">
+						<signature cv="const">
+							<type>void</type>
+						</signature>
+						<signature cv="const">
+							<template><template-type-parameter name="Pred"/></template>
+							<type>void</type>
+							<parameter name="pred"><paramtype>Pred</paramtype></parameter>
+						</signature>
+						<description>
+							<para>Blocks until the object is woken up by another thread via
+								<methodname>monitor_base::notify_all</methodname>() or <methodname>monitor_base::notify_one</methodname>().
+								The mutex in the object's associated <classname>monitor_ptr</classname> is unlocked
+								before the thread goes to sleep,
+								and then automatically reaquired when the thread wakes up again.
+							</para>
+							<para>
+								If the <code>pred</code> parameter is supplied, the call will return
+								when <code>pred()</code> returns <code>true</code>.  <code>pred()</code>
+								will be checked when <code>wait()</code> is first entered, and whenever the
+								thread is woken by a notification.  The mutex will be
+								locked when <code>pred()</code> is called.
+							</para>
+						</description>
+					</overloaded-method>
+					<method name="notify_all" cv="const">
+						<type>void</type>
+						<description>
+							<para>Wakes all threads which are currently blocking in <methodname>monitor_base::wait</methodname>() calls
+								on this object.  If no threads are waiting, it has no effect.
+							</para>
+						</description>
+					</method>
+					<method name="notify_one" cv="const">
+						<type>void</type>
+						<description>
+							<para>Wakes a single thread which is currently blocking in a <methodname>monitor_base::wait</methodname>() call
+								on this object.  If no threads are waiting, it has no effect.
+							</para>
+						</description>
+					</method>
+				</method-group>
+			</access>
+		</class>
+	</namespace>
+</header>

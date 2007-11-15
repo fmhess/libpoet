@@ -38,6 +38,10 @@
 				R. Greg Lavender and Douglas C. Schmidt</ulink>.
 			</para>
 			<para>
+					libpoet also provides support for creating monitor objects via the
+					<classname>poet::monitor_ptr</classname> and <classname>poet::monitor_base</classname> classes.
+			</para>
+			<para>
 				A version of this documentation corresponding to the most recent release should
 				be available online at
 				<ulink url="http://www.comedi.org/projects/libpoet/index.html">http://www.comedi.org/projects/libpoet/index.html</ulink>
