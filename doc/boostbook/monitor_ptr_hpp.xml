@@ -15,7 +15,7 @@
 					when they are accessed through the overloaded <methodname>operator-&gt;</methodname>.
 					It is based on ideas from
 					<ulink url="http://www.research.att.com/~bs/wrapper.pdf">"Wrapping C++ Member Function Calls"</ulink>
-					by Bjarne Stroustroup and <ulink url="//www.cs.wustl.edu/~schmidt/PDF/monitor.pdf">"Monitor Object:
+					by Bjarne Stroustroup and <ulink url="http://www.cs.wustl.edu/~schmidt/PDF/monitor.pdf">"Monitor Object:
 					An Object Behavioral Pattern for Concurrent Programming"</ulink> by Douglas C. Schmidt.
 				</para>
 				<para>
