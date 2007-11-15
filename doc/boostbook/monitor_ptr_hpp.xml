@@ -31,7 +31,7 @@
 					<title>Example Code</title>
 					<listitem>
 						<para>
-							<link linkend="poet.example.monitor_demo.cpp">pipeline.cpp</link>
+							<link linkend="poet.example.monitor_demo.cpp">monitor_demo.cpp</link>
 						</para>
 					</listitem>
 				</itemizedlist>
