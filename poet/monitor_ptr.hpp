@@ -68,7 +68,7 @@ namespace poet
 		monitor_call_proxy<T, Mutex> operator->() const
 		{
 			boost::shared_ptr<typename Mutex::scoped_lock> shared_lock(new typename Mutex::scoped_lock(_syncer->_mutex));
-			_syncer->_current_lock = shared_lock;
+			_syncer->set_current_lock(shared_lock);
 			return monitor_call_proxy<T, Mutex>(_pointer.get(), shared_lock);
 		}
 		// unlocked access

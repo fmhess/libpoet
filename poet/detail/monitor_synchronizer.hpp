@@ -52,14 +52,24 @@ namespace poet
 		public:
 			virtual void wait() const
 			{
-				_condition.wait(*_current_lock.lock());
+				boost::shared_ptr<typename Mutex::scoped_lock> lock = _current_lock.lock();
+				_condition.wait(*lock);
+				set_current_lock(lock);
 			}
 			virtual void wait(const boost::function<bool ()> &pred) const
 			{
-				_condition.wait(*_current_lock.lock(), pred);
+				boost::shared_ptr<typename Mutex::scoped_lock> lock = _current_lock.lock();
+				_condition.wait(*lock, pred);
+				set_current_lock(lock);
 			}
 			Mutex _mutex;
-			boost::weak_ptr<typename Mutex::scoped_lock> _current_lock;
+			void set_current_lock(const boost::weak_ptr<typename Mutex::scoped_lock> &lock) const
+			{
+				_current_lock = lock;
+// 				std::cerr << __FUNCTION__ << ": lock set to " << _current_lock.lock() << std::endl;
+			}
+		private:
+			mutable boost::weak_ptr<typename Mutex::scoped_lock> _current_lock;
 		};
 	};
 };
