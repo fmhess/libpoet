@@ -19,7 +19,7 @@
 #include <cassert>
 #include <list>
 #include <map>
-#include <poet/detail/static_mutex.hpp>
+#include <poet/detail/template_static.hpp>
 #include <string>
 
 namespace poet
@@ -54,7 +54,7 @@ namespace poet
 		{
 			static mutex_grapher *grapher = 0;
 
-			boost::mutex::scoped_lock lock(detail::static_mutex<mutex_grapher>::mutex);
+			boost::mutex::scoped_lock lock(detail::template_static<mutex_grapher, boost::mutex>::object);
 			if(grapher == 0) grapher = new mutex_grapher();
 			return *grapher;
 		}

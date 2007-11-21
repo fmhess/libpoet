@@ -20,12 +20,6 @@
 #include <sstream>
 #include <string>
 
-#ifdef NDEBUG
-#ifndef ACYCLIC_MUTEX_NDEBUG
-#define ACYCLIC_MUTEX_NDEBUG
-#endif
-#endif
-
 namespace poet
 {
 	namespace detail
@@ -115,32 +109,32 @@ namespace poet
 
 #ifdef ACYCLIC_MUTEX_NDEBUG	// user is compiling with lock order debugging disabled
 	template<typename Key = std::string, typename Mutex = boost::mutex>
-	class acyclic_mutex: public Mutex
+	class acyclic_mutex: public detail::acyclic_mutex_base, public Mutex
 	{
 	public:
 		typedef Mutex wrapped_mutex_type;
 		typedef Key key_type;
 
-		acyclic_mutex(const Key &node_key = Key())
+		acyclic_mutex(const Key &node_key = Key()): detail::acyclic_mutex_base(node_key)
 		{}
 	};
 
 	template<typename Key = std::string, typename Mutex = boost::try_mutex>
-	class acyclic_try_mutex: public Mutex
+	class acyclic_try_mutex: public detail::acyclic_mutex_base, public Mutex
 	{
 	public:
-		acyclic_try_mutex(const Key &node_key = Key())
+		acyclic_try_mutex(const Key &node_key = Key()): detail::acyclic_mutex_base(node_key)
 		{}
 	};
 
 	template<typename Key = std::string, typename Mutex = boost::timed_mutex>
-	class acyclic_timed_mutex: public Mutex
+	class acyclic_timed_mutex: public detail::acyclic_mutex_base, public Mutex
 	{
 	public:
-		acyclic_timed_mutex(const Key &node_key = Key())
+		acyclic_timed_mutex(const Key &node_key = Key()): detail::acyclic_mutex_base(node_key)
 		{}
 	};
-#else // user is compiling with lock order debugging enabled
+#else // ACYCLIC_MUTEX_NDEBUG undefined
 	template<typename Key = std::string, typename Mutex = boost::mutex>
 	class acyclic_mutex: public detail::acyclic_mutex_base
 	{
@@ -183,7 +177,7 @@ namespace poet
 		template<typename T>
 		friend class detail::scoped_timed_lock;
 	};
-#endif
+#endif	// ACYCLIC_MUTEX_NDEBUG
 };
 
 #endif // _POET_ACYCLIC_MUTEX_HPP
