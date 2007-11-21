@@ -60,7 +60,7 @@ namespace poet
 		{
 			set_monitor_ptr(_pointer.get());
 		}
-		monitor_ptr(T *pointer): _pointer(pointer),
+		explicit monitor_ptr(T *pointer): _pointer(pointer),
 			_syncer(new detail::monitor_synchronizer<Mutex>())
 		{
 			set_monitor_ptr(_pointer.get());
