@@ -24,10 +24,9 @@ namespace poet
 {
 	namespace detail
 	{
-		template<typename AcyclicMutex>
+		template<typename AcyclicMutex, typename Lock = AcyclicMutex::wrapped_mutex_type::scoped_lock>
 		class scoped_lock
 		{
-			typedef typename AcyclicMutex::wrapped_mutex_type::scoped_lock wrapped_lock_type;
 		public:
 			scoped_lock(AcyclicMutex &mutex): _tracker(mutex),
 				_lock(mutex._wrapped_mutex)
@@ -58,14 +57,13 @@ namespace poet
 			}
 		protected:
 			mutex_grapher::tracker _tracker;
-			wrapped_lock_type _lock;
+			Lock _lock;
 		};
 
-		template<typename AcyclicMutex>
-		class scoped_try_lock: public scoped_lock<AcyclicMutex>
+		template<typename AcyclicMutex, typename Lock = AcyclicMutex::wrapped_mutex_type::scoped_try_lock>
+		class scoped_try_lock: public scoped_lock<AcyclicMutex, Lock>
 		{
-			typedef scoped_lock<AcyclicMutex> base_class;
-			typedef typename AcyclicMutex::wrapped_mutex_type::scoped_try_lock wrapped_lock_type;
+			typedef scoped_lock<AcyclicMutex, Lock> base_class;
 		public:
 			scoped_try_lock(AcyclicMutex &mutex): base_class(mutex, false)
 			{
@@ -84,11 +82,10 @@ namespace poet
 			}
 		};
 
-		template<typename AcyclicMutex>
-		class scoped_timed_lock: public scoped_try_lock<AcyclicMutex>
+		template<typename AcyclicMutex, typename Lock = AcyclicMutex::wrapped_mutex_type::scoped_timed_lock>
+		class scoped_timed_lock: public scoped_try_lock<AcyclicMutex, Lock>
 		{
-			typedef scoped_try_lock<AcyclicMutex> base_class;
-			typedef typename AcyclicMutex::wrapped_mutex_type::scoped_timed_lock wrapped_lock_type;
+			typedef scoped_try_lock<AcyclicMutex, Lock> base_class;
 		public:
 			template<typename Timeout>
 			scoped_timed_lock(AcyclicMutex &mutex, const Timeout &t): base_class(mutex, false)
