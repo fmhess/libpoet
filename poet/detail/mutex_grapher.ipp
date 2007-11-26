@@ -19,6 +19,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/thread/mutex.hpp>
 #include <cassert>
+#include <cstdlib>
 #include <list>
 #include <map>
 #include <poet/detail/acyclic_mutex_base.hpp>
@@ -29,6 +30,9 @@
 
 namespace poet
 {
+	mutex_grapher::mutex_grapher(): _cycle_handler(&std::abort)
+	{}
+
 	void mutex_grapher::track_lock(const detail::acyclic_mutex_base &mutex)
 	{
 		boost::mutex::scoped_lock lock(_graph_mutex);
@@ -59,14 +63,14 @@ namespace poet
 			catch(const boost::not_a_dag &error)
 			{
 				acyclic = false;
-				_graph[new_edge].status = EDGE_LOCKING_ORDER_VIOLATION;
+				_graph[new_edge].locking_order_violation = true;
 			}
 		}
 		locked_mutexes().push_back(&mutex);
 		if(acyclic == false)
 		{
-			write_graphviz(std::cerr);
-			abort();
+			lock.unlock();
+			_cycle_handler();
 		}
 	};
 

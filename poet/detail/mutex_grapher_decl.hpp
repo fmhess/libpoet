@@ -13,6 +13,7 @@
 #ifndef _POET_MUTEX_GRAPHER_DECL_HPP
 #define _POET_MUTEX_GRAPHER_DECL_HPP
 
+#include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/tss.hpp>
@@ -36,15 +37,10 @@ namespace poet
 		{
 			std::string name;
 		};
-		enum edge_status
-		{
-			EDGE_OK,
-			EDGE_LOCKING_ORDER_VIOLATION
-		};
 		struct edge_properties
 		{
-			edge_properties(): status(EDGE_OK) {}
-			enum edge_status status;
+			edge_properties(): locking_order_violation(false) {}
+			bool locking_order_violation;
 		};
 		typedef boost::adjacency_list<boost::setS, boost::vecS, boost::directedS, vertex_properties, edge_properties>
 			locking_order_graph;
@@ -60,7 +56,12 @@ namespace poet
 		}
 		const locking_order_graph& graph() const {return _graph;}
 		inline void write_graphviz(std::ostream &out_stream);
-  private:
+		template<typename Func>
+		void set_cycle_handler(Func func)
+		{
+			_cycle_handler = func;
+		}
+	private:
 		class tracker
 		{
 		public:
@@ -108,17 +109,12 @@ namespace poet
 			void operator()(std::ostream &output_stream, locking_order_graph::edge_descriptor edge)
 			{
 				output_stream << "[color=";
-				switch(_graph[edge].status)
+				if(_graph[edge].locking_order_violation)
 				{
-				case EDGE_OK:
-					output_stream << "black";
-					break;
-				case EDGE_LOCKING_ORDER_VIOLATION:
 					output_stream << "red";
-					break;
-				default:
-					assert(false);
-					break;
+				}else
+				{
+					output_stream << "black";
 				}
 				output_stream << "]";
 			}
@@ -128,8 +124,7 @@ namespace poet
 		friend class tracker;
 		typedef std::list<const detail::acyclic_mutex_base *> mutex_list_type;
 
-		mutex_grapher()
-		{}
+		inline mutex_grapher();
 		mutex_list_type& locked_mutexes()
 		{
 			if(_locked_mutexes.get() == 0)
@@ -146,6 +141,7 @@ namespace poet
 		vertex_map_type _vertex_map;
 		boost::thread_specific_ptr<mutex_list_type> _locked_mutexes;
 		boost::mutex _graph_mutex;
+		boost::function<void ()> _cycle_handler;
 	};
 };
 
