@@ -24,7 +24,7 @@ namespace poet
 {
 	namespace detail
 	{
-		template<typename AcyclicMutex, typename Lock = AcyclicMutex::wrapped_mutex_type::scoped_lock>
+		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_lock>
 		class scoped_lock
 		{
 		public:
@@ -60,7 +60,7 @@ namespace poet
 			Lock _lock;
 		};
 
-		template<typename AcyclicMutex, typename Lock = AcyclicMutex::wrapped_mutex_type::scoped_try_lock>
+		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_try_lock>
 		class scoped_try_lock: public scoped_lock<AcyclicMutex, Lock>
 		{
 			typedef scoped_lock<AcyclicMutex, Lock> base_class;
@@ -82,7 +82,7 @@ namespace poet
 			}
 		};
 
-		template<typename AcyclicMutex, typename Lock = AcyclicMutex::wrapped_mutex_type::scoped_timed_lock>
+		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_timed_lock>
 		class scoped_timed_lock: public scoped_try_lock<AcyclicMutex, Lock>
 		{
 			typedef scoped_try_lock<AcyclicMutex, Lock> base_class;
