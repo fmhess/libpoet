@@ -10,7 +10,6 @@
 #define _POET_MONITOR_BASE_IPP
 
 #include <poet/monitor_base.hpp>
-#include <poet/monitor_ptr.hpp>
 
 namespace poet
 {

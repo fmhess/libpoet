@@ -13,7 +13,7 @@
 #ifndef _POET_MUTEX_GRAPHER_IPP
 #define _POET_MUTEX_GRAPHER_IPP
 
-#include <poet/detail/mutex_grapher_decl.hpp>
+#include <poet/mutex_grapher.hpp>
 
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graphviz.hpp>

@@ -16,7 +16,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <poet/detail/monitor_base_decl.hpp>
+#include <poet/monitor_base.hpp>
 #include <poet/detail/monitor_synchronizer.hpp>
 
 namespace boost
