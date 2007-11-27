@@ -29,47 +29,47 @@ namespace poet
 		class monitor_synchronizer_base
 		{
 		public:
+			typedef boost::function<void (boost::condition &, const boost::function<bool ()> &)> wait_function_type;
+
 			virtual ~monitor_synchronizer_base()
 			{}
 
-			virtual void wait() const = 0;
-			virtual void wait(const boost::function<bool ()> &pred) const = 0;
-			void notify_one() const
+			void wait()
+			{
+				wait_function_type wait_func = _wait_func;
+				_wait_func(_condition, boost::function<bool ()>());
+				// restore _wait_func after we have lock again
+				_wait_func = wait_func;
+			}
+			void wait(const boost::function<bool ()> &pred)
+			{
+				wait_function_type wait_func = _wait_func;
+				_wait_func(_condition, pred);
+				// restore _wait_func after we have lock again
+				_wait_func = wait_func;
+			}
+			void notify_one()
 			{
 				_condition.notify_one();
 			}
-			void notify_all() const
+			void notify_all()
 			{
 				_condition.notify_all();
 			}
+			void set_wait_function(const wait_function_type &wait_func)
+			{
+				_wait_func = wait_func;
+			}
 		protected:
-			mutable boost::condition _condition;
+			boost::condition _condition;
+			wait_function_type _wait_func;
 		};
 
 		template<typename Mutex>
 		class monitor_synchronizer: public monitor_synchronizer_base
 		{
 		public:
-			virtual void wait() const
-			{
-				boost::shared_ptr<typename Mutex::scoped_lock> lock = _current_lock.lock();
-				_condition.wait(*lock);
-				set_current_lock(lock);
-			}
-			virtual void wait(const boost::function<bool ()> &pred) const
-			{
-				boost::shared_ptr<typename Mutex::scoped_lock> lock = _current_lock.lock();
-				_condition.wait(*lock, pred);
-				set_current_lock(lock);
-			}
 			Mutex _mutex;
-			void set_current_lock(const boost::weak_ptr<typename Mutex::scoped_lock> &lock) const
-			{
-				_current_lock = lock;
-// 				std::cerr << __FUNCTION__ << ": lock set to " << _current_lock.lock() << std::endl;
-			}
-		private:
-			mutable boost::weak_ptr<typename Mutex::scoped_lock> _current_lock;
 		};
 	};
 };
