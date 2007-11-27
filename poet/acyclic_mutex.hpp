@@ -25,15 +25,15 @@ namespace poet
 	namespace detail
 	{
 		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_lock>
-		class scoped_lock
+		class acyclic_scoped_lock
 		{
 		public:
-			scoped_lock(AcyclicMutex &mutex): _tracker(mutex),
+			acyclic_scoped_lock(AcyclicMutex &mutex): _tracker(mutex),
 				_lock(mutex._wrapped_mutex)
 			{
 				_tracker.track_lock();
 			}
-			scoped_lock(AcyclicMutex &mutex, bool do_lock):
+			acyclic_scoped_lock(AcyclicMutex &mutex, bool do_lock):
 				_tracker(mutex),
 				_lock(mutex._wrapped_mutex, false)
 			{
@@ -61,48 +61,50 @@ namespace poet
 		};
 
 		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_try_lock>
-		class scoped_try_lock: public scoped_lock<AcyclicMutex, Lock>
+		class acyclic_scoped_try_lock: public acyclic_scoped_lock<AcyclicMutex, Lock>
 		{
-			typedef scoped_lock<AcyclicMutex, Lock> base_class;
+			typedef acyclic_scoped_lock<AcyclicMutex, Lock> base_class;
 		public:
-			scoped_try_lock(AcyclicMutex &mutex): base_class(mutex, false)
+			acyclic_scoped_try_lock(AcyclicMutex &mutex): base_class(mutex, false)
 			{
 				try_lock();
 			}
-			scoped_try_lock(AcyclicMutex &mutex, bool do_lock): base_class(mutex, do_lock)
+			acyclic_scoped_try_lock(AcyclicMutex &mutex, bool do_lock): base_class(mutex, do_lock)
 			{}
 			bool try_lock()
 			{
 				this->_tracker.track_lock();
-				if(this->_lock.try_lock() == false)
+				bool locked = this->_lock.try_lock();
+				if(locked == false)
 				{
 					this->_tracker.track_unlock();
 				}
-				return this->_lock.locked();
+				return locked;
 			}
 		};
 
 		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_timed_lock>
-		class scoped_timed_lock: public scoped_try_lock<AcyclicMutex, Lock>
+		class acyclic_scoped_timed_lock: public acyclic_scoped_try_lock<AcyclicMutex, Lock>
 		{
-			typedef scoped_try_lock<AcyclicMutex, Lock> base_class;
+			typedef acyclic_scoped_try_lock<AcyclicMutex, Lock> base_class;
 		public:
 			template<typename Timeout>
-			scoped_timed_lock(AcyclicMutex &mutex, const Timeout &t): base_class(mutex, false)
+			acyclic_scoped_timed_lock(AcyclicMutex &mutex, const Timeout &t): base_class(mutex, false)
 			{
 				timed_lock(t);
 			}
-			scoped_timed_lock(AcyclicMutex &mutex, bool do_lock): base_class(mutex, do_lock)
+			acyclic_scoped_timed_lock(AcyclicMutex &mutex, bool do_lock): base_class(mutex, do_lock)
 			{}
 			template<typename Timeout>
 			bool timed_lock(const Timeout &t)
 			{
 				this->_tracker.track_lock();
-				if(this->lock.timed_lock(t) == false)
+				bool locked = this->lock.timed_lock(t);
+				if(locked == false)
 				{
 					this->_tracker.track_unlock();
 				}
-				return this->_lock.locked();
+				return locked;
 			}
 		};
 	};
@@ -141,13 +143,13 @@ namespace poet
 	public:
 		typedef Mutex wrapped_mutex_type;
 		typedef Key key_type;
-		typedef detail::scoped_lock<acyclic_mutex<Key, Mutex> > scoped_lock;
+		typedef detail::acyclic_scoped_lock<acyclic_mutex<Key, Mutex> > scoped_lock;
 
 		acyclic_mutex(const Key &node_key = Key()): detail::acyclic_mutex_base(node_key)
 		{}
 	protected:
 		template<typename T>
-		friend class detail::scoped_lock;
+		friend class detail::acyclic_scoped_lock;
 
 		Mutex _wrapped_mutex;
 	};
@@ -156,26 +158,26 @@ namespace poet
 	class acyclic_try_mutex: public acyclic_mutex<Key, Mutex>
 	{
 	public:
-		typedef detail::scoped_try_lock<acyclic_mutex<Key, Mutex> > scoped_try_lock;
+		typedef detail::acyclic_scoped_try_lock<acyclic_mutex<Key, Mutex> > scoped_try_lock;
 
 		acyclic_try_mutex(const Key &node_key = Key()): acyclic_mutex<Key, Mutex>(node_key)
 		{}
 	protected:
 		template<typename T>
-		friend class detail::scoped_try_lock;
+		friend class detail::acyclic_scoped_try_lock;
 	};
 
 	template<typename Key = std::string, typename Mutex = boost::timed_mutex>
 	class acyclic_timed_mutex: public acyclic_try_mutex<Key, Mutex>
 	{
 	public:
-		typedef detail::scoped_timed_lock<acyclic_mutex<Key, Mutex> > scoped_timed_lock;
+		typedef detail::acyclic_scoped_timed_lock<acyclic_mutex<Key, Mutex> > scoped_timed_lock;
 
 		acyclic_timed_mutex(const Key &node_key = Key()): acyclic_try_mutex<Key, Mutex>(node_key)
 		{}
 	protected:
 		template<typename T>
-		friend class detail::scoped_timed_lock;
+		friend class detail::acyclic_scoped_timed_lock;
 	};
 #endif	// ACYCLIC_MUTEX_NDEBUG
 };
