@@ -15,6 +15,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/exceptions.hpp>
@@ -28,35 +29,35 @@ namespace poet
 	namespace detail
 	{
 		template<typename T, typename Mutex, typename Lock = typename Mutex::scoped_lock>
-		class monitor_ptr_scoped_lock
+		class monitor_ptr_scoped_lock: boost::noncopyable
 		{
 		public:
 			monitor_ptr_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer):
 				_pointer(monitor_pointer._pointer.get()),
 				_syncer(monitor_pointer._syncer),
-				_lock(new Lock(_syncer->_mutex))
+				_lock(_syncer->_mutex)
 			{
 				set_wait_function();
 			}
 			monitor_ptr_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
 				_pointer(monitor_pointer._pointer.get()),
 				_syncer(monitor_pointer._syncer),
-				_lock(new Lock(_syncer->_mutex))
+				_lock(_syncer->_mutex)
 			{
 				if(do_lock)
 					set_wait_function();
 			}
 
-			bool locked() const {return _lock->locked();}
-			operator const void*() const {return static_cast<const void*>(*_lock);}
+			bool locked() const {return _lock.locked();}
+			operator const void*() const {return static_cast<const void*>(_lock);}
 			void lock()
 			{
-				_lock->lock();
+				_lock.lock();
 				set_wait_function();
 			}
 			void unlock()
 			{
-				_lock->unlock();
+				_lock.unlock();
 			}
 			T* operator->() const
 			{
@@ -77,9 +78,9 @@ namespace poet
 			void wait_function(boost::condition &condition, const boost::function<bool ()> &pred)
 			{
 				if(pred == 0)
-					condition.wait(*_lock);
+					condition.wait(_lock);
 				else
-					condition.wait(*_lock, pred);
+					condition.wait(_lock, pred);
 			}
 		protected:
 			void set_wait_function()
@@ -91,7 +92,7 @@ namespace poet
 
 			T* _pointer;
 			boost::shared_ptr<detail::monitor_synchronizer<Mutex> > _syncer;
-			boost::shared_ptr<Lock> _lock;
+			Lock _lock;
 		};
 
 		template<typename T, typename Mutex, typename Lock = typename Mutex::scoped_try_lock>
@@ -109,7 +110,7 @@ namespace poet
 			{}
 			bool try_lock()
 			{
-				bool locked = this->_lock->try_lock();
+				bool locked = this->_lock.try_lock();
 				if(locked)
 				{
 					this->set_wait_function();
@@ -135,7 +136,7 @@ namespace poet
 			template<typename Timeout>
 			bool timed_lock(const Timeout &t)
 			{
-				bool locked = this->_lock->timed_lock(t);
+				bool locked = this->_lock.timed_lock(t);
 				if(locked)
 				{
 					this->set_wait_function();
@@ -154,6 +155,20 @@ namespace poet
 		typedef Mutex mutex_type;
 		typedef detail::monitor_ptr_scoped_lock<T, Mutex> scoped_lock;
 
+		class call_proxy
+		{
+		public:
+			const scoped_lock& operator->() {return *_lock;}
+		private:
+			friend class monitor_ptr;
+
+			call_proxy(const boost::shared_ptr<scoped_lock> &lock):
+				_lock(lock)
+			{}
+
+			boost::shared_ptr<scoped_lock> _lock;
+		};
+
 		monitor_ptr()
 		{}
 		monitor_ptr(boost::shared_ptr<T> smart_pointer): _pointer(smart_pointer),
@@ -168,9 +183,9 @@ namespace poet
 		}
 		virtual ~monitor_ptr() {}
 
-		scoped_lock operator->()
+		call_proxy operator->()
 		{
-			return scoped_lock(*this);
+			return call_proxy(boost::shared_ptr<scoped_lock>(new scoped_lock(*this)));
 		}
 		// unlocked access
 		const boost::shared_ptr<T>& direct() const {return _pointer;}
@@ -220,7 +235,7 @@ namespace poet
 		{}
 		timed_monitor_ptr(boost::shared_ptr<T> smart_pointer): base_class(smart_pointer)
 		{}
-		explicit try_monitor_ptr(T *pointer): base_class(pointer)
+		explicit timed_monitor_ptr(T *pointer): base_class(pointer)
 		{}
 	};
 };
