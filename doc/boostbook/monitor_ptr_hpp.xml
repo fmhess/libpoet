@@ -119,6 +119,18 @@
 					</access>
 				</class>
 				<method-group name="public member functions">
+					<method name="direct" cv="const">
+						<type>const boost::shared_ptr&lt;T&gt; &amp;</type>
+						<description><para>Gives direct unlocked access to the underlying pointer.</para></description>
+					</method>
+					<method name="operator bool" cv="const">
+						<description>
+							<para>
+								Conversion to <code>bool</code> results in <code>false</code> if the <code>monitor_ptr</code>'s underlying pointer
+								is null, <code>true</code> otherwise.
+							</para>
+						</description>
+					</method>
 					<method name="operator->" cv="const">
 						<type><classname>call_proxy</classname></type>
 						<description>
@@ -147,10 +159,29 @@
 							</para>
 						</description>
 					</method>
-					<method name="direct" cv="const">
-						<type>const boost::shared_ptr&lt;T&gt; &amp;</type>
-						<description><para>Gives direct unlocked access to the underlying pointer.</para></description>
-					</method>
+					<overloaded-method name="reset">
+						<signature>
+							<template>
+								<template-type-parameter name="U"/>
+							</template>
+							<type>void</type>
+							<parameter name="pointer">
+								<paramtype>U*</paramtype>
+							</parameter>
+						</signature>
+						<signature>
+							<type>void</type>
+							<parameter name="smart_pointer">
+								<paramtype>const boost::shared_ptr&lt;T&gt; &amp;</paramtype>
+							</parameter>
+						</signature>
+						<description>
+							<para>
+								Resets the <code>monitor_ptr</code>'s underlying pointer.  The <code>monitor_ptr</code>
+								also gets a new mutex and condition.
+							</para>
+						</description>
+					</overloaded-method>
 				</method-group>
 				<constructor>
 					<description>
@@ -159,8 +190,11 @@
 					</description>
 				</constructor>
 				<constructor specifiers="explicit">
+					<template>
+						<template-type-parameter name="U"/>
+					</template>
 					<parameter name="pointer">
-						<paramtype>T*</paramtype>
+						<paramtype>U*</paramtype>
 					</parameter>
 					<description>
 						<para>Creates a <code>monitor_ptr</code> which wraps the specified pointer.  The <code>monitor_ptr</code>
@@ -276,8 +310,11 @@
 					</description>
 				</constructor>
 				<constructor specifiers="explicit">
+					<template>
+						<template-type-parameter name="U"/>
+					</template>
 					<parameter name="pointer">
-						<paramtype>T*</paramtype>
+						<paramtype>U*</paramtype>
 					</parameter>
 					<description>
 						<para>Creates a <code>try_monitor_ptr</code> which wraps the specified pointer.  The <code>try_monitor_ptr</code>
