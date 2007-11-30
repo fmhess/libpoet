@@ -33,9 +33,9 @@ namespace poet
 		{
 		public:
 			monitor_ptr_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer):
-				_pointer(monitor_pointer._pointer.get()),
 				_syncer(monitor_pointer._syncer),
-				_lock(_syncer->_mutex)
+				_lock(_syncer->_mutex),
+				_pointer(monitor_pointer._pointer.get())
 			{
 				set_wait_function();
 			}
@@ -75,13 +75,6 @@ namespace poet
 				}
 				return *_pointer;
 			}
-			void wait_function(boost::condition &condition, const boost::function<bool ()> &pred)
-			{
-				if(pred == 0)
-					condition.wait(_lock);
-				else
-					condition.wait(_lock, pred);
-			}
 		protected:
 			void set_wait_function()
 			{
@@ -90,9 +83,19 @@ namespace poet
 				_syncer->set_wait_function(wait_func);
 				}
 
-			T* _pointer;
 			boost::shared_ptr<detail::monitor_synchronizer<Mutex> > _syncer;
 			Lock _lock;
+			T* _pointer;
+		private:
+			friend class detail::monitor_synchronizer<Mutex>;
+
+			void wait_function(boost::condition &condition, const boost::function<bool ()> &pred)
+			{
+				if(pred == 0)
+					condition.wait(_lock);
+				else
+					condition.wait(_lock, pred);
+			}
 		};
 
 		template<typename T, typename Mutex, typename Lock = typename Mutex::scoped_try_lock>
@@ -176,7 +179,8 @@ namespace poet
 		{
 			set_monitor_ptr(_pointer.get());
 		}
-		explicit monitor_ptr(T *pointer): _pointer(pointer),
+		template<typename U>
+		explicit monitor_ptr(U *pointer): _pointer(pointer),
 			_syncer(new detail::monitor_synchronizer<Mutex>())
 		{
 			set_monitor_ptr(_pointer.get());
@@ -189,7 +193,19 @@ namespace poet
 		}
 		// unlocked access
 		const boost::shared_ptr<T>& direct() const {return _pointer;}
-		//: TODO implement reset()
+
+		void reset(const boost::shared_ptr<T> smart_pointer)
+		{
+			_pointer = smart_pointer;
+			set_monitor_ptr(_pointer.get());
+			_syncer.reset(new detail::monitor_synchronizer<Mutex>());
+		};
+		template<typename U>
+		void reset(U *pointer)
+		{
+			boost::shared_ptr<T> smart_pointer(pointer);
+			reset(smart_pointer);
+		};
 	private:
 		template<typename U, typename M, typename L>
 		friend class detail::monitor_ptr_scoped_lock;
@@ -220,7 +236,8 @@ namespace poet
 		{}
 		try_monitor_ptr(boost::shared_ptr<T> smart_pointer): base_class(smart_pointer)
 		{}
-		explicit try_monitor_ptr(T *pointer): base_class(pointer)
+		template<typename U>
+		explicit try_monitor_ptr(U *pointer): base_class(pointer)
 		{}
 	};
 
@@ -235,7 +252,8 @@ namespace poet
 		{}
 		timed_monitor_ptr(boost::shared_ptr<T> smart_pointer): base_class(smart_pointer)
 		{}
-		explicit timed_monitor_ptr(T *pointer): base_class(pointer)
+		template<typename U>
+		explicit timed_monitor_ptr(U *pointer): base_class(pointer)
 		{}
 	};
 };
