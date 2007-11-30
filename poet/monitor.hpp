@@ -17,20 +17,42 @@
 
 namespace poet
 {
-	template<typename T, typename Mutex = boost::mutex>
+	template<typename T, typename Mutex = boost::timed_mutex>
 	class monitor
 	{
 	public:
 		typedef T value_type;
 		typedef Mutex mutex_type;
 
-		class scoped_lock: public monitor_ptr<T, Mutex>::scoped_lock
+		class scoped_lock: public timed_monitor_ptr<T, Mutex>::scoped_lock
 		{
-			typedef typename monitor_ptr<T, Mutex>::scoped_lock base_class;
+			typedef typename timed_monitor_ptr<T, Mutex>::scoped_lock base_class;
 		public:
 			scoped_lock(monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
 			{}
+			scoped_lock(monitor<T, Mutex> &mon, bool do_lock): base_class(mon._monitor_pointer, do_lock)
+			{}
 		};
+		class scoped_try_lock: public timed_monitor_ptr<T, Mutex>::scoped_try_lock
+		{
+			typedef typename timed_monitor_ptr<T, Mutex>::scoped_try_lock base_class;
+		public:
+			scoped_try_lock(monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
+			{}
+			scoped_try_lock(monitor<T, Mutex> &mon, bool do_lock): base_class(mon._monitor_pointer, do_lock)
+			{}
+		};
+		class scoped_timed_lock: public timed_monitor_ptr<T, Mutex>::scoped_timed_lock
+		{
+			typedef typename timed_monitor_ptr<T, Mutex>::scoped_timed_lock base_class;
+		public:
+			template<typename Timeout>
+			scoped_timed_lock(monitor<T, Mutex> &mon, const Timeout &t): base_class(mon._monitor_pointer, t)
+			{}
+			scoped_timed_lock(monitor<T, Mutex> &mon, bool do_lock): base_class(mon._monitor_pointer, do_lock)
+			{}
+		};
+
 		monitor()
 		{}
 		monitor(const T &object): _monitor_pointer(new T(object))
@@ -65,10 +87,8 @@ namespace poet
 			return *this = *temp;
 		}
 	private:
-
-		monitor_ptr<T, Mutex> _monitor_pointer;
+		timed_monitor_ptr<T, Mutex> _monitor_pointer;
 	};
-
 };
 
 #endif // _POET_MONITOR_HPP
