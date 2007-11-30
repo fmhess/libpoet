@@ -28,6 +28,13 @@ namespace poet
 	class monitor_base
 	{
 	public:
+		/* Does nothing except prevent _syncer from being disturbed
+		on assignment by default assignment operator.  It's fine if derived
+		class overrides this and doesn't call it, since it doesn't do anything! */
+		monitor_base& operator=(const monitor_base &rhs)
+		{
+			return *this;
+		}
 	protected:
 		inline void wait() const;
 		template<typename Pred>
