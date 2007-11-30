@@ -12,8 +12,9 @@
 #ifndef _POET_MONITOR_HPP
 #define _POET_MONITOR_HPP
 
-#include <poet/monitor_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <poet/detail/monitor_locks.hpp>
+#include <poet/monitor_ptr.hpp>
 
 namespace poet
 {
@@ -24,27 +25,27 @@ namespace poet
 		typedef T value_type;
 		typedef Mutex mutex_type;
 
-		class scoped_lock: public timed_monitor_ptr<T, Mutex>::scoped_lock
+		class scoped_lock: public detail::monitor_scoped_lock<T, Mutex>
 		{
-			typedef typename timed_monitor_ptr<T, Mutex>::scoped_lock base_class;
+			typedef typename detail::monitor_scoped_lock<T, Mutex> base_class;
 		public:
 			scoped_lock(monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
 			{}
 			scoped_lock(monitor<T, Mutex> &mon, bool do_lock): base_class(mon._monitor_pointer, do_lock)
 			{}
 		};
-		class scoped_try_lock: public timed_monitor_ptr<T, Mutex>::scoped_try_lock
+		class scoped_try_lock: public detail::monitor_scoped_try_lock<T, Mutex>
 		{
-			typedef typename timed_monitor_ptr<T, Mutex>::scoped_try_lock base_class;
+			typedef typename detail::monitor_scoped_try_lock<T, Mutex> base_class;
 		public:
 			scoped_try_lock(monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
 			{}
 			scoped_try_lock(monitor<T, Mutex> &mon, bool do_lock): base_class(mon._monitor_pointer, do_lock)
 			{}
 		};
-		class scoped_timed_lock: public timed_monitor_ptr<T, Mutex>::scoped_timed_lock
+		class scoped_timed_lock: public detail::monitor_scoped_timed_lock<T, Mutex>
 		{
-			typedef typename timed_monitor_ptr<T, Mutex>::scoped_timed_lock base_class;
+			typedef typename detail::monitor_scoped_timed_lock<T, Mutex> base_class;
 		public:
 			template<typename Timeout>
 			scoped_timed_lock(monitor<T, Mutex> &mon, const Timeout &t): base_class(mon._monitor_pointer, t)
@@ -58,21 +59,26 @@ namespace poet
 		monitor(const T &object): _monitor_pointer(new T(object))
 		{}
 		template<typename U, typename M>
-		monitor(const monitor<U, M> &other)
+		monitor(monitor<U, M> &other)
 		{
 			typename monitor<U, M>::scoped_lock lock(other);
 			_monitor_pointer.reset(new T((*lock)));
 		}
-		virtual ~monitor() {}
 
 		monitor& operator=(const T &rhs)
 		{
-			scoped_lock lock(*this);
-			*lock = rhs;
+			if(_monitor_pointer)
+			{
+				scoped_lock lock(*this);
+				*lock = rhs;
+			}else
+			{
+				_monitor_pointer.reset(new T(rhs));
+			}
 			return *this;
 		}
 		template<typename U, typename M>
-		monitor& operator=(const monitor<U, M> &rhs)
+		monitor& operator=(monitor<U, M> &rhs)
 		{
 			if(&rhs == this) return *this;
 
