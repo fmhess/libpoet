@@ -40,9 +40,9 @@ namespace poet
 				set_wait_function();
 			}
 			monitor_ptr_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				_pointer(monitor_pointer._pointer.get()),
 				_syncer(monitor_pointer._syncer),
-				_lock(_syncer->_mutex)
+				_lock(_syncer->_mutex),
+				_pointer(monitor_pointer._pointer.get())
 			{
 				if(do_lock)
 					set_wait_function();
