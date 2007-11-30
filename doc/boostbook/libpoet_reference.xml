@@ -13,4 +13,8 @@
 		xmlns:xi="http://www.w3.org/2001/XInclude"/>
 	<xi:include href="monitor_ptr_hpp.xml"
 		xmlns:xi="http://www.w3.org/2001/XInclude"/>
+	<xi:include href="monitor_hpp.xml"
+		xmlns:xi="http://www.w3.org/2001/XInclude"/>
+	<xi:include href="monitor_locks_hpp.xml"
+		xmlns:xi="http://www.w3.org/2001/XInclude"/>
 </library-reference>

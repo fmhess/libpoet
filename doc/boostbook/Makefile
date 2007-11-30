@@ -11,7 +11,9 @@ XML_SRCS=\
 	libpoet_doc.xml \
 	libpoet_reference.xml \
 	monitor_base_hpp.xml \
-	monitor_ptr_hpp.xml
+	monitor_ptr_hpp.xml \
+	monitor_hpp.xml \
+	monitor_locks_hpp.xml
 
 .PHONY: all
 all: doc

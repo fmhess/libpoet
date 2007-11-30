@@ -1,0 +1,156 @@
+<header name="poet/detail/monitor_locks.hpp">
+	<namespace name="poet">
+		<namespace name="detail">
+			<class name="monitor_scoped_lock">
+				<template>
+					<template-type-parameter name="T"/>
+					<template-type-parameter name="Mutex"/>
+					<template-type-parameter name="Lock">
+						<default>Mutex::scoped_lock</default>
+					</template-type-parameter>
+				</template>
+				<inherit access="public">
+					<type><classname>boost::noncopyable</classname></type>
+				</inherit>
+				<purpose>Scoped lock with member access</purpose>
+				<description>
+					<para>
+						<code>monitor_scoped_lock</code> objects should not be created directly by the user.
+						They are only documented here as part of the public interface of
+						derived classes such as <classname>monitor::scoped_lock</classname> and
+						<classname>monitor_ptr::scoped_lock</classname>.
+					</para>
+				</description>
+				<access name="public">
+					<method-group name="public member functions">
+						<method name="lock">
+							<type>void</type>
+							<description>
+								<para>Blocks until it can lock its associated monitor.
+								</para>
+							</description>
+							<postconditions>
+								<para><code>locked() == true</code></para>
+							</postconditions>
+						</method>
+						<method name="locked" cv="const">
+							<type>bool</type>
+							<returns>
+								<para><code>true</code> if the <code>scoped_lock</code> has locked its
+									associated monitor, <code>false</code> otherwise.
+								</para>
+							</returns>
+						</method>
+						<method name="operator-&gt;" cv="const">
+							<type>T*</type>
+							<description>
+								<para>Provides access to the members of the object owned by the <code>scoped_lock</code>'s associated
+									monitor.
+								</para>
+							</description>
+							<throws><para><classname>boost::lock_error</classname> if <code>locked() != true</code></para>
+							</throws>
+						</method>
+						<method name="operator*" cv="const">
+							<type>T&amp;</type>
+							<description>
+								<para>Provides access to the object owned by the <code>scoped_lock</code>'s associated
+									monitor.
+								</para>
+							</description>
+							<throws><para><classname>boost::lock_error</classname> if <code>locked() != true</code></para>
+							</throws>
+						</method>
+						<method name="unlock">
+							<type>void</type>
+							<description>
+								<para>Releases lock on its associated monitor.
+								</para>
+							</description>
+							<postconditions>
+								<para><code>locked() == false</code></para>
+							</postconditions>
+						</method>
+					</method-group>
+				</access>
+			</class>
+			<class name="monitor_scoped_try_lock">
+				<template>
+					<template-type-parameter name="T"/>
+					<template-type-parameter name="Mutex"/>
+					<template-type-parameter name="Lock">
+						<default>Mutex::scoped_try_lock</default>
+					</template-type-parameter>
+				</template>
+				<inherit access="public">
+					<type><classname>monitor_scoped_lock</classname>&lt;T, Mutex, Lock&gt;</type>
+				</inherit>
+				<purpose>Scoped try lock with member access</purpose>
+				<description>
+					<para>
+						<code>monitor_scoped_try_lock</code> objects should not be created directly by the user.
+						They are only documented here as part of the public interface of
+						derived classes such as <classname>monitor::scoped_try_lock</classname> and
+						<classname>try_monitor_ptr::scoped_try_lock</classname>.
+					</para>
+				</description>
+				<access name="public">
+					<method-group name="public member functions">
+						<method name="try_lock">
+							<type>bool</type>
+							<description>
+								<para>Makes a non-blocking attempt to lock its associated monitor.
+								</para>
+							</description>
+							<returns><para><code>true</code> if a lock was acquired, <code>false</code> otherwise.</para>
+							</returns>
+						</method>
+					</method-group>
+				</access>
+			</class>
+			<class name="monitor_scoped_timed_lock">
+				<template>
+					<template-type-parameter name="T"/>
+					<template-type-parameter name="Mutex"/>
+					<template-type-parameter name="Lock">
+						<default>Mutex::scoped_timed_lock</default>
+					</template-type-parameter>
+				</template>
+				<inherit access="public">
+					<type><classname>monitor_scoped_try_lock</classname>&lt;T, Mutex, Lock&gt;</type>
+				</inherit>
+				<purpose>Scoped timed lock with member access</purpose>
+				<description>
+					<para>
+						<code>monitor_scoped_timed_lock</code> objects should not be created directly by the user.
+						They are only documented here as part of the public interface of
+						derived classes such as <classname>monitor::scoped_timed_lock</classname> and
+						<classname>timed_monitor_ptr::scoped_timed_lock</classname>.
+					</para>
+				</description>
+				<access name="public">
+					<method-group name="public member functions">
+						<method name="timed_lock">
+							<template>
+								<template-type-parameter name="Timeout">
+								</template-type-parameter>
+							</template>
+							<type>bool</type>
+							<parameter name="timeout">
+								<paramtype>const Timeout &amp;</paramtype>
+							</parameter>
+							<description>
+								<para>Blocks for up to the time specified by the <code>timeout</code> parameter (which is passed to the
+									<code>timed_lock</code> method of the underlying <code>Mutex::scoped_timed_lock</code> object) in an
+									attempt to lock its associated monitor.
+								</para>
+							</description>
+							<returns><para><code>true</code> if a lock was acquired, <code>false</code> otherwise.</para>
+							</returns>
+						</method>
+					</method-group>
+				</access>
+			</class>
+		</namespace>
+	</namespace>
+</header>
