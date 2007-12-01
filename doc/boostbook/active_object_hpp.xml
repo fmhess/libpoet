@@ -161,13 +161,13 @@
 		<class name="out_of_order_activation_queue">
 			<inherit access="public"><type><classname>poet::in_order_activation_queue</classname></type></inherit>
 			<purpose>An activation queue which can reorder method requests. </purpose>
-			<description><para>An out_of_order_activation_queue will return the oldest method request which is currently ready for execution. Thus, a single method request which is not ready will never prevent other method requests which are ready from running. </para></description>
+			<description><para>An out_of_order_activation_queue can return any method request which is currently ready for execution. Thus, method requests which are not ready will never prevent a ready method request from running. </para></description>
 			<access name="public">
 				<method-group name="public member functions">
 					<method name="get_request" cv="" specifiers="virtual">
 						<type>boost::shared_ptr&lt;<classname>method_request_base</classname>&gt;</type>
 						<description><para></para></description>
-						<returns><para>The oldest method request in the queue which is currently ready for execution. </para></returns>
+						<returns><para>A method request from the queue which is currently ready for execution. </para></returns>
 					</method>
 				</method-group>
 				<destructor specifiers="virtual"/>

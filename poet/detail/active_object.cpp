@@ -42,46 +42,47 @@ boost::shared_ptr<poet::method_request_base> poet::in_order_activation_queue::un
 	return methodRequest;
 }
 
+void poet::out_of_order_activation_queue::push_back(const boost::shared_ptr<method_request_base> &request)
+{
+	boost::mutex::scoped_lock lock(_mutex);
+	_pendingRequests.insert(_next, request);
+}
+
 boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue::get_request()
 {
 	boost::mutex::scoped_lock lock(_mutex);
-	/* Optimization: before going through the entire list in reverse, do a quick check
-	of the common case where the request at the front of the queue is ready */
-	boost::shared_ptr<method_request_base> methodRequest = in_order_activation_queue::unlockedGetRequest();
-	if(methodRequest)
+	boost::shared_ptr<method_request_base> methodRequest;
+	list_type::iterator old_next = _next;
+	while(_next != _pendingRequests.end())
 	{
-		return methodRequest;
-	}
-	/* Iterating in reverse through the queue ensures that if we
-	pick a methodRequest to execute, it was the oldest ready
-	request at some point in time.  If you iterate forwards,
-	then there is a race between going through the queue and
-	requests asyncronously becoming ready.  The race makes it
-	possible for a request to be chosen to run when there is another
-	request which both older and has been ready longer. */
-	list_type::reverse_iterator rit;
-	list_type::iterator readyIt = _pendingRequests.end();
-	for(rit = _pendingRequests.rbegin(); rit != _pendingRequests.rend(); ++rit)
-	{
-		while(rit != _pendingRequests.rend() && (*rit)->cancelled())
+		if((*_next)->cancelled())
 		{
-			// need the predecrement to get an iterator that dereferences to the same object
-			list_type::iterator eraseIt = --rit.base();
-			/* rit is still a valid reverse iterator after erase, since
-			it is based on an iterator one past the erased point.  The erase
-			does have the side-effect of incrementing rit */
-			_pendingRequests.erase(eraseIt);
-		}
-		if(rit != _pendingRequests.rend() && (*rit)->ready())
+			_next = _pendingRequests.erase(_next);
+		}else if((*_next)->ready())
 		{
-			// need the predecrement to get an iterator that dereferences to the same object
-			readyIt = --rit.base();
+			methodRequest = *_next;
+			_next = _pendingRequests.erase(_next);
+			return methodRequest;
+		}else
+		{
+			++_next;
 		}
 	}
-	if(readyIt != _pendingRequests.end())
+	_next = _pendingRequests.begin();
+	while(_next != old_next)
 	{
-		methodRequest = *readyIt;
-		_pendingRequests.erase(readyIt);
+		if((*_next)->cancelled())
+		{
+			_next = _pendingRequests.erase(_next);
+		}else if((*_next)->ready())
+		{
+			methodRequest = *_next;
+			_next = _pendingRequests.erase(_next);
+			return methodRequest;
+		}else
+		{
+			++_next;
+		}
 	}
 	return methodRequest;
 }
