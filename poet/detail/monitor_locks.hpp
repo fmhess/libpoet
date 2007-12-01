@@ -35,14 +35,14 @@ namespace poet
 			monitor_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer):
 				_syncer(monitor_pointer._syncer),
 				_lock(_syncer->_mutex, true),
-				_pointer(monitor_pointer._pointer.get())
+				_pointer(monitor_pointer._pointer)
 			{
 				set_wait_function();
 			}
 			monitor_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
 				_syncer(monitor_pointer._syncer),
 				_lock(_syncer->_mutex, do_lock),
-				_pointer(monitor_pointer._pointer.get())
+				_pointer(monitor_pointer._pointer)
 			{
 				if(do_lock)
 					set_wait_function();
@@ -65,7 +65,7 @@ namespace poet
 				{
 					throw boost::lock_error();
 				}
-				return _pointer;
+				return _pointer.get();
 			}
 			T& operator*() const
 			{
@@ -85,7 +85,7 @@ namespace poet
 
 			boost::shared_ptr<detail::monitor_synchronizer<Mutex> > _syncer;
 			Lock _lock;
-			T* _pointer;
+			boost::shared_ptr<T> _pointer;
 		private:
 			friend class detail::monitor_synchronizer<Mutex>;
 
