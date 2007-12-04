@@ -46,10 +46,6 @@ namespace poet
 				if(do_lock)
 					set_wait_function();
 			}
-			~monitor_scoped_lock()
-			{
-				if(_lock.locked()) unlock();
-			}
 
 			bool locked() const {return _lock.locked();}
 			operator const void*() const {return static_cast<const void*>(_lock);}
@@ -60,7 +56,6 @@ namespace poet
 			}
 			void unlock()
 			{
-				clear_wait_function();
 				_lock.unlock();
 			}
 			T* operator->() const
@@ -85,12 +80,6 @@ namespace poet
 				typename detail::monitor_synchronizer<Mutex>::wait_function_type wait_func = boost::bind(
 					&poet::detail::monitor_scoped_lock<T, Mutex, Lock>::wait_function, this, _1, _2);
 				_syncer->set_wait_function(wait_func);
-			}
-			void clear_wait_function()
-			{
-#ifndef NDEBUG
-				_syncer->set_wait_function(0);
-#endif	// NDEBUG
 			}
 
 			boost::shared_ptr<detail::monitor_synchronizer<Mutex> > _syncer;
