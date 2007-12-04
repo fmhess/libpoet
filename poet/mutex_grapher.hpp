@@ -15,12 +15,13 @@
 
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/tss.hpp>
 #include <cassert>
 #include <list>
 #include <map>
 #include <poet/detail/template_static.hpp>
+#include <poet/monitor.hpp>
 #include <string>
 
 namespace poet
@@ -32,6 +33,7 @@ namespace poet
 
 	class mutex_grapher
 	{
+		typedef monitor_ptr<mutex_grapher, boost::recursive_mutex> monitor_type;
 	public:
 		struct vertex_properties
 		{
@@ -45,15 +47,13 @@ namespace poet
 		typedef boost::adjacency_list<boost::setS, boost::vecS, boost::directedS, vertex_properties, edge_properties>
 			locking_order_graph;
 		typedef std::map<std::string, locking_order_graph::vertex_descriptor> vertex_map_type;
-
-		static mutex_grapher& instance()
+		class scoped_lock: public monitor_type::scoped_lock
 		{
-			static mutex_grapher *grapher = 0;
+		public:
+			scoped_lock(): monitor_type::scoped_lock(mutex_grapher::instance())
+			{}
+		};
 
-			boost::mutex::scoped_lock lock(detail::template_static<mutex_grapher, boost::mutex>::object);
-			if(grapher == 0) grapher = new mutex_grapher();
-			return *grapher;
-		}
 		const locking_order_graph& graph() const {return _graph;}
 		inline void write_graphviz(std::ostream &out_stream);
 		template<typename Func>
@@ -76,13 +76,15 @@ namespace poet
 			{
 				if(_tracking) return;
 				_tracking = true;
-				mutex_grapher::instance().track_lock(_mutex);
+				mutex_grapher::scoped_lock lock;
+				lock->track_lock(_mutex);
 			}
 			void track_unlock()
 			{
 				if(_tracking == false) return;
 				_tracking = false;
-				mutex_grapher::instance().track_unlock(_mutex);
+				mutex_grapher::scoped_lock lock;
+				lock->track_unlock(_mutex);
 			}
 
 		private:
@@ -136,11 +138,20 @@ namespace poet
 		inline void track_lock(const detail::acyclic_mutex_base &_mutex);
 		inline void track_unlock(const detail::acyclic_mutex_base &_mutex);
 		inline void check_for_cycles() const;
+		// static functions
+		static monitor_type& instance()
+		{
+			static monitor_type grapher;
+
+			boost::mutex::scoped_lock lock(detail::template_static<mutex_grapher, boost::mutex>::object);
+			if(grapher == 0) grapher.reset(new mutex_grapher);
+			return grapher;
+		}
+		inline static void default_cycle_handler();
 
 		locking_order_graph _graph;
 		vertex_map_type _vertex_map;
 		boost::thread_specific_ptr<mutex_list_type> _locked_mutexes;
-		boost::mutex _graph_mutex;
 		boost::function<void ()> _cycle_handler;
 	};
 };

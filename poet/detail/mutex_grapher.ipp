@@ -17,7 +17,6 @@
 
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/thread/mutex.hpp>
 #include <cassert>
 #include <cstdlib>
 #include <list>
@@ -30,13 +29,11 @@
 
 namespace poet
 {
-	mutex_grapher::mutex_grapher(): _cycle_handler(&std::abort)
+	mutex_grapher::mutex_grapher(): _cycle_handler(&default_cycle_handler)
 	{}
 
 	void mutex_grapher::track_lock(const detail::acyclic_mutex_base &mutex)
 	{
-		boost::mutex::scoped_lock lock(_graph_mutex);
-
 		locking_order_graph::vertex_descriptor target_vertex;
 
 		vertex_map_type::iterator it = _vertex_map.find(mutex.node_key());
@@ -69,14 +66,12 @@ namespace poet
 		locked_mutexes().push_back(&mutex);
 		if(acyclic == false)
 		{
-			lock.unlock();
 			_cycle_handler();
 		}
 	};
 
 	void mutex_grapher::track_unlock(const detail::acyclic_mutex_base &_mutex)
 	{
-		boost::mutex::scoped_lock lock(_graph_mutex);
 		mutex_list_type::reverse_iterator rit = std::find(locked_mutexes().rbegin(), locked_mutexes().rend(), &_mutex);
 		assert(rit != locked_mutexes().rend());
 		locked_mutexes().erase(--(rit.base()));
@@ -93,6 +88,12 @@ namespace poet
 		result_type result;
 		// throws boost::not_a_dag if graph has cycles
 		boost::topological_sort(_graph, std::back_inserter(result));
+	}
+
+	void mutex_grapher::default_cycle_handler()
+	{
+		std::cerr << __PRETTY_FUNCTION__ << ": cycle detected in mutex locking order." << std::endl;
+		std::abort();
 	}
 };
 
