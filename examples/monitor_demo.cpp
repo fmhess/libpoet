@@ -1,11 +1,14 @@
 
 #include <boost/bind.hpp>
+#include <boost/ref.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <iostream>
+#include <poet/monitor.hpp>
 #include <poet/monitor_ptr.hpp>
 #include <poet/monitor_base.hpp>
 #include <unistd.h>
+
 
 class Monitored: public poet::monitor_base
 {
@@ -35,25 +38,71 @@ public:
 	}
 };
 
-void thread0_function(poet::monitor_ptr<Monitored> mymon)
+//example of using poet::monitor_ptr
+
+typedef poet::monitor_ptr<Monitored> monitor_ptr_type;
+
+void monitor_ptr_thread0_function(monitor_ptr_type mymonitor)
 {
-	mymon->waiting_function();
+	mymonitor->waiting_function();
 }
 
-void thread1_function(poet::monitor_ptr<Monitored> mymon)
+void monitor_ptr_thread1_function(monitor_ptr_type mymonitor)
 {
 	usleep(500000);
-	mymon->notifying_function();
+	mymonitor->notifying_function();
 	usleep(500000);
-	mymon->another_function();
+	mymonitor->another_function();
+}
+
+void monitor_ptr_example()
+{
+	std::cerr << "\n" << __PRETTY_FUNCTION__ << std::endl;
+	monitor_ptr_type mymonitor(new Monitored);
+	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor));
+	boost::thread thread1(boost::bind(&monitor_ptr_thread1_function, mymonitor));
+	thread0.join();
+	thread1.join();
+}
+
+
+// same thing done with poet::monitor
+
+typedef poet::monitor<Monitored> monitor_type;
+
+void monitor_thread0_function(monitor_type &mymonitor)
+{
+	monitor_type::scoped_lock mon_lock(mymonitor);
+	mon_lock->waiting_function();
+}
+
+void monitor_thread1_function(monitor_type &mymonitor)
+{
+	usleep(500000);
+	{
+		monitor_type::scoped_lock mon_lock(mymonitor);
+		mon_lock->notifying_function();
+	}
+	usleep(500000);
+	{
+		monitor_type::scoped_lock mon_lock(mymonitor);
+		mon_lock->another_function();
+	}
+}
+
+void monitor_example()
+{
+	std::cerr << "\n" << __PRETTY_FUNCTION__ << std::endl;
+	monitor_type mymonitor = Monitored();
+	boost::thread thread0(boost::bind(&monitor_thread0_function, boost::ref(mymonitor)));
+	boost::thread thread1(boost::bind(&monitor_thread1_function, boost::ref(mymonitor)));
+	thread0.join();
+	thread1.join();
 }
 
 int main()
 {
-	poet::monitor_ptr<Monitored> mymon(new Monitored);
-	boost::thread thread0(boost::bind(&thread0_function, mymon));
-	boost::thread thread1(boost::bind(&thread1_function, mymon));
-	thread0.join();
-	thread1.join();
+	monitor_ptr_example();
+	monitor_example();
 	return 0;
 }

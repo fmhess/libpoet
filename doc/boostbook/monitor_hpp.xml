@@ -30,6 +30,14 @@
 					described in the Boost Thread library.
 				</para>
 				<itemizedlist>
+					<title>Example Code</title>
+					<listitem>
+						<para>
+							<link linkend="poet.example.monitor_demo.cpp">monitor_demo.cpp</link>
+						</para>
+					</listitem>
+				</itemizedlist>
+				<itemizedlist>
 					<title>See also</title>
 					<listitem>
 						<para>
