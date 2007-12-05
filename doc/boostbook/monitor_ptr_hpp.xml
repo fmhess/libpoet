@@ -31,15 +31,32 @@
 					<classname>try_monitor_ptr::scoped_try_lock</classname> and
 					<classname>timed_monitor_ptr::scoped_timed_lock</classname> classes.
 				</para>
-				<para>
-					An alternative is provided by the <classname>monitor</classname> class, which
-					stores its wrapped object by value instead of acting like a pointer.
-				</para>
 				<itemizedlist>
 					<title>Example Code</title>
 					<listitem>
 						<para>
 							<link linkend="poet.example.monitor_demo.cpp">monitor_demo.cpp</link>
+						</para>
+					</listitem>
+				</itemizedlist>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem>
+						<para>
+							<classname>try_monitor_ptr</classname>: a class which extends <code>monitor_ptr</code> by adding a
+							scoped_try_lock.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<classname>timed_monitor_ptr</classname>: a class which extends <code>try_monitor_ptr</code> by adding a
+							scoped_timed_lock.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<classname>monitor</classname>: an alternative to the <code>monitor_ptr</code> class,
+							which stores its wrapped object by value instead of acting like a pointer.
 						</para>
 					</listitem>
 				</itemizedlist>
@@ -255,6 +272,15 @@
 					except its default Mutex template type is <classname>boost::try_mutex</classname>,
 					and it adds another scoped lock class: <classname>try_monitor_ptr::scoped_try_lock</classname>.
 				</para>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem>
+						<para>
+							<classname>timed_monitor_ptr</classname>: a class which extends <code>try_monitor_ptr</code> by adding a
+							scoped_timed_lock.
+						</para>
+					</listitem>
+				</itemizedlist>
 			</description>
 			<access name="public">
 				<class name="scoped_try_lock">
