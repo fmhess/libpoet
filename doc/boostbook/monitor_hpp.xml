@@ -164,6 +164,7 @@
 						</para>
 					</description>
 				</constructor>
+				<destructor specifiers="virtual"/>
 			</access>
 		</class>
 		<class name="try_monitor">

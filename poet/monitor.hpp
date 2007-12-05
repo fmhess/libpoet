@@ -49,6 +49,7 @@ namespace poet
 			typename monitor<U, M>::scoped_lock lock(other);
 			_monitor_pointer.reset(new T((*lock)));
 		}
+		virtual ~monitor() {}
 
 		monitor& operator=(const T &rhs)
 		{
@@ -87,9 +88,9 @@ namespace poet
 		{
 			typedef typename detail::monitor_scoped_try_lock<T, Mutex> base_class;
 		public:
-			scoped_try_lock(monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
+			scoped_try_lock(try_monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
 			{}
-			scoped_try_lock(monitor<T, Mutex> &mon, bool do_lock):
+			scoped_try_lock(try_monitor<T, Mutex> &mon, bool do_lock):
 				base_class(mon._monitor_pointer, do_lock)
 			{}
 		};
@@ -111,10 +112,10 @@ namespace poet
 			typedef typename detail::monitor_scoped_timed_lock<T, Mutex> base_class;
 		public:
 			template<typename Timeout>
-			scoped_timed_lock(monitor<T, Mutex> &mon, const Timeout &t):
+			scoped_timed_lock(timed_monitor<T, Mutex> &mon, const Timeout &t):
 				base_class(mon._monitor_pointer, t)
 			{}
-			scoped_timed_lock(monitor<T, Mutex> &mon, bool do_lock):
+			scoped_timed_lock(timed_monitor<T, Mutex> &mon, bool do_lock):
 				base_class(mon._monitor_pointer, do_lock)
 			{}
 		};
