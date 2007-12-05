@@ -39,7 +39,8 @@
 			</para>
 			<para>
 					libpoet also provides support for creating monitor objects via the
-					<classname>poet::monitor_ptr</classname> and <classname>poet::monitor_base</classname> classes.
+					<classname>poet::monitor_ptr</classname>, <classname>poet::monitor</classname>,
+					and <classname>poet::monitor_base</classname> classes.
 			</para>
 			<para>
 				A version of this documentation corresponding to the most recent release should
