@@ -90,7 +90,7 @@
 					<para>
 						<code>monitor_scoped_try_lock</code> objects should not be created directly by the user.
 						They are only documented here as part of the public interface of
-						derived classes such as <classname>monitor::scoped_try_lock</classname> and
+						derived classes such as <classname>try_monitor::scoped_try_lock</classname> and
 						<classname>try_monitor_ptr::scoped_try_lock</classname>.
 					</para>
 				</description>
@@ -124,7 +124,7 @@
 					<para>
 						<code>monitor_scoped_timed_lock</code> objects should not be created directly by the user.
 						They are only documented here as part of the public interface of
-						derived classes such as <classname>monitor::scoped_timed_lock</classname> and
+						derived classes such as <classname>timed_monitor::scoped_timed_lock</classname> and
 						<classname>timed_monitor_ptr::scoped_timed_lock</classname>.
 					</para>
 				</description>

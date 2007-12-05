@@ -4,15 +4,15 @@
 			<template>
 				<template-type-parameter name="T"/>
 				<template-type-parameter name="Mutex">
-					<default>boost::timed_mutex</default>
+					<default>boost::mutex</default>
 				</template-type-parameter>
 			</template>
-			<purpose>A wrapper which provides automatically locked access to an object.</purpose>
+			<purpose>A wrapper which provides insures locked access to an object.</purpose>
 			<description>
 				<para>
 					<code>monitor</code> allows for the easy creation of simple monitor objects.
 					A <code>monitor</code> provides automatically locked access to its contained object's members
-					through its scoped lock classes, which can be used like pointers.
+					through its scoped lock class, which can be used like pointers.
 					It stores its contained object by value, as an alternative to the pointer-like
 					interface of <classname>monitor_ptr</classname>.
 					Copies of a <code>monitor</code> object are deep copies, which do not share
@@ -23,12 +23,32 @@
 					special support is provided
 					for classes derived from <classname>monitor_base</classname>.  This allows classes derived from
 					<classname>monitor_base</classname> to wait on conditions inside member function calls,
-					releasing the <code>monitor</code>'s mutex until the condition is met.
+					releasing the <code>monitor</code>'s mutex until the condition is satisfied.
 				</para>
 				<para>
-					The <code>Mutex</code> template type must be a model of the TimedMutex concept as
+					The <code>Mutex</code> template type must be a model of the Mutex concept as
 					described in the Boost Thread library.
 				</para>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem>
+						<para>
+							<classname>try_monitor</classname>: a class which extends <code>monitor</code> by adding a
+							scoped_try_lock.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<classname>timed_monitor</classname>: a class which extends <code>try_monitor</code> by adding a
+							scoped_timed_lock.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<classname>monitor_ptr</classname>: a pointer-like alternative to the <code>monitor</code> class.
+						</para>
+					</listitem>
+				</itemizedlist>
 			</description>
 			<access name="public">
 				<typedef name="value_type">
@@ -86,104 +106,6 @@
 						</constructor>
 					</access>
 				</class>
-				<class name="scoped_try_lock">
-					<inherit access="public">
-						<type><classname>detail::monitor_scoped_try_lock</classname>&lt;T, Mutex&gt;</type>
-					</inherit>
-					<purpose>Scoped try lock with member access</purpose>
-					<description>
-						<para>
-							<code>monitor::scoped_try_lock</code> models the ScopedTryLock concept described by the
-							Boost Thread libarary, with its associated mutex type being <classname>monitor</classname>.
-							In addition, <code>scoped_try_lock</code> can be used like a pointer via its
-							member access and dereference operators, which provide safe access to an object contained
-							in a <classname>monitor</classname>.
-						</para>
-					</description>
-					<access name="public">
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>,
-									and calls <methodname alt="detail::monitor_scoped_try_lock::try_lock">try_lock</methodname>().
-								</para>
-							</description>
-						</constructor>
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="do_lock">
-								<paramtype>bool</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>.
-									If <code>do_lock</code> is <code>true</code>, calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == do_lock</code></para>
-							</postconditions>
-						</constructor>
-					</access>
-				</class>
-				<class name="scoped_timed_lock">
-					<inherit access="public">
-						<type><classname>detail::monitor_scoped_timed_lock</classname>&lt;T, Mutex&gt;</type>
-					</inherit>
-					<purpose>Scoped timed lock with member access</purpose>
-					<description>
-						<para>
-							<code>monitor::scoped_timed_lock</code> models the ScopedTimedLock concept described by the
-							Boost Thread libarary, with its associated mutex type being <classname>monitor</classname>.
-							In addition, <code>scoped_timed_lock</code> can be used like a pointer via its
-							member access and dereference operators, which provide safe access to an object contained
-							in a <classname>monitor</classname>.
-						</para>
-					</description>
-					<access name="public">
-						<constructor>
-							<template>
-								<template-type-parameter name="Timeout"/>
-							</template>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="timeout">
-								<paramtype>const Timeout &amp;</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>,
-									and calls <code><methodname alt="detail::monitor_scoped_timed_lock::timed_lock">timed_lock</methodname>(timeout)</code>.
-								</para>
-							</description>
-						</constructor>
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="do_lock">
-								<paramtype>bool</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>.
-									If <code>do_lock</code> is <code>true</code>, calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == do_lock</code></para>
-							</postconditions>
-						</constructor>
-					</access>
-				</class>
 				<method-group name="public member functions">
 					<overloaded-method name="operator=">
 						<signature>
@@ -219,15 +141,6 @@
 					</overloaded-method>
 				</method-group>
 				<constructor>
-					<description>
-						<para>The default constructor creates an empty <code>monitor</code> which is unusable
-							until a value is assigned to it.  It does not attempt to default-construct a value of type
-							<code>T</code> for itself, since that would limit <code>monitor</code> to
-							default-constructible types.
-						</para>
-					</description>
-				</constructor>
-				<constructor>
 					<parameter name="value">
 						<paramtype>const T &amp;</paramtype>
 					</parameter>
@@ -242,10 +155,199 @@
 						<template-type-parameter name="M"/>
 					</template>
 					<parameter name="other">
-						<paramtype>monitor&lt;U, M&gt; &amp;</paramtype>
+						<paramtype><classname>monitor</classname>&lt;U, M&gt; &amp;</paramtype>
 					</parameter>
 					<description>
 						<para>Creates a <code>monitor</code> whose contained value is a copy of the
+							value contained in the <code>other</code> parameter.  <code>other</code> is
+							locked before its value is copied out.
+						</para>
+					</description>
+				</constructor>
+			</access>
+		</class>
+		<class name="try_monitor">
+			<template>
+				<template-type-parameter name="T"/>
+				<template-type-parameter name="Mutex">
+					<default>boost::try_mutex</default>
+				</template-type-parameter>
+			</template>
+			<purpose>Extends <classname>monitor</classname> with a scoped try lock.</purpose>
+			<description>
+				<para>
+					<code>try_monitor</code> adds a <classname alt="try_monitor::scoped_try_lock">scoped_try_lock</classname> nested class to
+					the <classname>monitor</classname> class.
+					The <code>Mutex</code> template type must be a model of the TryMutex concept as
+					described in the Boost Thread library.
+				</para>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem><para><classname>timed_monitor</classname>: a class which extends <code>try_monitor</code> by adding a
+						scoped_timed_lock.</para></listitem>
+				</itemizedlist>
+			</description>
+			<access name="public">
+				<class name="scoped_try_lock">
+					<inherit access="public">
+						<type><classname>detail::monitor_scoped_try_lock</classname>&lt;T, Mutex&gt;</type>
+					</inherit>
+					<purpose>Scoped try lock with member access</purpose>
+					<description>
+						<para>
+							<code>try_monitor::scoped_try_lock</code> models the ScopedTryLock concept described by the
+							Boost Thread libarary, with its associated mutex type being <classname>try_monitor</classname>.
+							In addition, <code>scoped_try_lock</code> can be used like a pointer via its
+							member access and dereference operators, which provide safe access to an object contained
+							in a <classname>monitor</classname>.
+						</para>
+					</description>
+					<access name="public">
+						<constructor>
+							<parameter name="mon">
+								<paramtype><classname>try_monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object contained in a <code>try_monitor</code>,
+									and calls <methodname alt="detail::monitor_scoped_try_lock::try_lock">try_lock</methodname>().
+								</para>
+							</description>
+						</constructor>
+						<constructor>
+							<parameter name="mon">
+								<paramtype><classname>try_monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<parameter name="do_lock">
+								<paramtype>bool</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object contained in a <code>try_monitor</code>.
+									If <code>do_lock</code> is <code>true</code>, calls
+									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
+								</para>
+							</description>
+							<postconditions>
+								<para><code>locked() == do_lock</code></para>
+							</postconditions>
+						</constructor>
+					</access>
+				</class>
+				<constructor>
+					<parameter name="value">
+						<paramtype>const T &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>Creates a <code>try_monitor</code> which contains a copy of the specified value.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<template>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="M"/>
+					</template>
+					<parameter name="other">
+						<paramtype><classname>monitor</classname>&lt;U, M&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>Creates a <code>try_monitor</code> whose contained value is a copy of the
+							value contained in the <code>other</code> parameter.  <code>other</code> is
+							locked before its value is copied out.
+						</para>
+					</description>
+				</constructor>
+			</access>
+		</class>
+		<class name="timed_monitor">
+			<template>
+				<template-type-parameter name="T"/>
+				<template-type-parameter name="Mutex">
+					<default>boost::timed_mutex</default>
+				</template-type-parameter>
+			</template>
+			<purpose>Extends <classname>try_monitor</classname> with a scoped timed lock.</purpose>
+			<description>
+				<para>
+					<code>timed_monitor</code> adds a <classname alt="timed_monitor::scoped_timed_lock">scoped_timed_lock</classname>
+					nested class to the <classname>try_monitor</classname> class.
+					The <code>Mutex</code> template type must be a model of the TimedMutex concept as
+					described in the Boost Thread library.
+				</para>
+			</description>
+			<access name="public">
+				<class name="scoped_timed_lock">
+					<inherit access="public">
+						<type><classname>detail::monitor_scoped_timed_lock</classname>&lt;T, Mutex&gt;</type>
+					</inherit>
+					<purpose>Scoped timed lock with member access</purpose>
+					<description>
+						<para>
+							<code>timed_monitor::scoped_timed_lock</code> models the ScopedTimedLock concept described by the
+							Boost Thread libarary, with its associated mutex type being <classname>timed_monitor</classname>.
+							In addition, <code>scoped_timed_lock</code> can be used like a pointer via its
+							member access and dereference operators, which provide safe access to an object contained
+							in a <classname>monitor</classname>.
+						</para>
+					</description>
+					<access name="public">
+						<constructor>
+							<template>
+								<template-type-parameter name="Timeout"/>
+							</template>
+							<parameter name="mon">
+								<paramtype><classname>timed_monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<parameter name="timeout">
+								<paramtype>const Timeout &amp;</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object contained in a <code>timed_monitor</code>,
+									and calls <code><methodname alt="detail::monitor_scoped_timed_lock::timed_lock">timed_lock</methodname>(timeout)</code>.
+								</para>
+							</description>
+						</constructor>
+						<constructor>
+							<parameter name="mon">
+								<paramtype><classname>timed_monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<parameter name="do_lock">
+								<paramtype>bool</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object contained in a <code>timed_monitor</code>.
+									If <code>do_lock</code> is <code>true</code>, calls
+									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
+								</para>
+							</description>
+							<postconditions>
+								<para><code>locked() == do_lock</code></para>
+							</postconditions>
+						</constructor>
+					</access>
+				</class>
+				<constructor>
+					<parameter name="value">
+						<paramtype>const T &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>Creates a <code>timed_monitor</code> which contains a copy of the specified value.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<template>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="M"/>
+					</template>
+					<parameter name="other">
+						<paramtype><classname>monitor</classname>&lt;U, M&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>Creates a <code>timed_monitor</code> whose contained value is a copy of the
 							value contained in the <code>other</code> parameter.  <code>other</code> is
 							locked before its value is copied out.
 						</para>
