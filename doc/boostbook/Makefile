@@ -32,6 +32,8 @@ html: libpoet_doc.docbook
 		xsltproc --xinclude --stringparam boost.root $(PROJECT_ROOT) \
 		--stringparam chapters.select.box.show false \
 		--stringparam google.search.box.show false \
+		--stringparam toc.max.depth 4 \
+		--stringparam toc.section.depth 3 \
 		-o html/ $(BOOSTBOOK_TOOL_DIR)/xsl/html.xsl $<)
 
 libpoet_doc.docbook: $(XML_SRCS)

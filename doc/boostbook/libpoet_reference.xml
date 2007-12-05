@@ -1,20 +1,29 @@
 <library-reference id="libpoet_reference">
-	<xi:include href="active_object_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="active_function_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="exception_ptr_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="exceptions_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="future_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="monitor_base_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="monitor_ptr_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="monitor_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
-	<xi:include href="monitor_locks_hpp.xml"
-		xmlns:xi="http://www.w3.org/2001/XInclude"/>
+	<section id="libpoet_reference.section.active_objects">
+		<title>Active Objects</title>
+		<xi:include href="active_object_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="active_function_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="exception_ptr_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="exceptions_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="future_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+	</section>
+	<section id="libpoet_reference.section.monitor_objects">
+		<title>Monitor Objects</title>
+		<xi:include href="monitor_base_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="monitor_ptr_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="monitor_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="monitor_locks_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+	</section>
+	<section id="libpoet_reference.section.mutex_debugging">
+		<title>Mutex Debugging</title>
+	</section>
 </library-reference>
