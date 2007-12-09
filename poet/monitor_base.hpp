@@ -15,13 +15,14 @@
 
 #include <boost/function.hpp>
 #include <poet/detail/monitor_synchronizer.hpp>
+#include <poet/mutex_properties.hpp>
 
 namespace poet
 {
-	template<typename T, typename Mutex>
-	class monitor_ptr;
 	namespace detail
 	{
+		template<typename T, typename Mutex, enum mutex_model>
+		class specialized_monitor_ptr;
 		class monitor_synchronizer_base;
 	};
 
@@ -45,8 +46,8 @@ namespace poet
 		inline void notify_one() const;
 		inline void notify_all() const;
 	private:
-		template<typename T, typename Mutex>
-		friend class monitor_ptr;
+		template<typename T, typename Mutex, enum mutex_model>
+		friend class detail::specialized_monitor_ptr;
 
 		inline void set_synchronizer(const boost::shared_ptr<detail::monitor_synchronizer_base> &syncer) const;
 

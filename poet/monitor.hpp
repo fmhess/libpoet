@@ -14,8 +14,8 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <poet/detail/monitor_locks.hpp>
-#include <poet/mutex_properties.hpp>
 #include <poet/monitor_ptr.hpp>
+#include <poet/mutex_properties.hpp>
 
 namespace poet
 {
@@ -23,7 +23,10 @@ namespace poet
 	{
 		template<typename T, typename Mutex, enum mutex_model>
 		class specialized_monitor
-		{};
+		{
+		private:
+			specialized_monitor() {}
+		};
 		
 		template<typename T, typename Mutex>
 		class specialized_monitor<T, Mutex, mutex_concept>
@@ -32,11 +35,12 @@ namespace poet
 			typedef T value_type;
 			typedef Mutex mutex_type;
 
-			class scoped_lock: public detail::monitor_scoped_lock<T, Mutex>
+			class scoped_lock: public monitor_ptr<T, Mutex>::scoped_lock
 			{
-				typedef typename detail::monitor_scoped_lock<T, Mutex> base_class;
+				typedef typename monitor_ptr<T, Mutex>::scoped_lock base_class;
 			public:
-				scoped_lock(specialized_monitor<T, Mutex, mutex_concept> &mon): base_class(mon._monitor_pointer)
+				scoped_lock(specialized_monitor<T, Mutex, mutex_concept> &mon):
+					base_class(mon._monitor_pointer)
 				{}
 				scoped_lock(specialized_monitor<T, Mutex, mutex_concept> &mon, bool do_lock):
 					base_class(mon._monitor_pointer, do_lock)
@@ -87,9 +91,9 @@ namespace poet
 		{
 			typedef specialized_monitor<T, Mutex, mutex_concept> base_class;
 		public:
-			class scoped_try_lock: public detail::monitor_scoped_try_lock<T, Mutex>
+			class scoped_try_lock: public monitor_ptr<T, Mutex>::scoped_try_lock
 			{
-				typedef typename detail::monitor_scoped_try_lock<T, Mutex> base_class;
+				typedef typename monitor_ptr<T, Mutex>::scoped_try_lock base_class;
 			public:
 				scoped_try_lock(specialized_monitor<T, Mutex, try_mutex_concept> &mon): base_class(mon._monitor_pointer)
 				{}
@@ -111,9 +115,9 @@ namespace poet
 		{
 			typedef specialized_monitor<T, Mutex, try_mutex_concept> base_class;
 		public:
-			class scoped_timed_lock: public detail::monitor_scoped_timed_lock<T, Mutex>
+			class scoped_timed_lock: public monitor_ptr<T, Mutex>::scoped_timed_lock
 			{
-				typedef typename detail::monitor_scoped_timed_lock<T, Mutex> base_class;
+				typedef typename monitor_ptr<T, Mutex>::scoped_timed_lock base_class;
 			public:
 				template<typename Timeout>
 				scoped_timed_lock(specialized_monitor<T, Mutex, timed_mutex_concept> &mon, const Timeout &t):

@@ -22,26 +22,25 @@
 
 namespace poet
 {
-	template<typename T, typename Mutex>
-	class monitor_ptr;
-
 	namespace detail
 	{
 		template<typename T, typename Mutex, typename Lock = typename Mutex::scoped_lock>
 		class monitor_scoped_lock: boost::noncopyable
 		{
 		public:
-			monitor_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer):
-				_syncer(monitor_pointer._syncer),
+			monitor_scoped_lock(const boost::shared_ptr<detail::monitor_synchronizer<Mutex> > &syncer,
+				const boost::shared_ptr<T> &pointer):
+				_syncer(syncer),
 				_lock(_syncer->_mutex, true),
-				_pointer(monitor_pointer._pointer)
+				_pointer(pointer)
 			{
 				set_wait_function();
 			}
-			monitor_scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				_syncer(monitor_pointer._syncer),
+			monitor_scoped_lock(const boost::shared_ptr<detail::monitor_synchronizer<Mutex> > &syncer,
+				const boost::shared_ptr<T> &pointer, bool do_lock):
+				_syncer(syncer),
 				_lock(_syncer->_mutex, do_lock),
-				_pointer(monitor_pointer._pointer)
+				_pointer(pointer)
 			{
 				if(do_lock)
 					set_wait_function();
@@ -102,13 +101,15 @@ namespace poet
 		{
 			typedef monitor_scoped_lock<T, Mutex, Lock> base_class;
 		public:
-			monitor_scoped_try_lock(monitor_ptr<T, Mutex> &monitor_pointer):
-				base_class(monitor_pointer, false)
+			monitor_scoped_try_lock(const boost::shared_ptr<detail::monitor_synchronizer<Mutex> > &syncer,
+				const boost::shared_ptr<T> &pointer):
+				base_class(syncer, pointer, false)
 			{
 				try_lock();
 			}
-			monitor_scoped_try_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer, do_lock)
+			monitor_scoped_try_lock(const boost::shared_ptr<detail::monitor_synchronizer<Mutex> > &syncer,
+				const boost::shared_ptr<T> &pointer, bool do_lock):
+				base_class(syncer, pointer, do_lock)
 			{}
 			bool try_lock()
 			{
@@ -127,13 +128,15 @@ namespace poet
 			typedef monitor_scoped_try_lock<T, Mutex, Lock> base_class;
 		public:
 			template<typename Timeout>
-			monitor_scoped_timed_lock(monitor_ptr<T, Mutex> &monitor_pointer, const Timeout &t):
-				base_class(monitor_pointer, false)
+			monitor_scoped_timed_lock(const boost::shared_ptr<detail::monitor_synchronizer<Mutex> > &syncer,
+				const boost::shared_ptr<T> &pointer, const Timeout &t):
+				base_class(syncer, pointer, false)
 			{
 				timed_lock(t);
 			}
-			monitor_scoped_timed_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer, do_lock)
+			monitor_scoped_timed_lock(const boost::shared_ptr<detail::monitor_synchronizer<Mutex> > &syncer,
+				const boost::shared_ptr<T> &pointer, bool do_lock):
+				base_class(syncer, pointer, do_lock)
 			{}
 			template<typename Timeout>
 			bool timed_lock(const Timeout &t)
