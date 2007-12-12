@@ -12,8 +12,10 @@
 #ifndef _POET_ACYCLIC_MUTEX_BASE_HPP
 #define _POET_ACYCLIC_MUTEX_BASE_HPP
 
+#include <boost/optional.hpp>
 #include <boost/thread/mutex.hpp>
 #include <poet/detail/template_static.hpp>
+#include <poet/detail/mutex_grapher_decl.hpp>
 #include <sstream>
 #include <string>
 
@@ -30,35 +32,59 @@ namespace poet
 #ifdef ACYCLIC_MUTEX_NDEBUG
 		class acyclic_mutex_base
 		{
+		protected:
+			typedef mutex_grapher::locking_order_graph::vertex_descriptor vertex_descriptor_type;
 		public:
-			acyclic_mutex_base(const std::string &node_key)
+			const vertex_descriptor_type* vertex_descriptor() const {return 0;}
+			void set_vertex_descriptor(vertex_descriptor_type vertex)
 			{}
-			const std::string& node_key() const {return template_static<acyclic_mutex_base, std::string>::object;}
 		};
+
+		template<typename Key>
+		class acyclic_mutex_keyed_base: public acyclic_mutex_base
+		{
+			typedef mutex_grapher::locking_order_graph::vertex_descriptor vertex_descriptor_type;
+		public:
+			typedef Key key_type;
+
+			acyclic_mutex_keyed_base()
+			{}
+			acyclic_mutex_keyed_base(const Key &node_key)
+			{}
+			const Key* node_key() const {return 0;}
+		};
+
 #else	// ACYCLIC_MUTEX_NDEBUG not defined
+
 		class acyclic_mutex_base
 		{
+		protected:
+			typedef mutex_grapher::locking_order_graph::vertex_descriptor vertex_descriptor_type;
 		public:
-			acyclic_mutex_base(const std::string &node_key): _node_key(node_key)
+			const vertex_descriptor_type* vertex_descriptor() const {return _vertex_descriptor.get_ptr();}
+			void set_vertex_descriptor(vertex_descriptor_type vertex)
 			{
-				if(_node_key == "")
-				{
-					std::ostringstream key_stream;
-					key_stream << generate_mutex_id();
-					_node_key = key_stream.str();
-				}
+				_vertex_descriptor = vertex;
 			}
-			const std::string& node_key() const {return _node_key;}
+		protected:
+			boost::optional<vertex_descriptor_type> _vertex_descriptor;
+		};
+
+		template<typename Key>
+		class acyclic_mutex_keyed_base: public acyclic_mutex_base
+		{
+			typedef mutex_grapher::locking_order_graph::vertex_descriptor vertex_descriptor_type;
+		public:
+			typedef Key key_type;
+
+			acyclic_mutex_keyed_base()
+			{}
+			acyclic_mutex_keyed_base(const Key &node_key): _node_key(node_key)
+			{}
+			const Key* node_key() const {return _node_key.get_ptr();}
 		private:
-			static uint64_t generate_mutex_id()
-			{
-				static uint64_t next_id = 0;
 
-				boost::mutex::scoped_lock lock(template_static<acyclic_mutex_base, boost::mutex>::object);
-				return next_id++;
-			}
-
-			std::string _node_key;
+			boost::optional<Key> _node_key;
 		};
 #endif	// ACYCLIC_MUTEX_NDEBUG
 	};

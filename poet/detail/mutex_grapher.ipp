@@ -32,27 +32,43 @@ namespace poet
 	mutex_grapher::mutex_grapher(): _cycle_handler(&default_cycle_handler)
 	{}
 
-	void mutex_grapher::track_lock(const detail::acyclic_mutex_base &mutex)
+	template<typename AcyclicMutex>
+	void mutex_grapher::track_lock(AcyclicMutex &mutex)
 	{
-		locking_order_graph::vertex_descriptor target_vertex;
+		if(mutex.vertex_descriptor() == 0)
+		{
+			typedef detail::vertex_finder<typename AcyclicMutex::key_type, typename AcyclicMutex::key_compare> vertex_finder_type;
 
-		vertex_map_type::iterator it = _vertex_map.find(mutex.node_key());
-		if(it == _vertex_map.end())
-		{
-			target_vertex = boost::add_vertex(_graph);
-			_graph[target_vertex].name = mutex.node_key();
-			_vertex_map[mutex.node_key()] = target_vertex;
-		}else
-		{
-			target_vertex = it->second;
+			const typename locking_order_graph::vertex_descriptor *found_vertex = 0;
+			typename locking_order_graph::vertex_descriptor target_vertex;
+			typename vertex_finder_type::scoped_lock finder;
+			if(mutex.node_key())
+			{
+				found_vertex = finder->find_vertex(*mutex.node_key());
+			}
+			if(found_vertex)
+			{
+				target_vertex = *found_vertex;
+			}else
+			{
+				target_vertex = boost::add_vertex(_graph);
+				std::ostringstream node_name;
+				if(mutex.node_key())
+					node_name << *mutex.node_key();
+				else
+					node_name << "vertex " << target_vertex;
+				_graph[target_vertex].name = node_name.str();
+				if(mutex.node_key())
+					finder->add_vertex(*mutex.node_key(), target_vertex);
+			}
+			mutex.set_vertex_descriptor(target_vertex);
 		}
 		bool acyclic = true;
 		if(locked_mutexes().empty() == false)
 		{
-			it = _vertex_map.find(locked_mutexes().back()->node_key());
-			assert(it != _vertex_map.end());
-			locking_order_graph::vertex_descriptor source_vertex = it->second;
-			locking_order_graph::edge_descriptor new_edge = boost::add_edge(source_vertex, target_vertex, _graph).first;
+			const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex_descriptor();
+			typename locking_order_graph::edge_descriptor new_edge = boost::add_edge(source_vertex,
+				*mutex.vertex_descriptor(), _graph).first;
 			try
 			{
 				check_for_cycles();

@@ -58,7 +58,7 @@ namespace poet
 				_lock.unlock();
 			}
 		protected:
-			mutex_grapher::tracker _tracker;
+			mutex_grapher::tracker<AcyclicMutex> _tracker;
 			Lock _lock;
 		};
 
@@ -115,20 +115,22 @@ namespace poet
 
 #ifdef ACYCLIC_MUTEX_NDEBUG	// user is compiling with lock order debugging disabled
 		template<typename Mutex, bool recursive, enum mutex_model model, typename Key, typename KeyCompare>
-		class specialized_acyclic_mutex: public detail::acyclic_mutex_base, public Mutex
+		class specialized_acyclic_mutex: public detail::acyclic_mutex_keyed_base<Key>, public Mutex
 		{
 		public:
 			typedef Mutex wrapped_mutex_type;
 			typedef Key key_type;
 			typedef KeyCompare key_compare;
 
-			specialized_acyclic_mutex(const Key &node_key): detail::acyclic_mutex_base(node_key)
+			specialized_acyclic_mutex()
+			{}
+			specialized_acyclic_mutex(const Key &node_key): detail::acyclic_mutex_keyed_base<Key>(node_key)
 			{}
 		};
 #else // ACYCLIC_MUTEX_NDEBUG undefined
 		template<typename Mutex, bool recursive, typename Key, typename KeyCompare>
 		class specialized_acyclic_mutex<Mutex, recursive, mutex_concept, Key, KeyCompare>:
-			public detail::acyclic_mutex_base
+			public detail::acyclic_mutex_keyed_base<Key>
 		{
 		public:
 			typedef Mutex wrapped_mutex_type;
@@ -136,7 +138,9 @@ namespace poet
 			typedef KeyCompare key_compare;
 			typedef detail::acyclic_scoped_lock<specialized_acyclic_mutex> scoped_lock;
 
-			specialized_acyclic_mutex(const Key &node_key): detail::acyclic_mutex_base(node_key)
+			specialized_acyclic_mutex()
+			{}
+			specialized_acyclic_mutex(const Key &node_key): detail::acyclic_mutex_keyed_base<Key>(node_key)
 			{}
 		protected:
 			template<typename M, typename L>
@@ -153,6 +157,8 @@ namespace poet
 		public:
 			typedef detail::acyclic_scoped_try_lock<specialized_acyclic_mutex> scoped_try_lock;
 
+			specialized_acyclic_mutex()
+			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
 		protected:
@@ -168,6 +174,8 @@ namespace poet
 		public:
 			typedef detail::acyclic_scoped_timed_lock<specialized_acyclic_mutex> scoped_timed_lock;
 
+			specialized_acyclic_mutex()
+			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
 		protected:
@@ -185,7 +193,9 @@ namespace poet
 		typedef typename detail::specialized_acyclic_mutex<Mutex, mutex_properties<Mutex>::recursive,
 			mutex_properties<Mutex>::model, Key, KeyCompare> base_class;
 	public:
-		acyclic_mutex(const Key &node_key = Key()): base_class(node_key)
+		acyclic_mutex()
+		{}
+		acyclic_mutex(const Key &node_key): base_class(node_key)
 		{}
 	};
 };
