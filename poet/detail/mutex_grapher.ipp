@@ -21,7 +21,7 @@
 #include <cstdlib>
 #include <list>
 #include <map>
-#include <poet/detail/acyclic_mutex_base.hpp>
+#include <poet/acyclic_mutex_base.hpp>
 #include <poet/mutex_properties.hpp>
 #include <sstream>
 #include <stdint.h>
@@ -90,7 +90,7 @@ namespace poet
 		}
 	};
 
-	void mutex_grapher::track_unlock(const detail::acyclic_mutex_base &mutex)
+	void mutex_grapher::track_unlock(const acyclic_mutex_base &mutex)
 	{
 		if(mutex.will_really_unlock())
 		{

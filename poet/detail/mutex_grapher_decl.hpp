@@ -27,13 +27,10 @@
 
 namespace poet
 {
+	// forward declarations
+	class acyclic_mutex_base;
 	namespace detail
 	{
-		// forward declarations
-		class acyclic_mutex_base;
-		template<typename Key>
-		class acyclic_mutex_keyed_base;
-		class acyclic_mutex_base;
 		template<typename AcyclicMutex, typename Lock>
 		class acyclic_scoped_lock;
 	};
@@ -53,6 +50,7 @@ namespace poet
 		};
 		typedef boost::adjacency_list<boost::setS, boost::vecS, boost::directedS, vertex_properties, edge_properties>
 			locking_order_graph;
+		typedef std::list<const acyclic_mutex_base *> mutex_list_type;
 		class scoped_lock: public monitor_type::scoped_lock
 		{
 		public:
@@ -66,6 +64,11 @@ namespace poet
 		void set_cycle_handler(Func func)
 		{
 			_cycle_handler = func;
+		}
+		const mutex_list_type& locked_mutexes() const
+		{
+			check_locked_mutexes_init();
+			return *_locked_mutexes;
 		}
 	private:
 		template<typename AcyclicMutex>
@@ -136,20 +139,23 @@ namespace poet
 		friend class detail::acyclic_scoped_lock;
 		template<typename AcyclicMutex>
 		friend class tracker;
-		typedef std::list<const detail::acyclic_mutex_base *> mutex_list_type;
 
 		inline mutex_grapher();
-		mutex_list_type& locked_mutexes()
+		void check_locked_mutexes_init() const
 		{
 			if(_locked_mutexes.get() == 0)
 			{
 				_locked_mutexes.reset(new mutex_list_type);
 			}
+		}
+		mutex_list_type& locked_mutexes()
+		{
+			check_locked_mutexes_init();
 			return *_locked_mutexes;
 		}
 		template<typename AcyclicMutex>
 		inline void track_lock(AcyclicMutex &_mutex);
-		inline void track_unlock(const detail::acyclic_mutex_base &_mutex);
+		inline void track_unlock(const acyclic_mutex_base &_mutex);
 		inline void check_for_cycles() const;
 
 		// static functions
@@ -164,7 +170,7 @@ namespace poet
 		inline static void default_cycle_handler();
 
 		locking_order_graph _graph;
-		boost::thread_specific_ptr<mutex_list_type> _locked_mutexes;
+		mutable boost::thread_specific_ptr<mutex_list_type> _locked_mutexes;
 		boost::function<void ()> _cycle_handler;
 	};
 

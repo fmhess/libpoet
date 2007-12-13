@@ -13,11 +13,12 @@
 #define _POET_ACYCLIC_MUTEX_HPP
 
 #include <boost/graph/graphviz.hpp>
+#include <boost/optional.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/tss.hpp>
 #include <cassert>
 #include <functional>
-#include <poet/detail/acyclic_mutex_base.hpp>
+#include <poet/acyclic_mutex_base.hpp>
 #include <poet/mutex_grapher.hpp>
 #include <poet/mutex_properties.hpp>
 #include <sstream>
@@ -117,7 +118,7 @@ namespace poet
 
 #ifdef ACYCLIC_MUTEX_NDEBUG	// user is compiling with lock order debugging disabled
 		template<typename Mutex, bool recursive, enum mutex_model model, typename Key, typename KeyCompare>
-		class specialized_acyclic_mutex: public detail::acyclic_mutex_keyed_base<Key>, public Mutex
+		class specialized_acyclic_mutex: public acyclic_mutex_base, public Mutex
 		{
 		public:
 			typedef Mutex wrapped_mutex_type;
@@ -126,15 +127,16 @@ namespace poet
 
 			specialized_acyclic_mutex()
 			{}
-			specialized_acyclic_mutex(const Key &node_key): detail::acyclic_mutex_keyed_base<Key>(node_key)
+			specialized_acyclic_mutex(const Key &node_key)
 			{}
+			const Key* node_key() const {return 0;}
 		};
 #else // ACYCLIC_MUTEX_NDEBUG undefined
 
 		// non-recursive mutex
 		template<typename Mutex, typename Key, typename KeyCompare>
 		class specialized_acyclic_mutex<Mutex, false, mutex_concept, Key, KeyCompare>:
-			public detail::acyclic_mutex_keyed_base<Key>
+			public acyclic_mutex_base
 		{
 		public:
 			typedef Mutex wrapped_mutex_type;
@@ -144,13 +146,15 @@ namespace poet
 
 			specialized_acyclic_mutex()
 			{}
-			specialized_acyclic_mutex(const Key &node_key): detail::acyclic_mutex_keyed_base<Key>(node_key)
+			specialized_acyclic_mutex(const Key &node_key): _node_key(node_key)
 			{}
-			~specialized_acyclic_mutex() {}
+
+			const Key* node_key() const {return _node_key.get_ptr();}
 		protected:
 			template<typename M, typename L>
 			friend class detail::acyclic_scoped_lock;
 
+			boost::optional<Key> _node_key;
 			Mutex _wrapped_mutex;
 		};
 
