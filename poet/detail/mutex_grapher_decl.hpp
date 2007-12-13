@@ -29,6 +29,7 @@ namespace poet
 {
 	namespace detail
 	{
+		// forward declarations
 		class acyclic_mutex_base;
 		template<typename Key>
 		class acyclic_mutex_keyed_base;
@@ -84,11 +85,13 @@ namespace poet
 				_tracking = true;
 				mutex_grapher::scoped_lock lock;
 				lock->track_lock(_mutex);
+				_mutex.increment_recursive_lock_count();
 			}
 			void track_unlock()
 			{
 				if(_tracking == false) return;
 				_tracking = false;
+				_mutex.decrement_recursive_lock_count();
 				mutex_grapher::scoped_lock lock;
 				lock->track_unlock(_mutex);
 			}
@@ -131,7 +134,7 @@ namespace poet
 		};
 		template<typename AcyclicMutex, typename Lock>
 		friend class detail::acyclic_scoped_lock;
-		template<typename Key>
+		template<typename AcyclicMutex>
 		friend class tracker;
 		typedef std::list<const detail::acyclic_mutex_base *> mutex_list_type;
 
@@ -148,6 +151,7 @@ namespace poet
 		inline void track_lock(AcyclicMutex &_mutex);
 		inline void track_unlock(const detail::acyclic_mutex_base &_mutex);
 		inline void check_for_cycles() const;
+
 		// static functions
 		static monitor_type& instance()
 		{

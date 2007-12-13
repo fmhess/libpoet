@@ -22,6 +22,7 @@
 #include <list>
 #include <map>
 #include <poet/detail/acyclic_mutex_base.hpp>
+#include <poet/mutex_properties.hpp>
 #include <sstream>
 #include <stdint.h>
 #include <string>
@@ -63,34 +64,40 @@ namespace poet
 			}
 			mutex.set_vertex_descriptor(target_vertex);
 		}
-		bool acyclic = true;
-		if(locked_mutexes().empty() == false)
+		if(mutex.will_really_lock())
 		{
-			const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex_descriptor();
-			typename locking_order_graph::edge_descriptor new_edge = boost::add_edge(source_vertex,
-				*mutex.vertex_descriptor(), _graph).first;
-			try
+			bool acyclic = true;
+			if(locked_mutexes().empty() == false)
 			{
-				check_for_cycles();
+				const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex_descriptor();
+				typename locking_order_graph::edge_descriptor new_edge = boost::add_edge(source_vertex,
+					*mutex.vertex_descriptor(), _graph).first;
+				try
+				{
+					check_for_cycles();
+				}
+				catch(const boost::not_a_dag &error)
+				{
+					acyclic = false;
+					_graph[new_edge].locking_order_violation = true;
+				}
 			}
-			catch(const boost::not_a_dag &error)
+			locked_mutexes().push_back(&mutex);
+			if(acyclic == false)
 			{
-				acyclic = false;
-				_graph[new_edge].locking_order_violation = true;
+				_cycle_handler();
 			}
-		}
-		locked_mutexes().push_back(&mutex);
-		if(acyclic == false)
-		{
-			_cycle_handler();
 		}
 	};
 
-	void mutex_grapher::track_unlock(const detail::acyclic_mutex_base &_mutex)
+	void mutex_grapher::track_unlock(const detail::acyclic_mutex_base &mutex)
 	{
-		mutex_list_type::reverse_iterator rit = std::find(locked_mutexes().rbegin(), locked_mutexes().rend(), &_mutex);
-		assert(rit != locked_mutexes().rend());
-		locked_mutexes().erase(--(rit.base()));
+		if(mutex.will_really_unlock())
+		{
+			mutex_list_type::reverse_iterator rit = std::find(locked_mutexes().rbegin(), locked_mutexes().rend(), &mutex);
+			assert(rit != locked_mutexes().rend());
+			locked_mutexes().erase(--(rit.base()));
+		}
 	}
 
 	void mutex_grapher::write_graphviz(std::ostream &out_stream)

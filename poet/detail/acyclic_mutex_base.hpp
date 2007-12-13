@@ -35,8 +35,25 @@ namespace poet
 		protected:
 			typedef mutex_grapher::locking_order_graph::vertex_descriptor vertex_descriptor_type;
 		public:
+			virtual ~acyclic_mutex_base() {}
+
 			const vertex_descriptor_type* vertex_descriptor() const {return 0;}
 			void set_vertex_descriptor(vertex_descriptor_type vertex)
+			{}
+		protected:
+			friend class poet::mutex_grapher;
+
+			virtual bool will_really_lock() const
+			{
+				return true;
+			}
+			virtual bool will_really_unlock() const
+			{
+				return true;
+			}
+			virtual void increment_recursive_lock_count()
+			{}
+			virtual void decrement_recursive_lock_count()
 			{}
 		};
 
@@ -61,12 +78,29 @@ namespace poet
 		protected:
 			typedef mutex_grapher::locking_order_graph::vertex_descriptor vertex_descriptor_type;
 		public:
+			virtual ~acyclic_mutex_base() {}
+
 			const vertex_descriptor_type* vertex_descriptor() const {return _vertex_descriptor.get_ptr();}
 			void set_vertex_descriptor(vertex_descriptor_type vertex)
 			{
 				_vertex_descriptor = vertex;
 			}
 		protected:
+			friend class poet::mutex_grapher;
+
+			virtual bool will_really_lock() const
+			{
+				return true;
+			}
+			virtual bool will_really_unlock() const
+			{
+				return true;
+			}
+			virtual void increment_recursive_lock_count()
+			{}
+			virtual void decrement_recursive_lock_count()
+			{}
+
 			boost::optional<vertex_descriptor_type> _vertex_descriptor;
 		};
 

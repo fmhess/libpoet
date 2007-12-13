@@ -14,6 +14,7 @@
 
 #include <boost/graph/graphviz.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/tss.hpp>
 #include <cassert>
 #include <functional>
 #include <poet/detail/acyclic_mutex_base.hpp>
@@ -31,9 +32,10 @@ namespace poet
 		{
 		public:
 			acyclic_scoped_lock(AcyclicMutex &mutex): _tracker(mutex),
-				_lock(mutex._wrapped_mutex)
+				_lock(mutex._wrapped_mutex, false)
 			{
 				_tracker.track_lock();
+				_lock.lock();
 			}
 			acyclic_scoped_lock(AcyclicMutex &mutex, bool do_lock):
 				_tracker(mutex),
@@ -128,8 +130,10 @@ namespace poet
 			{}
 		};
 #else // ACYCLIC_MUTEX_NDEBUG undefined
-		template<typename Mutex, bool recursive, typename Key, typename KeyCompare>
-		class specialized_acyclic_mutex<Mutex, recursive, mutex_concept, Key, KeyCompare>:
+
+		// non-recursive mutex
+		template<typename Mutex, typename Key, typename KeyCompare>
+		class specialized_acyclic_mutex<Mutex, false, mutex_concept, Key, KeyCompare>:
 			public detail::acyclic_mutex_keyed_base<Key>
 		{
 		public:
@@ -142,6 +146,7 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key): detail::acyclic_mutex_keyed_base<Key>(node_key)
 			{}
+			~specialized_acyclic_mutex() {}
 		protected:
 			template<typename M, typename L>
 			friend class detail::acyclic_scoped_lock;
@@ -149,6 +154,54 @@ namespace poet
 			Mutex _wrapped_mutex;
 		};
 
+		// recursive mutex
+		template<typename Mutex, typename Key, typename KeyCompare>
+		class specialized_acyclic_mutex<Mutex, true, mutex_concept, Key, KeyCompare>:
+			public specialized_acyclic_mutex<Mutex, false, mutex_concept, Key, KeyCompare>
+		{
+			typedef specialized_acyclic_mutex<Mutex, false, mutex_concept, Key, KeyCompare> base_class;
+		public:
+			specialized_acyclic_mutex()
+			{}
+			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
+			{}
+			virtual ~specialized_acyclic_mutex() {}
+		protected:
+			virtual bool will_really_lock() const
+			{
+				check_lock_count_init();
+				return *_lock_count == 0;
+			}
+			virtual bool will_really_unlock() const
+			{
+				check_lock_count_init();
+				return *_lock_count == 0;
+			}
+			virtual void increment_recursive_lock_count()
+			{
+				check_lock_count_init();
+				++(*_lock_count);
+				assert(*_lock_count >= 0);
+			}
+			virtual void decrement_recursive_lock_count()
+			{
+				check_lock_count_init();
+				--(*_lock_count);
+				assert(*_lock_count >= 0);
+			}
+		private:
+			template<typename M, typename L>
+			friend class detail::acyclic_scoped_lock;
+
+			void check_lock_count_init() const
+			{
+				if(_lock_count.get() == 0) _lock_count.reset(new int(0));
+			}
+
+			mutable boost::thread_specific_ptr<int> _lock_count;
+		};
+
+		// try mutex
 		template<typename Mutex, bool recursive, typename Key, typename KeyCompare>
 		class specialized_acyclic_mutex<Mutex, recursive, try_mutex_concept, Key, KeyCompare>:
 			public specialized_acyclic_mutex<Mutex, recursive, mutex_concept, Key, KeyCompare>
@@ -161,11 +214,12 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
-		protected:
+		private:
 			template<typename M, typename L>
 			friend class detail::acyclic_scoped_try_lock;
 		};
 
+		// timed mutex
 		template<typename Mutex, bool recursive, typename Key, typename KeyCompare>
 		class specialized_acyclic_mutex<Mutex, recursive, timed_mutex_concept, Key, KeyCompare>:
 			public specialized_acyclic_mutex<Mutex, recursive, try_mutex_concept, Key, KeyCompare>
@@ -178,7 +232,7 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
-		protected:
+		private:
 			template<typename M, typename L>
 			friend class detail::acyclic_scoped_timed_lock;
 		};
