@@ -25,5 +25,7 @@
 	</section>
 	<section id="libpoet_reference.section.mutex_debugging">
 		<title>Mutex Debugging</title>
+		<xi:include href="mutex_properties_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
 	</section>
 </library-reference>

@@ -1,0 +1,57 @@
+<header name="poet/mutex_properties.hpp">
+	<namespace name="poet">
+		<class name="mutex_properties">
+			<template>
+				<template-type-parameter name="Mutex">
+				</template-type-parameter>
+			</template>
+			<purpose>A class for discovering the properties of a type which models one of
+				the mutex concepts defined by the Boost Thread library.</purpose>
+			<description>
+				<para>
+					The <code>mutex_properties</code> class is used by libpoet to discover the properties
+					of mutex types passed as template type parameters to classes such as
+					<classname>acyclic_mutex</classname>, <classname>monitor</classname>, and
+					<classname>monitor_ptr</classname>.  These properties are used internally to
+					perform partial template specializations according to the properties of the
+					mutex being used.
+				</para>
+				<para>
+					Specializations of <code>mutex_properties</code> are provided by libpoet
+					for all the mutex
+					types defined by the Boost Thread library, as well as all mutex types defined
+					by libpoet itself.  If you wish to use some other custom class with libpoet
+					as a Mutex template type parameter, you will need to also define a
+					specialization of <code>poet::mutex_properties</code> for your custom
+					mutex class.
+				</para>
+			</description>
+			<access name="public">
+				<data-member name="recursive">
+					<type>static const bool</type>
+					<description>
+						<para>
+							Is <code>true</code> if the <code>Mutex</code> template type parameter
+							is a recursive mutex.
+						</para>
+					</description>
+				</data-member>
+				<data-member name="model">
+					<type>static const enum <enumname>mutex_model</enumname></type>
+					<description>
+						<para>
+							Describes whether the <code>Mutex</code> template type parameter is
+							a model of the Mutex, TryMutex, or TimedMutex concepts described by
+							the Boost Thread library.
+						</para>
+					</description>
+				</data-member>
+			</access>
+		</class>
+		<enum name="mutex_model">
+			<enumvalue name="mutex_concept"/>
+			<enumvalue name="try_mutex_concept"/>
+			<enumvalue name="timed_mutex_concept"/>
+		</enum>
+	</namespace>
+</header>

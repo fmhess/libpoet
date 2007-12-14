@@ -13,7 +13,8 @@ XML_SRCS=\
 	monitor_base_hpp.xml \
 	monitor_ptr_hpp.xml \
 	monitor_hpp.xml \
-	monitor_locks_hpp.xml
+	monitor_locks_hpp.xml \
+	mutex_properties_hpp.xml
 
 .PHONY: all
 all: doc
