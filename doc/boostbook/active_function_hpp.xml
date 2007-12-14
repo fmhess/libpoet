@@ -26,10 +26,10 @@
 			</description>
 			<access name="public">
 				<typedef name="passive_result_type">
-					<type>boost::function_traits&lt;Signature&gt;::<classname>result_type</classname></type>
+					<type>boost::function_traits&lt;Signature&gt;::result_type</type>
 				</typedef>
 				<typedef name="result_type">
-					<type><classname>poet::future</classname>&lt;<classname>passive_result_type</classname>&gt;</type>
+					<type><classname>poet::future</classname>&lt;passive_result_type&gt;</type>
 				</typedef>
 				<typedef name="passive_slot_type">
 					<type><classname>boost::slot</classname>&lt;Signature&gt;</type>
