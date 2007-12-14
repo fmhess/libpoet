@@ -26,10 +26,14 @@
 					releasing the <code>monitor_ptr</code>'s mutex until the condition is met.
 				</para>
 				<para>
-					The <classname>try_monitor_ptr</classname> and <classname>timed_monitor_ptr</classname>
-					variants additionally allow "try locking" or "timed locking" through the
-					<classname>try_monitor_ptr::scoped_try_lock</classname> and
-					<classname>timed_monitor_ptr::scoped_timed_lock</classname> classes.
+					Support for "try locking" or "timed locking" are provided through the
+					nested <classname>monitor_ptr::scoped_try_lock</classname> and
+					<classname>monitor_ptr::scoped_timed_lock</classname> classes.  However, these
+					types exist only if the <code>monitor_ptr</code>'s <code>Mutex</code> template
+					parameter type is a model of the TryMutex or TimedMutex concepts from
+					the Boost Thread library.  Libpoet determines if the <code>Mutex</code> type
+					supports try or timed locking by testing the value of
+					<code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>.
 				</para>
 				<itemizedlist>
 					<title>Example Code</title>
@@ -41,18 +45,6 @@
 				</itemizedlist>
 				<itemizedlist>
 					<title>See also</title>
-					<listitem>
-						<para>
-							<classname>try_monitor_ptr</classname>: a class which extends <code>monitor_ptr</code> by adding a
-							scoped_try_lock.
-						</para>
-					</listitem>
-					<listitem>
-						<para>
-							<classname>timed_monitor_ptr</classname>: a class which extends <code>try_monitor_ptr</code> by adding a
-							scoped_timed_lock.
-						</para>
-					</listitem>
 					<listitem>
 						<para>
 							<classname>monitor</classname>: an alternative to the <code>monitor_ptr</code> class,
@@ -79,8 +71,7 @@
 							Boost Thread libarary, with its associated mutex type being <classname>monitor_ptr</classname>.
 							In addition, <code>scoped_lock</code> can be used like a pointer via its
 							member access and dereference operators, which provide safe access to an object owned
-							by a <classname>monitor_ptr</classname> (or the related
-							<classname>try_monitor_ptr</classname> or <classname>timed_monitor_ptr</classname>).
+							by a <classname>monitor_ptr</classname>.
 						</para>
 					</description>
 					<access name="public">
@@ -97,6 +88,113 @@
 							<postconditions>
 								<para><code>locked() == true</code></para>
 							</postconditions>
+						</constructor>
+						<constructor>
+							<parameter name="monitor_pointer">
+								<paramtype><classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<parameter name="do_lock">
+								<paramtype>bool</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object owned by a <code>monitor_ptr</code>.
+									If <code>do_lock</code> is <code>true</code>, calls
+									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
+								</para>
+							</description>
+							<postconditions>
+								<para><code>locked() == do_lock</code></para>
+							</postconditions>
+						</constructor>
+					</access>
+				</class>
+				<class name="scoped_try_lock">
+					<inherit access="public">
+						<type><classname>detail::monitor_scoped_try_lock</classname>&lt;T, Mutex&gt;</type>
+					</inherit>
+					<purpose>Scoped try lock with member access.</purpose>
+					<description>
+						<para>
+							This nested class will only exist if <code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>
+							equals <enumname alt="mutex_model">try_mutex_concept</enumname> or <code>timed_mutex_concept</code>.
+						</para>
+						<para>
+							<code>scoped_try_lock</code> models the ScopedTryLock concept described by the
+							Boost Thread library, with its associated mutex type being <classname>monitor_ptr</classname>.
+							In addition, <code>scoped_try_lock</code> can be used like a pointer via its
+							member access and dereference operators, which provide safe access to an object owned
+							by a <classname>monitor_ptr</classname>.
+						</para>
+					</description>
+					<access name="public">
+						<constructor>
+							<parameter name="monitor_pointer">
+								<paramtype><classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object owned by a <code>monitor_ptr</code>,
+									and calls <methodname alt="detail::monitor_scoped_try_lock::try_lock">try_lock</methodname>().
+								</para>
+							</description>
+						</constructor>
+						<constructor>
+							<parameter name="monitor_pointer">
+								<paramtype><classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<parameter name="do_lock">
+								<paramtype>bool</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object owned by a <code>monitor_ptr</code>.
+									If <code>do_lock</code> is <code>true</code>, calls
+									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
+								</para>
+							</description>
+							<postconditions>
+								<para><code>locked() == do_lock</code></para>
+							</postconditions>
+						</constructor>
+					</access>
+				</class>
+				<class name="scoped_timed_lock">
+					<inherit access="public">
+						<type><classname>detail::monitor_scoped_timed_lock</classname>&lt;T, Mutex&gt;</type>
+					</inherit>
+					<purpose>Scoped timed lock with member access</purpose>
+					<description>
+						<para>
+							This nested class will only exist if <code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>
+							equals <enumname alt="mutex_model">timed_mutex_concept</enumname>.
+						</para>
+						<para>
+							<code>scoped_timed_lock</code> models the ScopedTimedLock concept described by the
+							Boost Thread libarary, with its associated mutex type being <classname>monitor_ptr</classname>.
+							In addition, <code>scoped_timed_lock</code> can be used like a pointer via its
+							member access and dereference operators, which provide safe access to an object owned
+							by a <classname>monitor_ptr</classname>.
+						</para>
+					</description>
+					<access name="public">
+						<constructor>
+							<template>
+								<template-type-parameter name="Timeout">
+								</template-type-parameter>
+							</template>
+							<parameter name="monitor_pointer">
+								<paramtype><classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<parameter name="timeout">
+								<paramtype>const Timeout &amp;</paramtype>
+							</parameter>
+							<description>
+								<para>Creates a scoped lock which can be used to safely
+									access the object owned by a <code>monitor_ptr</code>,
+									and calls <code><methodname alt="detail::monitor_scoped_timed_lock::timed_lock">timed_lock</methodname>(timeout)</code>.
+								</para>
+							</description>
 						</constructor>
 						<constructor>
 							<parameter name="monitor_pointer">
@@ -160,8 +258,10 @@
 								destructor.
 							</para>
 							<para>
-								If more flexibility is desired, the <classname>monitor_ptr::scoped_lock</classname> class
-								provides an alternative to <code>monitor_ptr::operator-&gt;</code>.
+								If more flexibility is desired, the <classname>monitor_ptr::scoped_lock</classname>,
+								<classname>monitor_ptr::scoped_try_lock</classname>, and
+								<classname>monitor_ptr::scoped_timed_lock</classname>
+								classes provides alternatives to <code>monitor_ptr::operator-&gt;</code>.
 							</para>
 						</description>
 					</method>
@@ -253,237 +353,6 @@
 						</para>
 					</description>
 				</destructor>
-			</access>
-		</class>
-		<class name="try_monitor_ptr">
-			<template>
-				<template-type-parameter name="T"/>
-				<template-type-parameter name="Mutex">
-					<default>boost::try_mutex</default>
-				</template-type-parameter>
-			</template>
-			<inherit access="public">
-				<type><classname>monitor_ptr</classname>&lt;T, Mutex&gt;</type>
-			</inherit>
-			<purpose>Extends monitor_ptr by additionally providing a scoped try lock.</purpose>
-			<description>
-				<para>
-					A <code>try_monitor_ptr</code> is the same as a <classname>monitor_ptr</classname>
-					except its default Mutex template type is <classname>boost::try_mutex</classname>,
-					and it adds another scoped lock class: <classname>try_monitor_ptr::scoped_try_lock</classname>.
-				</para>
-				<itemizedlist>
-					<title>See also</title>
-					<listitem>
-						<para>
-							<classname>timed_monitor_ptr</classname>: a class which extends <code>try_monitor_ptr</code> by adding a
-							scoped_timed_lock.
-						</para>
-					</listitem>
-				</itemizedlist>
-			</description>
-			<access name="public">
-				<class name="scoped_try_lock">
-					<inherit access="public">
-						<type><classname>detail::monitor_scoped_try_lock</classname>&lt;T, Mutex&gt;</type>
-					</inherit>
-					<purpose>Scoped try lock with member access</purpose>
-					<description>
-						<para>
-							<code>scoped_try_lock</code> models the ScopedTryLock concept described by the
-							Boost Thread libarary, with its associated mutex type being <classname>try_monitor_ptr</classname>.
-							In addition, <code>scoped_try_lock</code> can be used like a pointer via its
-							member access and dereference operators, which provide safe access to an object owned
-							by a <classname>try_monitor_ptr</classname> (or the related <classname>timed_monitor_ptr</classname>).
-						</para>
-					</description>
-					<access name="public">
-						<constructor>
-							<parameter name="monitor_pointer">
-								<paramtype><classname>try_monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object owned by a <code>try_monitor_ptr</code>,
-									and calls <methodname alt="detail::monitor_scoped_try_lock::try_lock">try_lock</methodname>().
-								</para>
-							</description>
-						</constructor>
-						<constructor>
-							<parameter name="monitor_pointer">
-								<paramtype><classname>try_monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="do_lock">
-								<paramtype>bool</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object owned by a <code>try_monitor_ptr</code>.
-									If <code>do_lock</code> is <code>true</code>, calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == do_lock</code></para>
-							</postconditions>
-						</constructor>
-					</access>
-				</class>
-				<constructor>
-					<description>
-						<para>The default constructor creates a null <code>try_monitor_ptr</code>.
-						</para>
-					</description>
-				</constructor>
-				<constructor specifiers="explicit">
-					<template>
-						<template-type-parameter name="U"/>
-					</template>
-					<parameter name="pointer">
-						<paramtype>U*</paramtype>
-					</parameter>
-					<description>
-						<para>Creates a <code>try_monitor_ptr</code> which wraps the specified pointer.  The <code>try_monitor_ptr</code>
-							internally stores <code>pointer</code> in a <classname>boost::shared_ptr</classname>.
-							Thus the pointer will be automatically
-							deleted when the last copy of this <code>try_monitor_ptr</code> is destroyed.
-						</para>
-					</description>
-				</constructor>
-				<constructor>
-					<parameter name="smart_pointer">
-						<paramtype>boost::shared_ptr&lt;T&gt;</paramtype>
-					</parameter>
-					<description>
-						<para>Creates a <code>try_monitor_ptr</code> which wraps the specified pointer.
-							This constructor allows the <code>try_monitor_ptr</code> to be initialized with
-							a <classname>boost::shared_ptr</classname> that has a custom deleter.
-						</para>
-					</description>
-				</constructor>
-				<constructor>
-					<parameter name="other">
-						<paramtype>const try_monitor_ptr &amp;</paramtype>
-					</parameter>
-					<description>
-						<para>The copy constructor creates a <code>try_monitor_ptr</code> which shares the same pointer,
-							mutex, and condition as the original.
-						</para>
-					</description>
-				</constructor>
-			</access>
-		</class>
-		<class name="timed_monitor_ptr">
-			<template>
-				<template-type-parameter name="T"/>
-				<template-type-parameter name="Mutex">
-					<default>boost::timed_mutex</default>
-				</template-type-parameter>
-			</template>
-			<inherit access="public">
-				<type><classname>try_monitor_ptr</classname>&lt;T, Mutex&gt;</type>
-			</inherit>
-			<purpose>Extends try_monitor_ptr by additionally providing a scoped timed lock.</purpose>
-			<description>
-				<para>
-					A <code>timed_monitor_ptr</code> is the same as a <classname>try_monitor_ptr</classname>
-					except its default Mutex template type is <classname>boost::timed_mutex</classname>,
-					and it adds another scoped lock class: <classname>timed_monitor_ptr::scoped_timed_lock</classname>.
-				</para>
-			</description>
-			<access name="public">
-				<class name="scoped_timed_lock">
-					<inherit access="public">
-						<type><classname>detail::monitor_scoped_timed_lock</classname>&lt;T, Mutex&gt;</type>
-					</inherit>
-					<purpose>Scoped timed lock with member access</purpose>
-					<description>
-						<para>
-							<code>scoped_timed_lock</code> models the ScopedTimedLock concept described by the
-							Boost Thread libarary, with its associated mutex type being <classname>timed_monitor_ptr</classname>.
-							In addition, <code>scoped_timed_lock</code> can be used like a pointer via its
-							member access and dereference operators, which provide safe access to an object owned
-							by a <classname>timed_monitor_ptr</classname>.
-						</para>
-					</description>
-					<access name="public">
-						<constructor>
-							<template>
-								<template-type-parameter name="Timeout">
-								</template-type-parameter>
-							</template>
-							<parameter name="monitor_pointer">
-								<paramtype><classname>timed_monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="timeout">
-								<paramtype>const Timeout &amp;</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object owned by a <code>timed_monitor_ptr</code>,
-									and calls <code><methodname alt="detail::monitor_scoped_timed_lock::timed_lock">timed_lock</methodname>(timeout)</code>.
-								</para>
-							</description>
-						</constructor>
-						<constructor>
-							<parameter name="monitor_pointer">
-								<paramtype><classname>timed_monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="do_lock">
-								<paramtype>bool</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object owned by a <code>timed_monitor_ptr</code>.
-									If <code>do_lock</code> is <code>true</code>, calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == do_lock</code></para>
-							</postconditions>
-						</constructor>
-					</access>
-				</class>
-				<constructor>
-					<description>
-						<para>The default constructor creates a null <code>timed_monitor_ptr</code>.
-						</para>
-					</description>
-				</constructor>
-				<constructor specifiers="explicit">
-					<parameter name="pointer">
-						<paramtype>T*</paramtype>
-					</parameter>
-					<description>
-						<para>Creates a <code>timed_monitor_ptr</code> which wraps the specified pointer.  The <code>timed_monitor_ptr</code>
-							internally stores <code>pointer</code> in a <classname>boost::shared_ptr</classname>.
-							Thus the pointer will be automatically
-							deleted when the last copy of this <code>timed_monitor_ptr</code> is destroyed.
-						</para>
-					</description>
-				</constructor>
-				<constructor>
-					<parameter name="smart_pointer">
-						<paramtype>boost::shared_ptr&lt;T&gt;</paramtype>
-					</parameter>
-					<description>
-						<para>Creates a <code>timed_monitor_ptr</code> which wraps the specified pointer.
-							This constructor allows the <code>timed_monitor_ptr</code> to be initialized with
-							a <classname>boost::shared_ptr</classname> that has a custom deleter.
-						</para>
-					</description>
-				</constructor>
-				<constructor>
-					<parameter name="other">
-						<paramtype>const timed_monitor_ptr &amp;</paramtype>
-					</parameter>
-					<description>
-						<para>The copy constructor creates a <code>timed_monitor_ptr</code> which shares the same pointer,
-							mutex, and condition as the original.
-						</para>
-					</description>
-				</constructor>
 			</access>
 		</class>
 	</namespace>
