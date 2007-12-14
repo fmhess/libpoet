@@ -72,6 +72,11 @@
 							</postconditions>
 						</method>
 					</method-group>
+					<destructor>
+						<description>
+							<para>If <code>locked()</code>, calls <code>unlock()</code>.</para>
+						</description>
+					</destructor>
 				</access>
 			</class>
 			<class name="monitor_scoped_try_lock">
