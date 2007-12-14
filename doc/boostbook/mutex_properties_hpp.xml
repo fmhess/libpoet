@@ -27,25 +27,16 @@
 				</para>
 			</description>
 			<access name="public">
-				<data-member name="recursive">
-					<type>static const bool</type>
-					<description>
-						<para>
-							Is <code>true</code> if the <code>Mutex</code> template type parameter
-							is a recursive mutex.
-						</para>
-					</description>
-				</data-member>
-				<data-member name="model">
-					<type>static const enum <enumname>mutex_model</enumname></type>
-					<description>
-						<para>
-							Describes whether the <code>Mutex</code> template type parameter is
-							a model of the Mutex, TryMutex, or TimedMutex concepts described by
-							the Boost Thread library.
-						</para>
-					</description>
-				</data-member>
+				<static-constant name="recursive">
+					<type>bool</type>
+					<default><emphasis>varies</emphasis></default>
+					<purpose><code>true</code> if the <code>Mutex</code> template type parameter is a recursive mutex.</purpose>
+				</static-constant>
+				<static-constant name="model">
+					<type>enum <enumname>mutex_model</enumname></type>
+					<default><emphasis>varies</emphasis></default>
+					<purpose>Specifies the Mutex, TryMutex, or TimedMutex concept from Boost.Thread.</purpose>
+				</static-constant>
 			</access>
 		</class>
 		<enum name="mutex_model">
