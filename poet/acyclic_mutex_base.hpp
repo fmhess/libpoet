@@ -35,7 +35,7 @@ namespace poet
 	public:
 		virtual ~acyclic_mutex_base() {}
 
-		const vertex_descriptor_type* vertex_descriptor() const {return 0;}
+		boost::optional<vertex_descriptor_type> vertex_descriptor() const {return boost::optional<vertex_descriptor_type>();}
 	protected:
 		friend class poet::mutex_grapher;
 
@@ -63,7 +63,7 @@ namespace poet
 	public:
 		virtual ~acyclic_mutex_base() {}
 
-		const vertex_descriptor_type* vertex_descriptor() const {return _vertex_descriptor.get_ptr();}
+		boost::optional<vertex_descriptor_type> vertex_descriptor() const {return _vertex_descriptor;}
 	protected:
 		friend class poet::mutex_grapher;
 

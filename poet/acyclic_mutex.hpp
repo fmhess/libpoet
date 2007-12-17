@@ -129,7 +129,7 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key)
 			{}
-			const Key* node_key() const {return 0;}
+			boost::optional<Key> node_key() const {return boost::optional<Key>();}
 		};
 #else // ACYCLIC_MUTEX_NDEBUG undefined
 
@@ -149,7 +149,7 @@ namespace poet
 			specialized_acyclic_mutex(const Key &node_key): _node_key(node_key)
 			{}
 
-			const Key* node_key() const {return _node_key.get_ptr();}
+			boost::optional<Key> node_key() const {return _node_key;}
 		protected:
 			template<typename M, typename L>
 			friend class detail::acyclic_scoped_lock;
