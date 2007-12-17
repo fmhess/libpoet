@@ -36,7 +36,7 @@ namespace poet
 	template<typename AcyclicMutex>
 	void mutex_grapher::track_lock(AcyclicMutex &mutex)
 	{
-		if(mutex.vertex_descriptor() == 0)
+		if(mutex.vertex() == 0)
 		{
 			typedef detail::vertex_finder<typename AcyclicMutex::key_type, typename AcyclicMutex::key_compare> vertex_finder_type;
 
@@ -62,16 +62,16 @@ namespace poet
 				if(mutex.node_key())
 					finder->add_vertex(*mutex.node_key(), target_vertex);
 			}
-			mutex.set_vertex_descriptor(target_vertex);
+			mutex.set_vertex(target_vertex);
 		}
 		if(mutex.will_really_lock())
 		{
 			bool acyclic = true;
 			if(locked_mutexes().empty() == false)
 			{
-				const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex_descriptor();
+				const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex();
 				typename locking_order_graph::edge_descriptor new_edge = boost::add_edge(source_vertex,
-					*mutex.vertex_descriptor(), _graph).first;
+					*mutex.vertex(), _graph).first;
 				try
 				{
 					check_for_cycles();

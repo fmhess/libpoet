@@ -35,11 +35,11 @@ namespace poet
 	public:
 		virtual ~acyclic_mutex_base() {}
 
-		boost::optional<vertex_descriptor_type> vertex_descriptor() const {return boost::optional<vertex_descriptor_type>();}
+		boost::optional<vertex_descriptor_type> vertex() const {return boost::optional<vertex_descriptor_type>();}
 	protected:
 		friend class poet::mutex_grapher;
 
-		void set_vertex_descriptor(vertex_descriptor_type vertex)
+		void set_vertex(vertex_descriptor_type vertex)
 		{}
 		virtual bool will_really_lock() const
 		{
@@ -63,13 +63,13 @@ namespace poet
 	public:
 		virtual ~acyclic_mutex_base() {}
 
-		boost::optional<vertex_descriptor_type> vertex_descriptor() const {return _vertex_descriptor;}
+		boost::optional<vertex_descriptor_type> vertex() const {return _vertex;}
 	protected:
 		friend class poet::mutex_grapher;
 
-		void set_vertex_descriptor(vertex_descriptor_type vertex)
+		void set_vertex(vertex_descriptor_type vertex)
 		{
-			_vertex_descriptor = vertex;
+			_vertex = vertex;
 		}
 		virtual bool will_really_lock() const
 		{
@@ -84,7 +84,7 @@ namespace poet
 		virtual void decrement_recursive_lock_count()
 		{}
 
-		boost::optional<vertex_descriptor_type> _vertex_descriptor;
+		boost::optional<vertex_descriptor_type> _vertex;
 	};
 #endif	// ACYCLIC_MUTEX_NDEBUG
 };
