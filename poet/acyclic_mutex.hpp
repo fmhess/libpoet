@@ -28,7 +28,7 @@ namespace poet
 {
 	namespace detail
 	{
-		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_lock>
+		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::mutex_type::scoped_lock>
 		class acyclic_scoped_lock
 		{
 		public:
@@ -65,7 +65,7 @@ namespace poet
 			Lock _lock;
 		};
 
-		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_try_lock>
+		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::mutex_type::scoped_try_lock>
 		class acyclic_scoped_try_lock: public acyclic_scoped_lock<AcyclicMutex, Lock>
 		{
 			typedef acyclic_scoped_lock<AcyclicMutex, Lock> base_class;
@@ -88,7 +88,7 @@ namespace poet
 			}
 		};
 
-		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::wrapped_mutex_type::scoped_timed_lock>
+		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::mutex_type::scoped_timed_lock>
 		class acyclic_scoped_timed_lock: public acyclic_scoped_try_lock<AcyclicMutex, Lock>
 		{
 			typedef acyclic_scoped_try_lock<AcyclicMutex, Lock> base_class;
@@ -121,7 +121,7 @@ namespace poet
 		class specialized_acyclic_mutex: public acyclic_mutex_base, public Mutex
 		{
 		public:
-			typedef Mutex wrapped_mutex_type;
+			typedef Mutex mutex_type;
 			typedef Key key_type;
 			typedef KeyCompare key_compare;
 
@@ -139,7 +139,7 @@ namespace poet
 			public acyclic_mutex_base
 		{
 		public:
-			typedef Mutex wrapped_mutex_type;
+			typedef Mutex mutex_type;
 			typedef Key key_type;
 			typedef KeyCompare key_compare;
 			typedef detail::acyclic_scoped_lock<specialized_acyclic_mutex> scoped_lock;
