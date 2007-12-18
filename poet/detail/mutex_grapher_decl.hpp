@@ -18,6 +18,7 @@
 #include <boost/optional.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/tss.hpp>
+#include <boost/noncopyable.hpp>
 #include <cassert>
 #include <list>
 #include <map>
@@ -35,7 +36,7 @@ namespace poet
 		class acyclic_scoped_lock;
 	};
 
-	class mutex_grapher
+	class mutex_grapher: public boost::noncopyable
 	{
 		typedef monitor_ptr<mutex_grapher, boost::recursive_mutex> monitor_type;
 	public:
@@ -141,6 +142,7 @@ namespace poet
 		friend class tracker;
 
 		inline mutex_grapher();
+
 		void check_locked_mutexes_init() const
 		{
 			if(_locked_mutexes.get() == 0)
