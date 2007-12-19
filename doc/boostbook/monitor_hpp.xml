@@ -239,7 +239,62 @@
 							</para>
 						</description>
 					</overloaded-method>
+					<method name="swap">
+						<template>
+							<template-type-parameter name="M"/>
+						</template>
+						<type>void</type>
+						<parameter name="other">
+							<paramtype>monitor&lt;T, M&gt; &amp;</paramtype>
+						</parameter>
+						<description>
+							<para>
+								Swaps the values of <code>*this</code> and <code>other</code>.  This
+								function is provided to implement a specialization of
+								<functionname>std::swap</functionname> for this class, which may
+								enhance efficiency with generic algorithms.
+							</para>
+							<para>
+								Care is taken
+								not to lock both <code>monitor</code> objects simultaneously to avoid violating
+								or establishing a locking order between the two monitors (which might result in deadlock).
+								The swap operation performs the following steps:
+							</para>
+							<itemizedlist>
+								<listitem>
+									<para>
+										Copy constructs a temporary value of type T from the value in <code>other</code>, while
+										<code>other</code> is locked.
+									</para>
+								</listitem>
+								<listitem>
+									<para>
+										Swaps the temporary value with the value of <code>*this</code>, while
+										<code>*this</code> is locked.
+									</para>
+								</listitem>
+								<listitem>
+									<para>
+										Swaps the temporary value with the value of <code>other</code>, while
+										<code>other</code> is locked.
+									</para>
+								</listitem>
+							</itemizedlist>
+							<para>
+								Therefore, it is possible another thread could lock <code>other</code> and
+								perform some operation on it between the point where its value is copied
+								out, and the point where the value from <code>*this</code> is swapped back into
+								<code>other</code>.
+							</para>
+						</description>
+					</method>
 				</method-group>
+				<constructor>
+					<description>
+						<para>Creates a <code>monitor</code> with a default-constructed value.
+						</para>
+					</description>
+				</constructor>
 				<constructor>
 					<parameter name="value">
 						<paramtype>const T &amp;</paramtype>

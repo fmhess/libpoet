@@ -83,6 +83,28 @@ namespace poet
 				std::swap(*lock, *temp);
 				return *this;
 			}
+
+			template<typename M>
+			void swap(specialized_monitor<T, M, mutex_concept> &other)
+			{
+				boost::optional<T> temp;
+				/* Avoid locking the mutexes of both this monitor and the
+				other monitor simultaneously, since we don't want to invite
+				any potential locking order violations. */
+				{
+					typename specialized_monitor<T, M, mutex_concept>::scoped_lock other_lock(other);
+					temp = *other_lock;
+				}
+				{
+					scoped_lock lock(*this);
+					std::swap(*lock, *temp);
+				}
+				{
+					typename specialized_monitor<T, M, mutex_concept>::scoped_lock other_lock(other);
+					std::swap(*other_lock, *temp);
+				}
+			}
+
 		protected:
 			template<typename U, typename M, enum mutex_model model>
 			friend class specialized_monitor;
@@ -158,6 +180,16 @@ namespace poet
 		monitor(monitor<U, M> &other): base_class(other)
 		{}
 	};
+};
+
+// specialization of std::swap for efficiency with standard algorithms
+namespace std
+{
+	template<typename T, typename Mutex>
+	void swap(poet::monitor<T, Mutex> &mon0, poet::monitor<T, Mutex> &mon1)
+	{
+		mon0.swap(mon1);
+	}
 };
 
 #endif // _POET_MONITOR_HPP
