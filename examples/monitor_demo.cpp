@@ -1,3 +1,10 @@
+// An example of using the monitor_ptr and monitor classes
+// for automatically locked access to an object.
+
+// Copyright (C) Frank Mori Hess 2007
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
@@ -93,7 +100,7 @@ void monitor_thread1_function(monitor_type &mymonitor)
 void monitor_example()
 {
 	std::cerr << "\n" << __PRETTY_FUNCTION__ << std::endl;
-	monitor_type mymonitor = Monitored();
+	monitor_type mymonitor;
 	boost::thread thread0(boost::bind(&monitor_thread0_function, boost::ref(mymonitor)));
 	boost::thread thread1(boost::bind(&monitor_thread1_function, boost::ref(mymonitor)));
 	thread0.join();
