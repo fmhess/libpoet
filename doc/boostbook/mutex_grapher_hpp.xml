@@ -1,0 +1,181 @@
+<header name="poet/mutex_grapher.hpp">
+	<namespace name="poet">
+		<class name="mutex_grapher">
+			<purpose>Maintains a locking order graph for <classname>acyclic_mutex</classname>es.
+			</purpose>
+			<description>
+				<para>
+					The <code>mutex_grapher</code> class is a singleton which maintains a graph of
+					the locking order for the program's <classname>acyclic_mutex</classname>es.
+					It checks this graph to insure it has
+					a consistent locking order which cannot deadlock.
+				</para>
+				<para>
+					The class also provides information that may be useful in debugging any locking
+					order inconsistencies which are discovered.  The user may examine the
+					<classname>locking_order_graph</classname>, output it to a graphviz file,
+					and examine the list of mutexes
+					currently locked by each thread.  The user may also specify a custom handler to be called
+					in the event an inconsistency is detected.
+				</para>
+			</description>
+			<access name="public">
+				<struct name="vertex_properties">
+					<purpose>Bundled vertex properties for <classname>locking_order_graph</classname>.</purpose>
+					<description>
+						<para>
+							Each vertex in the <classname>locking_order_graph</classname> of the <classname>mutex_grapher</classname>
+							class has an object of this class associated with it as its bundled property.
+							For a vertex which represents a group of <classname>acyclic_mutex</classname>es
+							which share an equivalent key, then the <code>name</code> member is initialized by
+							passing the key though the formatted output operator <code>operator&lt;&lt;()</code>.
+							If the vertex represents a single key-less <classname>acyclic_mutex</classname>,
+							then <code>name</code> is initialized to the string &quot;mutex&quot; followed
+							by a decimal number obtained by passing the vertex's descriptor through
+							<code>operator&lt;&lt;()</code>.
+						</para>
+						<para>
+							The <code>name</code> member is used by <methodname>mutex_grapher::write_graphviz</methodname>
+							to label the vertexes in the graphviz output.
+						</para>
+					</description>
+					<data-member name="name">
+						<type>std::string</type>
+					</data-member>
+				</struct>
+				<struct name="edge_properties">
+					<purpose>Bundled edge properties for <classname>locking_order_graph</classname>.</purpose>
+					<description>
+						<para>
+							Each edge in the <classname>locking_order_graph</classname> of the <classname>mutex_grapher</classname>
+							class has an object of this class associated with it as its bundled property.
+							If the <classname>locking_order_graph</classname> is acyclic immeditately after the edge was added
+							to the graph, then the <code>locking_order_violation</code> member will be
+							<code>false</code>.  If the graph has a cycle, then the <code>locking_order_violation</code>
+							member will be <code>true</code>.
+						</para>
+						<para>
+							The <code>locking_order_violation</code> member is used by <methodname>mutex_grapher::write_graphviz</methodname>
+							to color the edges (red for violations, black otherwise) in the graphviz output.
+						</para>
+					</description>
+					<data-member name="locking_order_violation"><type>bool</type></data-member>
+				</struct>
+				<typedef name="locking_order_graph">
+					<type>boost::adjacency_list&lt;boost::setS, boost::vecS, boost::directedS, vertex_properties, edge_properties&gt;</type>
+					<description>
+						<para>
+							The <code>mutex_grapher</code> singleton contains one <code>locking_order_graph</code> object
+							which records all the locking order information for <classname>acyclic_mutex</classname>es.
+							Read access to the graph is provided through <methodname>mutex_grapher::graph</methodname>().
+						</para>
+						<para>
+							Each vertex in the graph represents either a group of <classname>acyclic_mutex</classname>es
+							which all have equivalent keys, or a single default-constructed <classname>acyclic_mutex</classname>
+							(which has no key).  A vertexes is added to the graph the first time one of its
+							associated mutexes is locked.
+						</para>
+						<para>
+							Each edge in the graph represents an established locking order between
+							two vertices.  When a thread attempts to lock an <classname>acyclic_mutex</classname>
+							while already holding a lock on one or more <classname>acyclic_mutex</classname>es,
+							a directed edge is added to the graph (if the edge in question does not already exist).
+							The edge is directed from the vertex of the most recently locked mutex towards the
+							vertex of the new mutex the thread is attempting to lock.  After each new edge
+							is added, the locking order graph is checked for cycles.
+							As long as the graph remains free of cycles, the locking order
+							among the program's <classname>acyclic_mutex</classname>es is valid and will not
+							result in deadlock.
+						</para>
+						<para>
+							See the documentation of the Boost Graph Library for more information on <classname>boost::adjacency_list</classname>.
+						</para>
+					</description>
+				</typedef>
+				<typedef name="mutex_list_type"><type>std::list&lt;const <classname>acyclic_mutex_base</classname> *&gt;</type></typedef>
+				<class name="scoped_lock">
+					<inherit access="public">
+						<type><classname>monitor_ptr</classname>&lt;<classname>mutex_grapher</classname>, boost::recursive_mutex&gt;::scoped_lock</type>
+					</inherit>
+					<purpose>Provides locked access to the <classname>mutex_grapher</classname> singleton.</purpose>
+					<description>
+						<para>
+							This scoped_lock class is default constructible (since there is only one mutex_grapher object),
+							and inherits from <classname>monitor_ptr::scoped_lock</classname>.
+							Creating objects of this class is the only way to access the <classname>mutex_grapher</classname> singleton.
+						</para>
+					</description>
+					<access name="public">
+						<constructor>
+							<description>
+								<para>
+									Creates a <classname>monitor_ptr</classname>::scoped_lock which provides access to the
+									mutex_grapher singleton.
+								</para>
+							</description>
+						</constructor>
+					</access>
+				</class>
+				<method-group name="public member functions">
+					<method name="graph" cv="const">
+						<type>const <classname>locking_order_graph</classname> &amp;</type>
+						<description>
+							<para>
+								Provides access to the <classname>locking_order_graph</classname>.
+							</para>
+						</description>
+					</method>
+					<method name="locked_mutexes" cv="const">
+						<type>const <classname>mutex_list_type</classname> &amp;</type>
+						<description>
+							<para>Returns a list of <classname>acyclic_mutex_base</classname> pointers to
+								the mutexes currently locked by the calling thread.  The list is ordered in
+								the same order that the mutexes were locked.  This list is thread-specific
+								data, and thus will vary depending on what thread this method is called from.
+							</para>
+						</description>
+					</method>
+					<method name="set_cycle_handler">
+						<template>
+							<template-type-parameter name="Func"/>
+						</template>
+						<type>void</type>
+						<parameter name="func">
+							<paramtype>Func</paramtype>
+						</parameter>
+						<description>
+							<para>
+								The function object <code>func</code> will be called (with no arguments)
+								when a cycle is detected in the <classname>locking_order_graph</classname>.  The default cycle handler
+								prints a message to stderr, and then calls <code>abort()</code>.
+							</para>
+						</description>
+					</method>
+					<method name="write_graphviz" cv="const">
+						<type>void</type>
+						<parameter name="out_stream"><paramtype>std::ostream &amp;</paramtype></parameter>
+						<description>
+							<para>
+								Calls <code>boost::write_graphviz</code>(), passing it the <code>out_stream</code>
+								parameter, and the <classname>locking_order_graph</classname>.  The vertices are labeled with the <code>name</code>
+								member of the graph's bundled <classname alt="mutex_grapher::vertex_properties">vertex_properties</classname>.
+								The edges are colored black
+								if the <code>locking_order_violation</code> member of the the graph's bundled
+								<classname alt="mutex_grapher::edge_properties">edge_properties</classname>
+								is false, and red if it is true.
+							</para>
+						</description>
+					</method>
+				</method-group>
+			</access>
+			<access name="private">
+				<constructor>
+					<description>
+						<para>Private constructor.  The <code>mutex_grapher</code> singleton may only
+						be accessed by creating a <classname>mutex_grapher::scoped_lock</classname> object.</para>
+					</description>
+				</constructor>
+			</access>
+		</class>
+	</namespace>
+</header>

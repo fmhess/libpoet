@@ -1,0 +1,35 @@
+<header name="poet/acyclic_mutex_base.hpp">
+	<namespace name="poet">
+		<class name="acyclic_mutex_base">
+			<purpose>The base class of the <classname>acyclic_mutex</classname> template class.
+			</purpose>
+			<description>
+				<para>
+					The <code>acyclic_mutex_base</code> class gives access to an <classname>acyclic_mutex</classname>'s
+					vertex descriptor in <classname>mutex_grapher</classname>'s locking order graph.
+				</para>
+			</description>
+			<access name="public">
+				<method-group name="public member functions">
+					<method name="vertex" cv="const">
+						<type><classname>boost::optional</classname>&lt;<classname>mutex_grapher</classname>::<classname>locking_order_graph</classname>::vertex_descriptor&gt;</type>
+						<description>
+							<para>Returns the mutex's vertex descriptor in the locking order graph.
+								If the mutex has never been locked, it will have no vertex descriptor and
+								an uninitialized <classname>boost::optional</classname> is returned.
+								Additionally, if mutex debugging has been disabled by defining
+								<code>NDEBUG</code> or <code>ACYCLIC_MUTEX_NDEBUG</code>, then
+								an uninitialized <classname>boost::optional</classname> will always be returned.
+							</para>
+						</description>
+					</method>
+				</method-group>
+				<destructor specifiers="virtual">
+					<description>
+						<para>Virtual destructor.</para>
+					</description>
+				</destructor>
+			</access>
+		</class>
+	</namespace>
+</header>

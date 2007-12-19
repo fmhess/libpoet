@@ -5,6 +5,8 @@ BOOSTBOOK_TOOL_DIR=$(BOOST_SRC_DIR)/tools/boostbook
 XML_SRCS=\
 	active_function_hpp.xml \
 	active_object_hpp.xml \
+	acyclic_mutex_base_hpp.xml \
+	acyclic_mutex_hpp.xml \
 	exception_ptr_hpp.xml \
 	exceptions_hpp.xml \
 	future_hpp.xml \
@@ -14,6 +16,7 @@ XML_SRCS=\
 	monitor_ptr_hpp.xml \
 	monitor_hpp.xml \
 	monitor_locks_hpp.xml \
+	mutex_grapher_hpp.xml \
 	mutex_properties_hpp.xml
 
 .PHONY: all

@@ -1,0 +1,157 @@
+<header name="poet/acyclic_mutex.hpp">
+	<namespace name="poet">
+		<class name="acyclic_mutex">
+			<template>
+				<template-type-parameter name="Mutex">
+					<default>boost::mutex</default>
+				</template-type-parameter>
+				<template-type-parameter name="Key">
+					<default>std::string</default>
+				</template-type-parameter>
+				<template-type-parameter name="KeyCompare">
+					<default>std::less&lt;Key&gt;</default>
+				</template-type-parameter>
+			</template>
+			<inherit access="public">
+				<type><classname>acyclic_mutex_base</classname></type>
+			</inherit>
+			<purpose>A mutex wrapper which automatically detects potential deadlocks
+				due to an inconsistent mutex locking order (e.g. deadly embrace).
+			</purpose>
+			<description>
+				<para>
+					The <code>acyclic_mutex</code> class automatically tracks the
+					order in which all the program's <code>acyclic_mutex</code> objects
+					are locked, and detects any potential deadlocks.  It does so by
+					building up a graph in the <classname>mutex_grapher</classname> singleton
+					of the mutex locking order, which is checked to insure the locking
+					order remains consistent as the program executes.
+				</para>
+				<para>
+					The <code>KeyCompare</code> template parameter must define a strict weak ordering
+					for the <code>Key</code> type.  Note, this is
+					only used to determine if two keys are equivalent or not, and is not taken
+					to imply any particular locking order requirement between mutexes with inequivalent
+					keys.  <code>acyclic_mutex</code> objects with equivalent keys share the same
+					vertex in the locking order graph built by <classname>mutex_grapher</classname>.
+				</para>
+				<para>
+					For production code, the tracking of mutex locking order may be disabled program-wide
+					at compile time by defining either <code>NDEBUG</code> or <code>ACYCLIC_MUTEX_NDEBUG</code>.
+				</para>
+				<itemizedlist>
+					<title>Example Code</title>
+					<listitem>
+						<para>
+							<link linkend="poet.example.acyclic_mutex_demo.cpp">acyclic_mutex_demo.cpp</link>
+						</para>
+					</listitem>
+				</itemizedlist>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem>
+						<para>
+							<classname>mutex_grapher</classname>: used by <code>acyclic_mutex</code> objects to
+							build up a locking order graph, and test the locking order for potential deadlocks.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</description>
+			<access name="public">
+				<typedef name="mutex_type">
+					<type>Mutex</type>
+				</typedef>
+				<typedef name="key_type">
+					<type>Key</type>
+				</typedef>
+				<typedef name="key_compare">
+					<type>KeyCompare</type>
+				</typedef>
+				<typedef name="scoped_lock">
+					<type><emphasis>unspecified</emphasis></type>
+					<purpose>Scoped lock with locking order debugging.</purpose>
+					<description>
+						<para>
+							<code>scoped_lock</code> models the ScopedLock concept described by the
+							Boost Thread library.
+							<code>scoped_lock</code> is a wrapper around the underlying
+							<code>Mutex::scoped_lock</code> class.  It updates the locking
+							order graph and tests for cycles before attempting to acquire a lock.
+						</para>
+					</description>
+				</typedef>
+				<typedef name="scoped_try_lock">
+					<type><emphasis>unspecified</emphasis></type>
+					<purpose>Scoped try lock with locking order debugging.</purpose>
+					<description>
+						<para>
+							This type will only exist if <code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>
+							equals <code>try_mutex_concept</code> or <code>timed_mutex_concept</code>.
+						</para>
+						<para>
+							<code>scoped_try_lock</code> models the ScopedTryLock concept described by the
+							Boost Thread library.  <code>scoped_try_lock</code> is a wrapper around the underlying
+							<code>Mutex::scoped_try_lock</code> class.  It updates the locking
+							order graph and tests for cycles before attempting to acquire a lock.
+						</para>
+					</description>
+				</typedef>
+				<typedef name="scoped_timed_lock">
+					<type><emphasis>unspecified</emphasis></type>
+					<purpose>Scoped timed lock with locking order debugging.</purpose>
+					<description>
+						<para>
+							This type will only exist if <code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>
+							equals <code>timed_mutex_concept</code>.
+						</para>
+						<para>
+							<code>scoped_timed_lock</code> models the ScopedTimedLock concept described by the
+							Boost Thread library.  <code>scoped_timed_lock</code> is a wrapper around the underlying
+							<code>Mutex::scoped_timed_lock</code> class.  It updates the locking
+							order graph and tests for cycles before attempting to acquire a lock.
+						</para>
+					</description>
+				</typedef>
+				<method-group name="public member functions">
+					<method name="node_key" cv="const">
+						<type><classname>boost::optional</classname>&lt;Key&gt;</type>
+						<description>
+							<para>Returns the mutex's key (wrapped in a <classname>boost::optional</classname>).
+								If the mutex was default constructed, it will have no key and
+								an uninitialized <classname>boost::optional</classname> is returned.
+								Additionally, if mutex debugging has been disabled by defining
+								<code>NDEBUG</code> or <code>ACYCLIC_MUTEX_NDEBUG</code>, then
+								this function will always return an uninitialized <classname>boost::optional</classname>.
+							</para>
+						</description>
+					</method>
+				</method-group>
+				<constructor>
+					<description>
+						<para>The default constructor creates a mutex with no key.  This causes the mutex to be allocated
+							its own vertex in the locking order graph.  Default construction requires the least effort
+							from the user, and minimizes the possibility of false positives, but also incurs the most overhead.
+							If your program allocates many mutex objects, it may be worth coming up with a scheme for
+							assigning keys to your mutexes.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<parameter name="key">
+						<paramtype>const Key &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>Creates a mutex with the specified key.  All mutexes with equivalent
+							(according to the <code>KeyCompare</code> ordering) keys
+							will share the same vertex in the locking order graph.  This limits the size
+							of the locking order graph, and so can reduce overhead if your program creates
+							many mutex objects.  However, it does require additional effort from the
+							programmer to group the mutexes by key in a way which will
+							not produce false positives.
+						</para>
+					</description>
+				</constructor>
+			</access>
+		</class>
+	</namespace>
+</header>

@@ -25,10 +25,8 @@
 			<title>Introduction</title>
 			<para>
 				libpoet is a C++ library whose goal is to make creation of active objects easy
-				enough for routine use.  Some of the more important classes in the library
-				are <classname>poet::active_function</classname>, <classname>poet::future</classname>,
-				and <classname>poet::scheduler</classname>.
-			</para>
+				enough for routine use.  It also includes support for monitor objects, and
+				mutex locking order debugging.
 			<para>
 				Active objects provide concurrency, since each active object executes in its own
 				thread.  Futures are employed to communicate with active objects
@@ -37,10 +35,16 @@
 				<ulink url="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming." by
 				R. Greg Lavender and Douglas C. Schmidt</ulink>.
 			</para>
-			<para>
-					libpoet also provides support for creating monitor objects via the
+				Some of the more important active object
+				classes in the library
+				are <classname>poet::active_function</classname>, <classname>poet::future</classname>,
+				and <classname>poet::scheduler</classname>.
+					The
 					<classname>poet::monitor_ptr</classname>, <classname>poet::monitor</classname>,
-					and <classname>poet::monitor_base</classname> classes.
+					and <classname>poet::monitor_base</classname> classes provide support for monitor
+					objects.  Finally, the <classname>poet::acyclic_mutex</classname> class provides
+					a wrapper for mutex classes which adds automatic validation of the program's
+					mutex locking order.
 			</para>
 			<para>
 				A version of this documentation corresponding to the most recent release should
@@ -51,7 +55,7 @@
 		<section id="poet.section.status">
 			<title>Status</title>
 			<para>
-				The library's API is still experimental, and subject to change as feedback
+				The library's API is still undergoing some development, and may be refined as feedback
 				and experience clairifies areas which could be improved.
 			</para>
 		</section>
@@ -106,29 +110,46 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 		xmlns:xi="http://www.w3.org/2001/XInclude"/>
 	<section id="poet.section.examples">
 		<title>Example Programs</title>
-		<section id="poet.example.pipeline.cpp">
-			<title>pipeline.cpp</title>
-			<para>
-				Download <ulink url="../../../examples/pipeline.cpp">pipeline.cpp</ulink>.
-			</para>
-			<programlisting><xi:include href="../../examples/pipeline.cpp"
-					xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+		<section id="poet.example.active_objects">
+			<title>Active Objects</title>
+			<section id="poet.example.active_object_example.cpp">
+				<title>active_object_example.cpp</title>
+				<para>
+					Download <ulink url="../../../examples/active_object_example.cpp">active_object_example.cpp</ulink>.
+				</para>
+				<programlisting><xi:include href="../../examples/active_object_example.cpp"
+						xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+			</section>
+			<section id="poet.example.pipeline.cpp">
+				<title>pipeline.cpp</title>
+				<para>
+					Download <ulink url="../../../examples/pipeline.cpp">pipeline.cpp</ulink>.
+				</para>
+				<programlisting><xi:include href="../../examples/pipeline.cpp"
+						xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+			</section>
 		</section>
-		<section id="poet.example.monitor_demo.cpp">
-			<title>monitor_demo.cpp</title>
-			<para>
-				Download <ulink url="../../../examples/monitor_demo.cpp">monitor_demo.cpp</ulink>.
-			</para>
-			<programlisting><xi:include href="../../examples/monitor_demo.cpp"
-					xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+		<section id="poet.example.monitor_objects">
+			<title>Monitor Objects</title>
+			<section id="poet.example.monitor_demo.cpp">
+				<title>monitor_demo.cpp</title>
+				<para>
+					Download <ulink url="../../../examples/monitor_demo.cpp">monitor_demo.cpp</ulink>.
+				</para>
+				<programlisting><xi:include href="../../examples/monitor_demo.cpp"
+						xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+			</section>
 		</section>
-		<section id="poet.example.active_object_example.cpp">
-			<title>active_object_example.cpp</title>
-			<para>
-				Download <ulink url="../../../examples/active_object_example.cpp">active_object_example.cpp</ulink>.
-			</para>
-			<programlisting><xi:include href="../../examples/active_object_example.cpp"
-					xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+		<section id="poet.example.mutex_debugging">
+			<title>Mutex Debugging</title>
+			<section id="poet.example.acyclic_mutex_demo.cpp">
+				<title>acyclic_mutex_demo.cpp</title>
+				<para>
+					Download <ulink url="../../../examples/acyclic_mutex_demo.cpp">acyclic_mutex_demo.cpp</ulink>.
+				</para>
+				<programlisting><xi:include href="../../examples/acyclic_mutex_demo.cpp"
+						xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+			</section>
 		</section>
 	</section>
 </library>

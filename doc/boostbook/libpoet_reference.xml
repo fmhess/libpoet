@@ -25,6 +25,15 @@
 	</section>
 	<section id="libpoet_reference.section.mutex_debugging">
 		<title>Mutex Debugging</title>
+		<xi:include href="acyclic_mutex_base_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="acyclic_mutex_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="mutex_grapher_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+	</section>
+	<section id="libpoet_reference.section.misc">
+		<title>Miscellaneous</title>
 		<xi:include href="mutex_properties_hpp.xml"
 			xmlns:xi="http://www.w3.org/2001/XInclude"/>
 	</section>
