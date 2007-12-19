@@ -60,7 +60,7 @@ namespace poet
 		};
 
 		const locking_order_graph& graph() const {return _graph;}
-		inline void write_graphviz(std::ostream &out_stream);
+		inline void write_graphviz(std::ostream &out_stream) const;
 		template<typename Func>
 		void set_cycle_handler(Func func)
 		{

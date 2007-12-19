@@ -100,7 +100,7 @@ namespace poet
 		}
 	}
 
-	void mutex_grapher::write_graphviz(std::ostream &out_stream)
+	void mutex_grapher::write_graphviz(std::ostream &out_stream) const
 	{
 		boost::write_graphviz(out_stream, graph(), vertex_labeler(graph()), edge_colorer(graph()));
 	}
