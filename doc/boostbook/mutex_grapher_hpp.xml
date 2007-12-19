@@ -18,6 +18,23 @@
 					currently locked by each thread.  The user may also specify a custom handler to be called
 					in the event an inconsistency is detected.
 				</para>
+				<itemizedlist>
+					<title>Example Code</title>
+					<listitem>
+						<para>
+							<link linkend="poet.example.acyclic_mutex_demo.cpp">acyclic_mutex_demo.cpp</link>
+						</para>
+					</listitem>
+				</itemizedlist>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem>
+						<para>
+							<classname>acyclic_mutex</classname>: a mutex wrapper whose locking events are
+							automatically tracked by <code>mutex_grapher</code>.
+						</para>
+					</listitem>
+				</itemizedlist>
 			</description>
 			<access name="public">
 				<struct name="vertex_properties">
