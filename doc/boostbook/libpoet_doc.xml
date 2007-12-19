@@ -144,6 +144,13 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 			<title>Mutex Debugging</title>
 			<section id="poet.example.acyclic_mutex_demo.cpp">
 				<title>acyclic_mutex_demo.cpp</title>
+				<para>The acyclic_mutex_demo example program writes the following graph to
+					stdout (after processing
+					into PNG format with the "dot" program from the graphviz package):
+				</para>
+				<para>
+					<imagedata fileref="demo_locking_order_graph.png"/>
+				</para>
 				<para>
 					Download <ulink url="../../../examples/acyclic_mutex_demo.cpp">acyclic_mutex_demo.cpp</ulink>.
 				</para>

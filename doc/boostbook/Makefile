@@ -39,6 +39,7 @@ html: libpoet_doc.docbook
 		--stringparam toc.max.depth 4 \
 		--stringparam toc.section.depth 3 \
 		-o html/ $(BOOSTBOOK_TOOL_DIR)/xsl/html.xsl $<)
+	cp ./demo_locking_order_graph.png html/
 
 libpoet_doc.docbook: $(XML_SRCS)
 	(export XML_CATALOG_FILES="./catalog.xml /etc/xml/catalog";\
