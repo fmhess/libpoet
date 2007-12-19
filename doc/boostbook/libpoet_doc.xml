@@ -56,7 +56,9 @@
 			<title>Status</title>
 			<para>
 				The library's API is still undergoing some development, and may be refined as feedback
-				and experience clairifies areas which could be improved.
+				and experience clairifies areas which could be improved.  It is anticipated that some
+				interfaces will change to keep in sync with API changes in boost, and to keep in
+				sync with relevant changes and additions to the C++ standard.
 			</para>
 		</section>
 		<section id="poet.section.dependencies">
