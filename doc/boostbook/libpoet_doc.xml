@@ -107,6 +107,17 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 				which may be used to discuss issues related to the library.
 			</para>
 		</section>
+		<section id="poet.section.caveats">
+			<title>Caveats</title>
+			<para>
+				The <classname>poet::monitor</classname> and <classname>poet::monitor_ptr</classname>
+				classes are intended to work with any mutex class which models one of the mutex concepts
+				described by the Boost Thread library.  However, due to limitations in the current
+				implementation of <classname>boost::condition</classname>, only the mutex classes
+				defined in the Boost Thread library will work.  This limitation will be lifted once the
+				ongoing rewrite of the Boost Thread library is completed and released.
+			</para>
+		</section>
 	</section>
 	<xi:include href="libpoet_reference.xml"
 		xmlns:xi="http://www.w3.org/2001/XInclude"/>
