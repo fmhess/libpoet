@@ -27,7 +27,7 @@ namespace poet
 		private:
 			specialized_monitor() {}
 		};
-		
+
 		template<typename T, typename Mutex>
 		class specialized_monitor<T, Mutex, mutex_concept>
 		{
@@ -47,6 +47,8 @@ namespace poet
 				{}
 			};
 
+			specialized_monitor(): _monitor_pointer(new T)
+			{}
 			specialized_monitor(const T &object): _monitor_pointer(new T(object))
 			{}
 			template<typename U, typename M>
@@ -102,6 +104,8 @@ namespace poet
 				{}
 			};
 
+			specialized_monitor()
+			{}
 			specialized_monitor(const T &object): base_class(object)
 			{}
 			template<typename U, typename M, enum mutex_model model>
@@ -128,6 +132,8 @@ namespace poet
 				{}
 			};
 
+			specialized_monitor()
+			{}
 			specialized_monitor(const T &object): base_class(object)
 			{}
 			template<typename U, typename M, enum mutex_model model>
@@ -141,6 +147,8 @@ namespace poet
 	{
 		typedef typename detail::specialized_monitor<T, Mutex, mutex_properties<Mutex>::model> base_class;
 	public:
+		monitor()
+		{}
 		monitor(const T &object): base_class(object)
 		{}
 		template<typename U, typename M>
