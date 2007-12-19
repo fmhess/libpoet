@@ -150,7 +150,7 @@ namespace poet
 				_locked_mutexes.reset(new mutex_list_type);
 			}
 		}
-		mutex_list_type& locked_mutexes()
+		mutex_list_type& internal_locked_mutexes()
 		{
 			check_locked_mutexes_init();
 			return *_locked_mutexes;

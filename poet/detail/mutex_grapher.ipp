@@ -82,7 +82,7 @@ namespace poet
 					_graph[new_edge].locking_order_violation = true;
 				}
 			}
-			locked_mutexes().push_back(&mutex);
+			internal_locked_mutexes().push_back(&mutex);
 			if(acyclic == false)
 			{
 				_cycle_handler();
@@ -94,9 +94,9 @@ namespace poet
 	{
 		if(mutex.will_really_unlock())
 		{
-			mutex_list_type::reverse_iterator rit = std::find(locked_mutexes().rbegin(), locked_mutexes().rend(), &mutex);
-			assert(rit != locked_mutexes().rend());
-			locked_mutexes().erase(--(rit.base()));
+			mutex_list_type::reverse_iterator rit = std::find(internal_locked_mutexes().rbegin(), internal_locked_mutexes().rend(), &mutex);
+			assert(rit != internal_locked_mutexes().rend());
+			internal_locked_mutexes().erase(--(rit.base()));
 		}
 	}
 
