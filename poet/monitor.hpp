@@ -12,6 +12,7 @@
 #ifndef _POET_MONITOR_HPP
 #define _POET_MONITOR_HPP
 
+#include <algorithm>
 #include <boost/scoped_ptr.hpp>
 #include <poet/detail/monitor_locks.hpp>
 #include <poet/monitor_ptr.hpp>
@@ -70,15 +71,17 @@ namespace poet
 			{
 				if(&rhs == this) return *this;
 
-				boost::scoped_ptr<T> temp;
+				boost::optional<T> temp;
 				/* Avoid locking the mutexes of both this monitor and the
 				other monitor simultaneously, since we don't want to invite
 				any potential locking order violations. */
 				{
 					typename specialized_monitor<U, M, mutex_concept>::scoped_lock other_lock(rhs);
-					temp.reset(new T(*other_lock));
+					temp = *other_lock;
 				}
-				return *this = *temp;
+				scoped_lock lock(*this);
+				std::swap(*lock, *temp);
+				return *this;
 			}
 		protected:
 			template<typename U, typename M, enum mutex_model model>
