@@ -111,7 +111,7 @@ namespace poet
 			{}
 			void operator()(std::ostream &output_stream, locking_order_graph::vertex_descriptor vertex)
 			{
-				output_stream << "[label=" << _graph[vertex].name << "]";
+				output_stream << "[label=\"" << _graph[vertex].name << "\"]";
 			}
 		private:
 			const locking_order_graph &_graph;
@@ -123,7 +123,7 @@ namespace poet
 			{}
 			void operator()(std::ostream &output_stream, locking_order_graph::edge_descriptor edge)
 			{
-				output_stream << "[color=";
+				output_stream << "[color=\"";
 				if(_graph[edge].locking_order_violation)
 				{
 					output_stream << "red";
@@ -131,7 +131,7 @@ namespace poet
 				{
 					output_stream << "black";
 				}
-				output_stream << "]";
+				output_stream << "\"]";
 			}
 		private:
 			const locking_order_graph &_graph;

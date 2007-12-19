@@ -57,7 +57,7 @@ namespace poet
 				if(mutex.node_key())
 					node_name << *mutex.node_key();
 				else
-					node_name << "vertex " << target_vertex;
+					node_name << "mutex " << target_vertex;
 				_graph[target_vertex].name = node_name.str();
 				if(mutex.node_key())
 					finder->add_vertex(*mutex.node_key(), target_vertex);
