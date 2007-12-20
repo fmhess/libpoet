@@ -64,9 +64,9 @@
 		<section id="poet.section.dependencies">
 			<title>Dependencies</title>
 			<para>
-				libpoet depends on the <ulink url="http://www.boost.org">boost C++ libraries</ulink> and
-				<ulink url="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</ulink>.
-				It requires linking to libboost_thread.
+				libpoet depends on the <ulink url="http://www.boost.org">boost C++ libraries</ulink>,
+				and requires linking to libboost_thread.
+				The headers from the active object portion of libpoet depend on <ulink url="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</ulink>.
 			</para>
 		</section>
 		<section id="poet.section.download">
@@ -88,7 +88,7 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 				<ulink url="http://www.comedi.org/cgi-bin/viewcvs.cgi/libpoet/">browse the cvs online</ulink>.
 			</para>
 			<para>
-				The code is licensed under the <ulink url="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Version 1.0</ulink>.
+				The code (and this documentation) is licensed under the <ulink url="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Version 1.0</ulink>.
 			</para>
 		</section>
 		<section id="poet.section.installation">

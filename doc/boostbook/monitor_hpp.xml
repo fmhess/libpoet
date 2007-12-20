@@ -12,7 +12,7 @@
 				<para>
 					<code>monitor</code> allows for the easy creation of simple monitor objects.
 					A <code>monitor</code> provides automatically locked access to its contained object's members
-					through its scoped lock class, which can be used like pointers.
+					through its scoped lock classes, which can be used like pointers.
 					It stores its contained object by value, as an alternative to the pointer-like
 					interface of <classname>monitor_ptr</classname>.
 					Copies of a <code>monitor</code> object are deep copies, which do not share
