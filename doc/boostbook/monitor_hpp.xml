@@ -250,8 +250,8 @@
 						<description>
 							<para>
 								Swaps the values of <code>*this</code> and <code>other</code>.  This
-								function is provided to implement a specialization of
-								<functionname>std::swap</functionname> for this class, which may
+								function is provided to implement
+								<functionname>swap</functionname> for this class, which may
 								enhance efficiency with generic algorithms.
 							</para>
 							<para>
@@ -322,5 +322,14 @@
 				<destructor specifiers="virtual"/>
 			</access>
 		</class>
+		<function name="swap">
+			<template>
+				<template-type-parameter name="T"/>
+				<template-type-parameter name="Mutex"/>
+			</template>
+			<parameter name="monitor0"><paramtype>monitor&lt;T, Mutex&gt; &amp;</paramtype></parameter>
+			<parameter name="monitor1"><paramtype>monitor&lt;T, Mutex&gt; &amp;</paramtype></parameter>
+			<type>void</type>
+		</function>
 	</namespace>
 </header>
