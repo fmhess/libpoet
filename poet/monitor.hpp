@@ -80,7 +80,7 @@ namespace poet
 					temp = *other_lock;
 				}
 				scoped_lock lock(*this);
-				std::swap(*lock, *temp);
+				swap(*lock, *temp);
 				return *this;
 			}
 
@@ -97,11 +97,11 @@ namespace poet
 				}
 				{
 					scoped_lock lock(*this);
-					std::swap(*lock, *temp);
+					swap(*lock, *temp);
 				}
 				{
 					typename specialized_monitor<T, M, mutex_concept>::scoped_lock other_lock(other);
-					std::swap(*other_lock, *temp);
+					swap(*other_lock, *temp);
 				}
 			}
 
@@ -180,11 +180,7 @@ namespace poet
 		monitor(monitor<U, M> &other): base_class(other)
 		{}
 	};
-};
 
-// specialization of std::swap for efficiency with standard algorithms
-namespace std
-{
 	template<typename T, typename Mutex>
 	void swap(poet::monitor<T, Mutex> &mon0, poet::monitor<T, Mutex> &mon1)
 	{

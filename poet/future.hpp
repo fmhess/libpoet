@@ -393,7 +393,7 @@ namespace poet
 		{
 			return _future_body->timed_join(absolute_time);
 		}
-		template <typename OtherType> const future<T>& operator =(const future<OtherType> &other)
+		template <typename OtherType> const future<T>& operator=(const future<OtherType> &other)
 		{
 			BOOST_ASSERT(typeid(T) != typeid(OtherType));
 			_future_body.reset(new detail::future_body_proxy<T, OtherType>(other._future_body));
@@ -465,7 +465,7 @@ namespace poet
 		{
 			get();
 		}
-		template <typename OtherType> const future<void>& operator =(const future<OtherType> &other)
+		template <typename OtherType> const future<void>& operator=(const future<OtherType> &other)
 		{
 			BOOST_ASSERT(typeid(void) != typeid(OtherType));
 			_future_body.reset(new detail::future_body_proxy<void, OtherType>(other._future_body));
