@@ -13,6 +13,7 @@
 #define _POET_MONITOR_HPP
 
 #include <algorithm>
+#include <boost/optional.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <poet/detail/monitor_locks.hpp>
 #include <poet/monitor_ptr.hpp>
