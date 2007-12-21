@@ -43,8 +43,7 @@ namespace poet
 		class specialized_acyclic_mutex;
 	};
 
-	template<typename Mutex> class mutex_properties
-	{};
+	template<typename Mutex> class mutex_properties;
 
 	template<>
 	class mutex_properties<boost::mutex>
