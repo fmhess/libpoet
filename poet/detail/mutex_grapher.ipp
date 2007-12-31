@@ -30,12 +30,16 @@
 
 namespace poet
 {
-	mutex_grapher::mutex_grapher(): _cycle_handler(&default_cycle_handler)
+	mutex_grapher::mutex_grapher(): _cycle_detected(false),
+		_cycle_handler(&default_cycle_handler)
 	{}
 
 	template<typename AcyclicMutex>
-	void mutex_grapher::track_lock(AcyclicMutex &mutex)
+	bool mutex_grapher::track_lock(AcyclicMutex &mutex)
 	{
+		// we want to ignore all locking events after the first cycle is detected.
+		if(_cycle_detected) return false;
+
 		if(mutex.vertex() == 0)
 		{
 			typedef detail::vertex_finder<typename AcyclicMutex::key_type, typename AcyclicMutex::key_compare> vertex_finder_type;
@@ -66,7 +70,6 @@ namespace poet
 		}
 		if(mutex.will_really_lock())
 		{
-			bool acyclic = true;
 			if(locked_mutexes().empty() == false)
 			{
 				const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex();
@@ -78,20 +81,20 @@ namespace poet
 				}
 				catch(const boost::not_a_dag &error)
 				{
-					acyclic = false;
+					_cycle_detected = true;
 					_graph[new_edge].locking_order_violation = true;
 				}
 			}
 			internal_locked_mutexes().push_back(&mutex);
-			if(acyclic == false)
-			{
-				_cycle_handler();
-			}
 		}
+		return _cycle_detected;
 	};
 
 	void mutex_grapher::track_unlock(const acyclic_mutex_base &mutex)
 	{
+		// we want to ignore all locking events after the first cycle is detected.
+		if(_cycle_detected) return;
+
 		if(mutex.will_really_unlock())
 		{
 			mutex_list_type::reverse_iterator rit = std::find(internal_locked_mutexes().rbegin(), internal_locked_mutexes().rend(), &mutex);

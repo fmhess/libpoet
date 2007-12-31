@@ -16,7 +16,6 @@
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/optional.hpp>
-#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/tss.hpp>
 #include <boost/noncopyable.hpp>
 #include <cassert>
@@ -38,7 +37,7 @@ namespace poet
 
 	class mutex_grapher: public boost::noncopyable
 	{
-		typedef monitor_ptr<mutex_grapher, boost::recursive_mutex> monitor_type;
+		typedef monitor_ptr<mutex_grapher, boost::mutex> monitor_type;
 	public:
 		struct vertex_properties
 		{
@@ -87,8 +86,16 @@ namespace poet
 			{
 				if(_tracking) return;
 				_tracking = true;
-				mutex_grapher::scoped_lock lock;
-				lock->track_lock(_mutex);
+				bool cycle_detected;
+				{
+					mutex_grapher::scoped_lock lock;
+					cycle_detected = lock->track_lock(_mutex);
+				};
+				/* _cycle_handler is run with no locks held by libpoet,
+				to minimize chance of deadlock with user-provided cycle handler.
+				tracking of locking events is disabled after the first cycle
+				is detected. */
+				if(cycle_detected) mutex_grapher::instance().direct()->_cycle_handler();
 				_mutex.increment_recursive_lock_count();
 			}
 			void track_unlock()
@@ -156,22 +163,22 @@ namespace poet
 			return *_locked_mutexes;
 		}
 		template<typename AcyclicMutex>
-		inline void track_lock(AcyclicMutex &_mutex);
+		inline bool track_lock(AcyclicMutex &_mutex);
 		inline void track_unlock(const acyclic_mutex_base &_mutex);
 		inline void check_for_cycles() const;
 
 		// static functions
 		static monitor_type& instance()
 		{
-			static monitor_type grapher;
-
 			boost::mutex::scoped_lock lock(detail::template_static<mutex_grapher, boost::mutex>::object);
+			static monitor_type grapher;
 			if(grapher == 0) grapher.reset(new mutex_grapher);
 			return grapher;
 		}
 		inline static void default_cycle_handler();
 
 		locking_order_graph _graph;
+		bool _cycle_detected;
 		mutable boost::thread_specific_ptr<mutex_list_type> _locked_mutexes;
 		boost::function<void ()> _cycle_handler;
 	};
