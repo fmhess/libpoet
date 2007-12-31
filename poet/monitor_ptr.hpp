@@ -30,7 +30,7 @@ namespace poet
 		private:
 			specialized_monitor_ptr() {}
 		};
-		
+
 		// uses default copy constructor/assignment operators
 		template<typename T, typename Mutex>
 		class specialized_monitor_ptr<T, Mutex, mutex_concept>
@@ -104,7 +104,7 @@ namespace poet
 		private:
 			template<typename U, typename M, enum mutex_model>
 			friend class specialized_monitor_ptr;
-			
+
 			void set_monitor_ptr(const monitor_base *monitor)
 			{
 				monitor->set_synchronizer(_syncer);
@@ -170,7 +170,7 @@ namespace poet
 			{}
 		};
 	};
-	
+
 	template<typename T, typename Mutex = boost::mutex>
 	class monitor_ptr: public detail::specialized_monitor_ptr<T, Mutex, mutex_properties<Mutex>::model>
 	{
@@ -184,6 +184,24 @@ namespace poet
 		explicit monitor_ptr(U *pointer): base_class(pointer)
 		{}
 	};
+
+	template<typename T, typename Mutex>
+	inline bool operator==(const monitor_ptr<T, Mutex> &ptr0, const monitor_ptr<T, Mutex> &ptr1)
+	{
+		return ptr0.direct() == ptr1.direct();
+	}
+
+	template<typename T, typename Mutex>
+	inline bool operator!=(const monitor_ptr<T, Mutex> &ptr0, const monitor_ptr<T, Mutex> &ptr1)
+	{
+		return ptr0.direct() != ptr1.direct();
+	}
+
+	template<typename T, typename Mutex>
+	inline bool operator<(const monitor_ptr<T, Mutex> &ptr0, const monitor_ptr<T, Mutex> &ptr1)
+	{
+		return ptr0.direct() < ptr1.direct();
+	}
 };
 
 #endif // _POET_MONITOR_PTR_HPP

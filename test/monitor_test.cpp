@@ -69,9 +69,24 @@ void monitor_ptr_thread1_function(monitor_ptr_type mymonitor)
 	mymonitor->another_function();
 }
 
+void monitor_ptr_comparison_test()
+{
+	poet::monitor_ptr<char> mymon0(new char);
+	poet::monitor_ptr<char> mymon0_copy = mymon0;
+	poet::monitor_ptr<char> mymon1(new char);
+	poet::monitor_ptr<char> mymon_null;
+	assert(mymon_null == 0);
+	assert(mymon_null != mymon0);
+	assert(mymon_null != mymon1);
+	assert(mymon0 != mymon1);
+	assert(mymon0 == mymon0_copy);
+	assert((mymon0 < mymon1 && !(mymon0 > mymon1)) || (mymon0 > mymon1 && !(mymon0 < mymon1)));
+}
+
 void monitor_ptr_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
+	monitor_ptr_comparison_test();
 	step_counter = 0;
 	monitor_ptr_type mymonitor(new Monitored);
 	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor));
