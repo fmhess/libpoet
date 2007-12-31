@@ -112,7 +112,7 @@
 				<typedef name="mutex_list_type"><type>std::list&lt;const <classname>acyclic_mutex_base</classname> *&gt;</type></typedef>
 				<class name="scoped_lock">
 					<inherit access="public">
-						<type><classname>monitor_ptr</classname>&lt;<classname>mutex_grapher</classname>, boost::recursive_mutex&gt;::scoped_lock</type>
+						<type><classname>monitor_ptr</classname>&lt;<classname>mutex_grapher</classname>, boost::mutex&gt;::scoped_lock</type>
 					</inherit>
 					<purpose>Provides locked access to the <classname>mutex_grapher</classname> singleton.</purpose>
 					<description>
