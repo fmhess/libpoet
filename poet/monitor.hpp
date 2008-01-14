@@ -44,7 +44,13 @@ namespace poet
 				scoped_lock(specialized_monitor<T, Mutex, mutex_concept> &mon):
 					base_class(mon._monitor_pointer)
 				{}
+				explicit scoped_lock(const specialized_monitor<T, Mutex, mutex_concept> &mon):
+					base_class(mon._monitor_pointer)
+				{}
 				scoped_lock(specialized_monitor<T, Mutex, mutex_concept> &mon, bool do_lock):
+					base_class(mon._monitor_pointer, do_lock)
+				{}
+				explicit scoped_lock(const specialized_monitor<T, Mutex, mutex_concept> &mon, bool do_lock):
 					base_class(mon._monitor_pointer, do_lock)
 				{}
 			};
@@ -125,7 +131,12 @@ namespace poet
 			public:
 				scoped_try_lock(specialized_monitor<T, Mutex, try_mutex_concept> &mon): base_class(mon._monitor_pointer)
 				{}
+				explicit scoped_try_lock(const specialized_monitor<T, Mutex, try_mutex_concept> &mon): base_class(mon._monitor_pointer)
+				{}
 				scoped_try_lock(specialized_monitor<T, Mutex, try_mutex_concept> &mon, bool do_lock):
+					base_class(mon._monitor_pointer, do_lock)
+				{}
+				explicit scoped_try_lock(const specialized_monitor<T, Mutex, try_mutex_concept> &mon, bool do_lock):
 					base_class(mon._monitor_pointer, do_lock)
 				{}
 			};
@@ -153,7 +164,14 @@ namespace poet
 				scoped_timed_lock(specialized_monitor<T, Mutex, timed_mutex_concept> &mon, const Timeout &t):
 					base_class(mon._monitor_pointer, t)
 				{}
+				template<typename Timeout>
+				explicit scoped_timed_lock(const specialized_monitor<T, Mutex, timed_mutex_concept> &mon, const Timeout &t):
+					base_class(mon._monitor_pointer, t)
+				{}
 				scoped_timed_lock(specialized_monitor<T, Mutex, timed_mutex_concept> &mon, bool do_lock):
+					base_class(mon._monitor_pointer, do_lock)
+				{}
+				explicit scoped_timed_lock(const specialized_monitor<T, Mutex, timed_mutex_concept> &mon, bool do_lock):
 					base_class(mon._monitor_pointer, do_lock)
 				{}
 			};

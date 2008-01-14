@@ -44,9 +44,17 @@ namespace poet
 				typedef typename detail::monitor_scoped_lock<T, Mutex> base_class;
 			public:
 				scoped_lock(specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer):
-					base_class(monitor_pointer._syncer, monitor_pointer._pointer)
+					base_class(monitor_pointer._syncer,
+						monitor_pointer._pointer)
+				{}
+				explicit scoped_lock(const specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer):
+					base_class(monitor_pointer._syncer,
+						monitor_pointer._pointer)
 				{}
 				scoped_lock(specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, bool do_lock):
+					base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
+				{}
+				explicit scoped_lock(const specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, bool do_lock):
 					base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
 				{}
 			};
@@ -81,9 +89,9 @@ namespace poet
 			}
 			virtual ~specialized_monitor_ptr() {}
 
-			call_proxy operator->()
+			call_proxy operator->() const
 			{
-				return call_proxy(boost::shared_ptr<scoped_lock>(new scoped_lock(*this)));
+				return call_proxy(boost::shared_ptr<scoped_lock>(new scoped_lock(const_cast<specialized_monitor_ptr&>(*this))));
 			}
 			// unlocked access
 			const boost::shared_ptr<T>& direct() const {return _pointer;}
@@ -129,7 +137,13 @@ namespace poet
 				scoped_try_lock(specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer):
 					base_class(monitor_pointer._syncer, monitor_pointer._pointer)
 				{}
+				explicit scoped_try_lock(const specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer):
+					base_class(monitor_pointer._syncer, monitor_pointer._pointer)
+				{}
 				scoped_try_lock(specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, bool do_lock):
+					base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
+				{}
+				explicit scoped_try_lock(const specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, bool do_lock):
 					base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
 				{}
 			};
@@ -153,10 +167,18 @@ namespace poet
 			{
 				typedef typename detail::monitor_scoped_timed_lock<T, Mutex> base_class;
 			public:
-				scoped_timed_lock(specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer):
-					base_class(monitor_pointer._syncer, monitor_pointer._pointer)
+				template<typename Timeout>
+				scoped_timed_lock(specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, const Timeout &timeout):
+					base_class(monitor_pointer._syncer, monitor_pointer._pointer, timeout)
+				{}
+				template<typename Timeout>
+				explicit scoped_timed_lock(const specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, const Timeout &timeout):
+					base_class(monitor_pointer._syncer, monitor_pointer._pointer, timeout)
 				{}
 				scoped_timed_lock(specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, bool do_lock):
+					base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
+				{}
+				explicit scoped_timed_lock(const specialized_monitor_ptr<T, Mutex, mutex_concept> &monitor_pointer, bool do_lock):
 					base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
 				{}
 			};

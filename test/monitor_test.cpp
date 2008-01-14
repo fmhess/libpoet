@@ -27,6 +27,8 @@ void check_step(int expected)
 class Monitored: public poet::monitor_base
 {
 public:
+	Monitored(): value(0)
+	{}
 	void waiting_function()
 	{
 		check_step(0);
@@ -50,6 +52,7 @@ public:
 		usleep(1000000);
 		check_step(7);
 	}
+	int value;
 };
 
 //test for poet::monitor_ptr
@@ -83,10 +86,33 @@ void monitor_ptr_comparison_test()
 	assert((mymon0 < mymon1 && !(mymon0 > mymon1)) || (mymon0 > mymon1 && !(mymon0 < mymon1)));
 }
 
+// make sure we can compile when using const monitor_ptr
+void monitor_ptr_const_test()
+{
+	typedef poet::monitor_ptr<Monitored, boost::timed_mutex> mon_type;
+	static const int test_value = 1;
+	const mon_type mymon(new Monitored());
+	mymon->value = test_value;
+	assert(mymon->value == test_value);
+	{
+		const mon_type::scoped_lock lock(mymon);
+		assert(lock->value == test_value);
+	}
+	{
+		const mon_type::scoped_try_lock lock(mymon);
+		assert(lock->value == test_value);
+	}
+	{
+		const mon_type::scoped_timed_lock lock(mymon, true);
+		assert(lock->value == test_value);
+	}
+}
+
 void monitor_ptr_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
 	monitor_ptr_comparison_test();
+	monitor_ptr_const_test();
 	step_counter = 0;
 	monitor_ptr_type mymonitor(new Monitored);
 	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor));
@@ -121,9 +147,31 @@ void monitor_thread1_function(monitor_type &mymonitor)
 	}
 }
 
+// make sure we can compile when using const monitor_ptr
+void monitor_const_test()
+{
+	typedef poet::monitor<Monitored, boost::timed_mutex> mon_type;
+	static const int test_value = 1;
+	const mon_type mymon = Monitored();
+	{
+		const mon_type::scoped_lock lock(mymon);
+		lock->value = test_value;
+		assert(lock->value == test_value);
+	}
+	{
+		const mon_type::scoped_try_lock lock(mymon);
+		assert(lock->value == test_value);
+	}
+	{
+		const mon_type::scoped_timed_lock lock(mymon, true);
+		assert(lock->value == test_value);
+	}
+}
+
 void monitor_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
+	monitor_const_test();
 	step_counter = 0;
 	monitor_type mymonitor;
 	boost::thread thread0(boost::bind(&monitor_thread0_function, boost::ref(mymonitor)));
