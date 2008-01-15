@@ -2,7 +2,8 @@
 	An experimental alternative to monitor_ptr that stores the wrapped
 	object by value instead of acting like a pointer.
 
-	begin: Frank Hess <fmhess@users.sourceforge.net>  2007-11-29
+	begin: Frank Mori Hess <fmhess@users.sourceforge.net>  2007-11-29
+	copyright (c) Frank Mori Hess 2007-2008
 */
 
 //  Distributed under the Boost Software License, Version 1.0. (See

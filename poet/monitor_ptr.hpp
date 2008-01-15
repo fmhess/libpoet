@@ -3,7 +3,8 @@
 	objects members are accessed.  See "Wrapping C++ Member Function Calls"
 	by Bjarne Stroustroup at http://www.research.att.com/~bs/wrapper.pdf
 
-	begin: Frank Hess <fmhess@users.sourceforge.net>  2007-08-27
+	begin: Frank Mori Hess <fmhess@users.sourceforge.net>  2007-08-27
+	copyright (c) Frank Mori Hess 2007-2008
 */
 
 //  Distributed under the Boost Software License, Version 1.0. (See
