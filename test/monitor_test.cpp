@@ -108,11 +108,79 @@ void monitor_ptr_const_test()
 	}
 }
 
+class MyBase
+{
+public:
+	virtual ~MyBase() {};
+	virtual void set(int value) = 0;
+	virtual int get() const = 0;
+};
+
+class MyDerived: public MyBase
+{
+public:
+	MyDerived(): _value(0)
+	{}
+	virtual void set(int value)
+	{
+		_value = value;
+	}
+	virtual int get() const
+	{
+		return _value;
+	}
+private:
+	int _value;
+};
+
+class MyDerivedToo: public MyBase
+{
+public:
+	MyDerivedToo()
+	{}
+	virtual void set(int value)
+	{
+	}
+	virtual int get() const
+	{
+		return 2;
+	}
+private:
+};
+
+
+void monitor_ptr_cast_test()
+{
+	static const int test_value = 2;
+	poet::monitor_ptr<MyBase> mon_base(new MyDerived());
+	mon_base->set(test_value);
+	
+	poet::monitor_ptr<MyDerived> mon_derived = poet::static_pointer_cast<MyDerived>(mon_base);
+	assert(mon_derived->get() == test_value);
+	mon_base = poet::static_pointer_cast<MyBase>(mon_derived);
+	assert(mon_base->get() == test_value);
+	
+	mon_derived = poet::dynamic_pointer_cast<MyDerived>(mon_base);
+	assert(mon_derived);
+	assert(mon_derived->get() == test_value);
+	mon_base = poet::dynamic_pointer_cast<MyBase>(mon_derived);
+	assert(mon_base);
+	assert(mon_base->get() == test_value);
+	poet::monitor_ptr<MyDerivedToo> mon_derived_too = poet::dynamic_pointer_cast<MyDerivedToo>(mon_base);
+	assert(mon_derived_too == 0);
+
+	poet::monitor_ptr<const MyBase> mon_base_const = mon_base;
+	assert(mon_base_const->get() == test_value);
+	mon_base = poet::const_pointer_cast<MyBase>(mon_base);
+	assert(mon_base->get() == test_value);
+}
+
 void monitor_ptr_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
 	monitor_ptr_comparison_test();
 	monitor_ptr_const_test();
+	monitor_ptr_cast_test();
 	step_counter = 0;
 	monitor_ptr_type mymonitor(new Monitored);
 	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor));

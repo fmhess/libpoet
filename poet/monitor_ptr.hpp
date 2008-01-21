@@ -26,11 +26,11 @@ namespace poet
 	namespace detail
 	{
 		template<typename T, typename Mutex, enum mutex_model>
-		class specialized_monitor_ptr
-		{
-		private:
-			specialized_monitor_ptr() {}
-		};
+		class specialized_monitor_ptr;
+
+		struct static_cast_tag {};
+		struct const_cast_tag {};
+		struct dynamic_cast_tag {};
 
 		// uses default copy constructor/assignment operators
 		template<typename T, typename Mutex>
@@ -88,6 +88,38 @@ namespace poet
 			{
 				set_monitor_ptr(_pointer.get());
 			}
+			// support implicit conversions
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other): _pointer(other._pointer),
+				_syncer(other._syncer)
+			{
+				set_monitor_ptr(_pointer.get());
+			}
+			// support static_pointer_cast
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other,
+				static_cast_tag): _pointer(boost::static_pointer_cast<T>(other._pointer)),
+				_syncer(other._syncer)
+			{
+				set_monitor_ptr(_pointer.get());
+			}
+			// support dynamic_pointer_cast
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other,
+				dynamic_cast_tag): _pointer(boost::dynamic_pointer_cast<T>(other._pointer)),
+				_syncer(other._syncer)
+			{
+				set_monitor_ptr(_pointer.get());
+			}
+			// support const_pointer_cast
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other,
+				const_cast_tag): _pointer(boost::const_pointer_cast<T>(other._pointer)),
+				_syncer(other._syncer)
+			{
+				set_monitor_ptr(_pointer.get());
+			}
+
 			virtual ~specialized_monitor_ptr() {}
 
 			call_proxy operator->() const
@@ -156,6 +188,13 @@ namespace poet
 			template<typename U>
 			explicit specialized_monitor_ptr(U *pointer): base_class(pointer)
 			{}
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, try_mutex_concept> &other): base_class(other)
+			{}
+			template<typename U, typename CastTag>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, try_mutex_concept> &other,
+				CastTag tag): base_class(other, tag)
+			{}
 		};
 
 		template<typename T, typename Mutex>
@@ -191,6 +230,14 @@ namespace poet
 			template<typename U>
 			explicit specialized_monitor_ptr(U *pointer): base_class(pointer)
 			{}
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, timed_mutex_concept> &other):
+				base_class(other)
+			{}
+			template<typename U, typename CastTag>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, timed_mutex_concept> &other,
+				CastTag tag): base_class(other, tag)
+			{}
 		};
 	};
 
@@ -206,6 +253,13 @@ namespace poet
 		template<typename U>
 		explicit monitor_ptr(U *pointer): base_class(pointer)
 		{}
+		template<typename U>
+		monitor_ptr(const monitor_ptr<U, Mutex> &other): base_class(other)
+		{}
+		template<typename U, typename CastTag>
+		monitor_ptr(const monitor_ptr<U, Mutex> &other, CastTag tag): base_class(other, tag)
+		{}
+
 	};
 
 	template<typename T, typename Mutex>
@@ -224,6 +278,22 @@ namespace poet
 	inline bool operator<(const monitor_ptr<T, Mutex> &ptr0, const monitor_ptr<T, Mutex> &ptr1)
 	{
 		return ptr0.direct() < ptr1.direct();
+	}
+
+	template<typename T, typename U, typename Mutex>
+	inline monitor_ptr<T, Mutex> static_pointer_cast(const monitor_ptr<U, Mutex> &pointer)
+	{
+		return monitor_ptr<T, Mutex>(pointer, detail::static_cast_tag());
+	}
+	template<typename T, typename U, typename Mutex>
+	inline monitor_ptr<T, Mutex> dynamic_pointer_cast(const monitor_ptr<U, Mutex> &pointer)
+	{
+		return monitor_ptr<T, Mutex>(pointer, detail::dynamic_cast_tag());
+	}
+	template<typename T, typename U, typename Mutex>
+	inline monitor_ptr<T, Mutex> const_pointer_cast(const monitor_ptr<U, Mutex> &pointer)
+	{
+		return monitor_ptr<T, Mutex>(pointer, detail::const_cast_tag());
 	}
 };
 
