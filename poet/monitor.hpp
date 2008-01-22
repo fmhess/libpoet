@@ -85,6 +85,10 @@ namespace poet
 #undef POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR
 			virtual ~specialized_monitor() {}
 
+			specialized_monitor& operator=(const specialized_monitor &rhs)
+			{
+				return operator=<T, Mutex>(rhs);
+			}
 			template<typename U, typename M>
 			specialized_monitor& operator=(const specialized_monitor<U, M, mutex_concept> &rhs)
 			{
@@ -99,6 +103,7 @@ namespace poet
 					temp = *other_lock;
 				}
 				scoped_lock lock(*this);
+				using std::swap;
 				swap(*lock, *temp);
 				return *this;
 			}
@@ -106,6 +111,7 @@ namespace poet
 			template<typename M>
 			void swap(specialized_monitor<T, M, mutex_concept> &other)
 			{
+				using std::swap;
 				boost::optional<T> temp;
 				/* Avoid locking the mutexes of both this monitor and the
 				other monitor simultaneously, since we don't want to invite

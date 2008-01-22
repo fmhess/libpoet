@@ -274,7 +274,13 @@ void monitor_assignment_test()
 	}
 	mymon_too = mymon;
 	{
-		poet::monitor<int>::scoped_lock lock(mymon_too);
+		poet::monitor<int>::scoped_lock lock_too(mymon_too);
+		assert(*lock_too == test_value);
+		static const int test_value_too = 5;
+		*lock_too = test_value_too;
+		assert(*lock_too == test_value_too);
+		// make sure we really did a deep copy
+		poet::monitor<int>::scoped_lock lock(mymon);
 		assert(*lock == test_value);
 	}
 }
