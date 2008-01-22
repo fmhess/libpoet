@@ -259,7 +259,6 @@ namespace poet
 		template<typename U, typename CastTag>
 		monitor_ptr(const monitor_ptr<U, Mutex> &other, CastTag tag): base_class(other, tag)
 		{}
-
 	};
 
 	template<typename T, typename MutexA, typename MutexB>

@@ -12,6 +12,8 @@
 
 // This file is included iteratively, and should not be protected from multiple inclusion
 
+#include <poet/detail/preprocessor_macros.hpp>
+
 #define POET_ACTIVE_FUNCTION_NUM_ARGS BOOST_PP_ITERATION()
 
 #define POET_ACTIVE_FUNCTION_CLASS_NAME BOOST_PP_CAT(active_function, POET_ACTIVE_FUNCTION_NUM_ARGS)
@@ -20,26 +22,21 @@
 // typename poet::future<boost::function_traits<Signature>::argn_type>
 #define POET_ACTIVE_FUNCTION_ARG_TYPE(z, n, Signature) \
 	poet::future< BOOST_PP_CAT(BOOST_PP_CAT(typename boost::function_traits<Signature>::arg, BOOST_PP_INC(n)), _type) >
-// nameStem(n + 1)
-#define POET_ACTIVE_FUNCTION_ARG_NAME(z, n, nameStem) BOOST_PP_CAT(nameStem, BOOST_PP_INC(n))
 // poet::future<typename boost::function_traits<Signature>::argn_type> argn
 #define POET_ACTIVE_FUNCTION_FULL_ARG(z, n, Signature) \
-	POET_ACTIVE_FUNCTION_ARG_TYPE(~, n, Signature) POET_ACTIVE_FUNCTION_ARG_NAME(~, n, arg)
+	POET_ACTIVE_FUNCTION_ARG_TYPE(~, n, Signature) POET_ARG_NAME(~, n, arg)
 // poet::future<typename boost::function_traits<Signature>::arg1_type> arg1,
 // poet::future<typename boost::function_traits<Signature>::arg2_type> arg2,
 // ...
 // poet::future<typename boost::function_traits<Signature>::argn_type> argn
 #define POET_ACTIVE_FUNCTION_FULL_ARGS(arity, Signature) \
 	BOOST_PP_ENUM(arity, POET_ACTIVE_FUNCTION_FULL_ARG, Signature)
-// nameStem1, nameStem2, ... , nameStemn
-#define POET_ACTIVE_FUNCTION_ARG_NAMES(arity, nameStem) \
-	BOOST_PP_ENUM(arity, POET_ACTIVE_FUNCTION_ARG_NAME, nameStem)
 // typename poet::future<boost::function_traits<Signature>::argn_type> _argn ;
 #define POET_ACTIVE_FUNCTION_ARG_DECLARATION(z, n, Signature) POET_ACTIVE_FUNCTION_ARG_TYPE(~, n, Signature) \
-	POET_ACTIVE_FUNCTION_ARG_NAME(~, n, _arg) ;
+	POET_ARG_NAME(~, n, _arg) ;
 // _argn ( argn )
 #define POET_ACTIVE_FUNCTION_ARG_CONSTRUCTOR(z, n, data) \
-	POET_ACTIVE_FUNCTION_ARG_NAME(~, n, _arg) ( POET_ACTIVE_FUNCTION_ARG_NAME(~, n, arg) )
+	POET_ARG_NAME(~, n, _arg) ( POET_ARG_NAME(~, n, arg) )
 // tupleName.get < n >()
 #define POET_ACTIVE_FUNCTION_GET_TUPLE_ELEMENT(z, n, tupleName) \
 	tupleName.get< n >()
@@ -66,7 +63,7 @@ namespace poet
 				const boost::shared_ptr<guard_slot_type> &guard = boost::shared_ptr<guard_slot_type>())
 			{
 				return deconstruct_ptr(new POET_AF_METHOD_REQUEST_CLASS_NAME<Signature>(
-					returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg)
+					returnValue, POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg)
 					BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS) passive_function, guard));
 			}
 			virtual ~POET_AF_METHOD_REQUEST_CLASS_NAME()
@@ -89,13 +86,13 @@ namespace poet
 				/* We return ready if any of the future inputs has an exception. */
 				// if(_argn.has_exception() == true) return true;
 #define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
-	if(POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).has_exception() == true) return true;
+	if(POET_ARG_NAME(~, n, nameStem).has_exception() == true) return true;
 				BOOST_PP_REPEAT(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_MISC_STATEMENT, _arg)
 #undef POET_ACTIVE_FUNCTION_MISC_STATEMENT
 				/* We also return ready when all the future inputs are ready, and the guard is true. */
 // if(_argn.ready() == false) return false;
 #define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
-	if(POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).ready() == false) return false;
+	if(POET_ARG_NAME(~, n, nameStem).ready() == false) return false;
 // if(_arg1.ready() == false) return false;
 // if(_arg2.ready() == false) return false;
 // ...
@@ -129,7 +126,7 @@ namespace poet
 					&POET_AF_METHOD_REQUEST_CLASS_NAME<Signature>::futureUpdateSlot, this).track(this->shared_from_this()));
 				*/
 #define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
-	POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).connect_update(slot_type( \
+	POET_ARG_NAME(~, n, nameStem).connect_update(slot_type( \
 		&POET_AF_METHOD_REQUEST_CLASS_NAME<Signature>::futureUpdateSlot, this).track(this->shared_from_this()));
 				BOOST_PP_REPEAT(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_MISC_STATEMENT, _arg)
 #undef POET_ACTIVE_FUNCTION_MISC_STATEMENT
@@ -139,7 +136,7 @@ namespace poet
 			{
 // if(_argn.cancelled()) return true;
 #define POET_ACTIVE_FUNCTION_MISC_STATEMENT(z, n, nameStem) \
-	if(POET_ACTIVE_FUNCTION_ARG_NAME(~, n, nameStem).has_exception()) return true;
+	if(POET_ARG_NAME(~, n, nameStem).has_exception()) return true;
 // if(_arg1.cancelled()) return true;
 // if(_arg2.cancelled()) return true;
 // ...
@@ -169,14 +166,14 @@ namespace poet
 			void m_run(void *)
 			{
 				(*_passive_function)(
-					POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg));
+					POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg));
 				this->return_value.fulfill();
 			}
 			template <typename U>
 			void m_run(U *)
 			{
 				this->return_value.fulfill((*_passive_function)(
-					POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)));
+					POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg)));
 			}
 
 			// typename poet::future<boost::function_traits<Signature>::arg1_type> _arg1;
@@ -214,7 +211,7 @@ namespace poet
 				promise<passive_result_type> returnValue;
 				boost::shared_ptr<POET_AF_METHOD_REQUEST_CLASS_NAME<Signature> > methodRequest =
 					POET_AF_METHOD_REQUEST_CLASS_NAME<Signature>::create(
-					returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
+					returnValue, POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 					_passive_function, _guard);
 				_scheduler->post_method_request(methodRequest);
 				return returnValue;
@@ -224,7 +221,7 @@ namespace poet
 				promise<passive_result_type> returnValue;
 				boost::shared_ptr<POET_AF_METHOD_REQUEST_CLASS_NAME<Signature> > methodRequest =
 					POET_AF_METHOD_REQUEST_CLASS_NAME<Signature>::create(
-					returnValue, POET_ACTIVE_FUNCTION_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
+					returnValue, POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 					_passive_function, _guard);
 				_scheduler->post_method_request(methodRequest);
 				return returnValue;
@@ -251,10 +248,8 @@ namespace poet
 #undef POET_ACTIVE_FUNCTION_NUM_ARGS
 #undef POET_ACTIVE_FUNCTION_CLASS_NAME
 #undef POET_ACTIVE_FUNCTION_ARG_TYPE
-#undef POET_ACTIVE_FUNCTION_ARG_NAME
 #undef POET_ACTIVE_FUNCTION_FULL_ARG
 #undef POET_ACTIVE_FUNCTION_FULL_ARGS
-#undef POET_ACTIVE_FUNCTION_ARG_NAMES
 #undef POET_ACTIVE_FUNCTION_ARG_DECLARATION
 #undef POET_ACTIVE_FUNCTION_ARG_CONSTRUCTOR
 #undef POET_ACTIVE_FUNCTION_GET_TUPLE_ELEMENT

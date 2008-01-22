@@ -15,10 +15,16 @@
 
 #include <algorithm>
 #include <boost/optional.hpp>
+#include <boost/preprocessor/repetition.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <poet/detail/monitor_locks.hpp>
+#include <poet/detail/preprocessor_macros.hpp>
 #include <poet/monitor_ptr.hpp>
 #include <poet/mutex_properties.hpp>
+
+#ifndef POET_MONITOR_MAX_CONSTRUCTOR_ARGS
+#define POET_MONITOR_MAX_CONSTRUCTOR_ARGS 10
+#endif
 
 namespace poet
 {
@@ -66,6 +72,12 @@ namespace poet
 				typename specialized_monitor<U, M, mutex_concept>::scoped_lock lock(other);
 				_monitor_pointer.reset(new T((*lock)));
 			}
+#define POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
+	template<POET_REPEATED_TYPENAMES(n, U)> \
+	specialized_monitor(POET_REPEATED_ARG_DECLARATIONS(n, U)): _monitor_pointer(new T(POET_REPEATED_ARG_NAMES(n, arg))) \
+	{}
+			BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR, x)
+#undef POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR
 			virtual ~specialized_monitor() {}
 
 			specialized_monitor& operator=(const T &rhs)
@@ -149,6 +161,11 @@ namespace poet
 			template<typename U, typename M, enum mutex_model model>
 			specialized_monitor(specialized_monitor<U, M, model> &other): base_class(other)
 			{}
+#define POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
+	template<POET_REPEATED_TYPENAMES(n, U)> \
+	specialized_monitor(POET_REPEATED_ARG_DECLARATIONS(n, U)): base_class(POET_REPEATED_ARG_NAMES(n, arg)) \
+	{}
+			BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR, x)
 		};
 
 		template<typename T, typename Mutex>
@@ -184,6 +201,7 @@ namespace poet
 			template<typename U, typename M, enum mutex_model model>
 			specialized_monitor(specialized_monitor<U, M, model> &other): base_class(other)
 			{}
+			BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR, x)
 		};
 	};
 
@@ -199,6 +217,12 @@ namespace poet
 		template<typename U, typename M>
 		monitor(monitor<U, M> &other): base_class(other)
 		{}
+#define POET_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
+	template<POET_REPEATED_TYPENAMES(n, U)> \
+	monitor(POET_REPEATED_ARG_DECLARATIONS(n, U)): base_class(POET_REPEATED_ARG_NAMES(n, arg)) \
+	{}
+		BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_MONITOR_TEMPLATE_CONSTRUCTOR, x)
+#undef POET_MONITOR_TEMPLATE_CONSTRUCTOR
 	};
 
 	template<typename T, typename Mutex>
@@ -207,5 +231,7 @@ namespace poet
 		mon0.swap(mon1);
 	}
 };
+
+#undef POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR
 
 #endif // _POET_MONITOR_HPP

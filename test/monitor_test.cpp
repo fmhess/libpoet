@@ -10,11 +10,13 @@
 #include <boost/ref.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <cmath>
 #include <iostream>
 #include <poet/monitor.hpp>
 #include <poet/monitor_ptr.hpp>
 #include <poet/monitor_base.hpp>
 #include <unistd.h>
+#include <utility>
 
 int step_counter;
 
@@ -154,12 +156,12 @@ void monitor_ptr_cast_test()
 	static const int test_value = 2;
 	poet::monitor_ptr<MyBase> mon_base(new MyDerived());
 	mon_base->set(test_value);
-	
+
 	poet::monitor_ptr<MyDerived> mon_derived = poet::static_pointer_cast<MyDerived>(mon_base);
 	assert(mon_derived->get() == test_value);
 	mon_base = poet::static_pointer_cast<MyBase>(mon_derived);
 	assert(mon_base->get() == test_value);
-	
+
 	mon_derived = poet::dynamic_pointer_cast<MyDerived>(mon_base);
 	assert(mon_derived);
 	assert(mon_derived->get() == test_value);
@@ -236,10 +238,22 @@ void monitor_const_test()
 	}
 }
 
+void monitor_construction_test()
+{
+	static const int first_test_value = -1;
+	static const double second_test_value = 1.5;
+	typedef poet::monitor<std::pair<int, double> > my_monitor_type;
+	my_monitor_type mymon(first_test_value, second_test_value);
+	my_monitor_type::scoped_lock lock(mymon);
+	assert(lock->first == first_test_value);
+	assert(std::abs(lock->second - second_test_value) < 1e-6);
+}
+
 void monitor_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
 	monitor_const_test();
+	monitor_construction_test();
 	step_counter = 0;
 	monitor_type mymonitor;
 	boost::thread thread0(boost::bind(&monitor_thread0_function, boost::ref(mymonitor)));

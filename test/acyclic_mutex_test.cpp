@@ -40,5 +40,6 @@ int main()
 		mutex_type::scoped_lock lock_a(mutex_a);
 		assert(cycle_detected);
 	}
+	std::cout << __FILE__ << ": OK" << std::endl;
 	return 0;
 }
