@@ -19,7 +19,7 @@
 					the same mutex/condition.
 				</para>
 				<para>
-					Although any copy-constructible object may be contained in a <code>monitor</code>,
+					Although any object may be wrapped in a <code>monitor</code>,
 					special support is provided
 					for classes derived from <classname>monitor_base</classname>.  This allows classes derived from
 					<classname>monitor_base</classname> to wait on conditions inside member function calls,
