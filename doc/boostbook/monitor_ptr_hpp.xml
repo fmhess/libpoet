@@ -425,12 +425,12 @@
 					<parameter name="b">
 						<paramtype>const <classname>monitor_ptr</classname>&lt;U, MutexU&gt; &amp;</paramtype>
 					</parameter>
-					<description>
+					<returns>
 						<para>
 							Returns the result of applying <code>operator==</code> to the underlying <code>shared_ptr</code>s
 							of the two <code>monitor_ptr</code> arguments.
 						</para>
-					</description>
+					</returns>
 				</function>
 				<function name="operator!=">
 					<template>
@@ -446,12 +446,12 @@
 					<parameter name="b">
 						<paramtype>const <classname>monitor_ptr</classname>&lt;U, MutexU&gt; &amp;</paramtype>
 					</parameter>
-					<description>
+					<returns>
 						<para>
 							Returns the result of applying <code>operator!=</code> to the underlying <code>shared_ptr</code>s
 							of the two <code>monitor_ptr</code> arguments.
 						</para>
-					</description>
+					</returns>
 				</function>
 				<function name="operator&lt;">
 					<template>
@@ -467,13 +467,12 @@
 					<parameter name="b">
 						<paramtype>const <classname>monitor_ptr</classname>&lt;U, MutexU&gt; &amp;</paramtype>
 					</parameter>
-					<description>
+					<returns>
 						<para>
 							Returns the result of applying <code>operator&lt;</code> to the underlying <code>shared_ptr</code>s
-							of the two <code>monitor_ptr</code> arguments.  Allows <code>monitor_ptr</code> objects to be used
-							as keys in associative containers.
+							of the two <code>monitor_ptr</code> arguments.
 						</para>
-					</description>
+					</returns>
 				</function>
 			</free-function-group>
 		</class>
