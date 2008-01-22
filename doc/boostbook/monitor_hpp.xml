@@ -300,7 +300,8 @@
 						<paramtype>const T &amp;</paramtype>
 					</parameter>
 					<description>
-						<para>Creates a <code>monitor</code> which contains a copy of the specified value.
+						<para>Creates a <code>monitor</code> which contains a value copy-constructed from
+							the constructor's argument.
 						</para>
 					</description>
 				</constructor>
@@ -313,9 +314,36 @@
 						<paramtype><classname>monitor</classname>&lt;U, M&gt; &amp;</paramtype>
 					</parameter>
 					<description>
-						<para>Creates a <code>monitor</code> whose contained value is a copy of the
+						<para>
+							Creates a <code>monitor</code> whose contained value is copy-constructed from the
 							value contained in the <code>other</code> parameter.  <code>other</code> is
-							locked before its value is copied out.
+							locked while its value is copied out.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<template>
+						<template-type-parameter name="U1"/>
+						<template-type-parameter name="U2"/>
+						<template-type-parameter name="..."/>
+						<template-type-parameter name="UN"/>
+					</template>
+					<parameter name="arg1"><paramtype>U1</paramtype></parameter>
+					<parameter name="arg2"><paramtype>U2</paramtype></parameter>
+					<parameter><paramtype>...</paramtype></parameter>
+					<parameter name="argN"><paramtype>UN</paramtype></parameter>
+					<description>
+						<para>
+							Creates a <code>monitor</code> by forwarding the constructor's arguments
+							to the constructor for the contained value.  If you need to pass
+							a reference to the contained value's constructor, you should wrap it
+							in a <classname>boost::reference_wrapper</classname> to prevent it
+							from being automatically converted to a value.
+						</para>
+						<para>
+							If you wish to change the maximum number of arguments this family of constructors can take
+							from its default value of 10, you may define the macro <code>POET_MONITOR_MAX_CONSTRUCTOR_ARGS</code>
+							to your desired value prior to including monitor.hpp.
 						</para>
 					</description>
 				</constructor>
