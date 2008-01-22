@@ -88,42 +88,29 @@ namespace poet
 			{
 				set_monitor_ptr(_pointer.get());
 			}
-			specialized_monitor_ptr(const specialized_monitor_ptr &other): _pointer(other._pointer),
-				_syncer(other._syncer)
-			{
-				set_monitor_ptr(_pointer.get());
-			}
 			// support implicit conversions
 			template<typename U>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other): _pointer(other._pointer),
 				_syncer(other._syncer)
-			{
-				set_monitor_ptr(_pointer.get());
-			}
+			{}
 			// support static_pointer_cast
 			template<typename U>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other,
 				static_cast_tag): _pointer(boost::static_pointer_cast<T>(other._pointer)),
 				_syncer(other._syncer)
-			{
-				set_monitor_ptr(_pointer.get());
-			}
+			{}
 			// support dynamic_pointer_cast
 			template<typename U>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other,
 				dynamic_cast_tag): _pointer(boost::dynamic_pointer_cast<T>(other._pointer)),
 				_syncer(other._syncer)
-			{
-				set_monitor_ptr(_pointer.get());
-			}
+			{}
 			// support const_pointer_cast
 			template<typename U>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other,
 				const_cast_tag): _pointer(boost::const_pointer_cast<T>(other._pointer)),
 				_syncer(other._syncer)
-			{
-				set_monitor_ptr(_pointer.get());
-			}
+			{}
 
 			virtual ~specialized_monitor_ptr() {}
 
