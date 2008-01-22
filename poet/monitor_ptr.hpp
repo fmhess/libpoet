@@ -88,6 +88,11 @@ namespace poet
 			{
 				set_monitor_ptr(_pointer.get());
 			}
+			specialized_monitor_ptr(const specialized_monitor_ptr &other): _pointer(other._pointer),
+				_syncer(other._syncer)
+			{
+				set_monitor_ptr(_pointer.get());
+			}
 			// support implicit conversions
 			template<typename U>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other): _pointer(other._pointer),

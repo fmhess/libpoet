@@ -185,6 +185,7 @@ void monitor_ptr_test()
 	monitor_ptr_cast_test();
 	step_counter = 0;
 	monitor_ptr_type mymonitor(new Monitored);
+	monitor_ptr_type mymonitor_too(mymonitor);
 	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor));
 	boost::thread thread1(boost::bind(&monitor_ptr_thread1_function, mymonitor));
 	thread0.join();
@@ -243,10 +244,22 @@ void monitor_construction_test()
 	static const int first_test_value = -1;
 	static const double second_test_value = 1.5;
 	typedef poet::monitor<std::pair<int, double> > my_monitor_type;
+	// construction of value by forwarding arguments to value constructor
 	my_monitor_type mymon(first_test_value, second_test_value);
-	my_monitor_type::scoped_lock lock(mymon);
-	assert(lock->first == first_test_value);
-	assert(std::abs(lock->second - second_test_value) < 1e-6);
+	{
+		my_monitor_type::scoped_lock lock(mymon);
+		assert(lock->first == first_test_value);
+		assert(std::abs(lock->second - second_test_value) < 1e-6);
+	}
+	// copy-construction
+	my_monitor_type mymon_too(mymon);
+	{
+		my_monitor_type::scoped_lock lock(mymon);
+		my_monitor_type::scoped_lock lock_too(mymon_too);
+		assert(lock_too->first == first_test_value);
+		assert(std::abs(lock_too->second - second_test_value) < 1e-6);
+	}
+
 }
 
 void monitor_assignment_test()

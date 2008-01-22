@@ -301,17 +301,31 @@
 					</description>
 				</constructor>
 				<constructor>
+					<parameter name="other">
+						<paramtype>const <classname>monitor</classname> &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							The copy constructor creates a <code>monitor</code> whose contained value is
+							copy-constructed from the
+							value contained in the <code>other</code> parameter.  <code>other</code> is
+							locked while its value is copied out.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
 					<template>
 						<template-type-parameter name="U"/>
 						<template-type-parameter name="M"/>
 					</template>
 					<parameter name="other">
-						<paramtype><classname>monitor</classname>&lt;U, M&gt; &amp;</paramtype>
+						<paramtype>const <classname>monitor</classname>&lt;U, M&gt; &amp;</paramtype>
 					</parameter>
 					<description>
 						<para>
 							Creates a <code>monitor</code> whose contained value is copy-constructed from the
-							value contained in the <code>other</code> parameter.  <code>other</code> is
+							value contained in the <code>other</code> parameter.  The type <code>U</code> must
+							be implicitly convertible to type <code>T</code>.  <code>other</code> is
 							locked while its value is copied out.
 						</para>
 					</description>

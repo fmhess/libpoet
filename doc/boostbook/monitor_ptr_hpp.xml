@@ -342,6 +342,20 @@
 						</para>
 					</description>
 				</constructor>
+				<constructor>
+					<template>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="M"/>
+					</template>
+					<parameter name="other">
+						<paramtype>const monitor_ptr&lt;U, M&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>This constructor creates a <code>monitor_ptr</code> which shares the same pointer
+							(implicitly converted), mutex, and condition as the original.
+						</para>
+					</description>
+				</constructor>
 				<destructor specifiers="virtual">
 					<description>
 						<para>A <code>monitor_ptr</code> and all its copies share ownership of an underlying pointer,

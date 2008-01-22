@@ -66,8 +66,13 @@ namespace poet
 			{}
 			specialized_monitor(const T &object): _monitor_pointer(new T(object))
 			{}
+			specialized_monitor(const specialized_monitor &other)
+			{
+				scoped_lock lock(other);
+				_monitor_pointer.reset(new T((*lock)));
+			}
 			template<typename U, typename M>
-			specialized_monitor(specialized_monitor<U, M, mutex_concept> &other)
+			specialized_monitor(const specialized_monitor<U, M, mutex_concept> &other)
 			{
 				typename specialized_monitor<U, M, mutex_concept>::scoped_lock lock(other);
 				_monitor_pointer.reset(new T((*lock)));
@@ -153,7 +158,7 @@ namespace poet
 			specialized_monitor(const T &object): base_class(object)
 			{}
 			template<typename U, typename M, enum mutex_model model>
-			specialized_monitor(specialized_monitor<U, M, model> &other): base_class(other)
+			specialized_monitor(const specialized_monitor<U, M, model> &other): base_class(other)
 			{}
 #define POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
 	template<POET_REPEATED_TYPENAMES(n, U)> \
@@ -193,7 +198,7 @@ namespace poet
 			specialized_monitor(const T &object): base_class(object)
 			{}
 			template<typename U, typename M, enum mutex_model model>
-			specialized_monitor(specialized_monitor<U, M, model> &other): base_class(other)
+			specialized_monitor(const specialized_monitor<U, M, model> &other): base_class(other)
 			{}
 			BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR, x)
 		};
@@ -209,7 +214,7 @@ namespace poet
 		monitor(const T &object): base_class(object)
 		{}
 		template<typename U, typename M>
-		monitor(monitor<U, M> &other): base_class(other)
+		monitor(const monitor<U, M> &other): base_class(other)
 		{}
 #define POET_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
 	template<POET_REPEATED_TYPENAMES(n, U)> \
