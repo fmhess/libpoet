@@ -262,20 +262,20 @@ namespace poet
 
 	};
 
-	template<typename T, typename Mutex>
-	inline bool operator==(const monitor_ptr<T, Mutex> &ptr0, const monitor_ptr<T, Mutex> &ptr1)
+	template<typename T, typename MutexA, typename MutexB>
+	inline bool operator==(const monitor_ptr<T, MutexA> &ptr0, const monitor_ptr<T, MutexB> &ptr1)
 	{
 		return ptr0.direct() == ptr1.direct();
 	}
 
-	template<typename T, typename Mutex>
-	inline bool operator!=(const monitor_ptr<T, Mutex> &ptr0, const monitor_ptr<T, Mutex> &ptr1)
+	template<typename T, typename MutexA, typename MutexB>
+	inline bool operator!=(const monitor_ptr<T, MutexA> &ptr0, const monitor_ptr<T, MutexB> &ptr1)
 	{
 		return ptr0.direct() != ptr1.direct();
 	}
 
-	template<typename T, typename Mutex>
-	inline bool operator<(const monitor_ptr<T, Mutex> &ptr0, const monitor_ptr<T, Mutex> &ptr1)
+	template<typename T, typename MutexA, typename MutexB>
+	inline bool operator<(const monitor_ptr<T, MutexA> &ptr0, const monitor_ptr<T, MutexB> &ptr1)
 	{
 		return ptr0.direct() < ptr1.direct();
 	}
