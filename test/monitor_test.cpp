@@ -249,11 +249,29 @@ void monitor_construction_test()
 	assert(std::abs(lock->second - second_test_value) < 1e-6);
 }
 
+void monitor_assignment_test()
+{
+	static const int test_value = 3;
+	poet::monitor<int> mymon;
+	poet::monitor<int> mymon_too;
+	mymon = test_value;
+	{
+		poet::monitor<int>::scoped_lock lock(mymon);
+		assert(*lock == test_value);
+	}
+	mymon_too = mymon;
+	{
+		poet::monitor<int>::scoped_lock lock(mymon_too);
+		assert(*lock == test_value);
+	}
+}
+
 void monitor_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
 	monitor_const_test();
 	monitor_construction_test();
+	monitor_assignment_test();
 	step_counter = 0;
 	monitor_type mymonitor;
 	boost::thread thread0(boost::bind(&monitor_thread0_function, boost::ref(mymonitor)));

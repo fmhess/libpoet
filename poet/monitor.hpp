@@ -80,14 +80,8 @@ namespace poet
 #undef POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR
 			virtual ~specialized_monitor() {}
 
-			specialized_monitor& operator=(const T &rhs)
-			{
-				scoped_lock lock(*this);
-				*lock = rhs;
-				return *this;
-			}
 			template<typename U, typename M>
-			specialized_monitor& operator=(specialized_monitor<U, M, mutex_concept> &rhs)
+			specialized_monitor& operator=(const specialized_monitor<U, M, mutex_concept> &rhs)
 			{
 				if(&rhs == this) return *this;
 
