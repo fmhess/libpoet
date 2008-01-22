@@ -354,6 +354,128 @@
 					</description>
 				</destructor>
 			</access>
+			<free-function-group name="free functions: casts">
+				<function name="static_pointer_cast">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="Mutex"/>
+					</template>
+					<type>monitor_ptr&lt;T, Mutex&gt;</type>
+					<parameter name="p">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;U, Mutex&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Casts a <code>monitor_ptr</code> by applying <code>boost::static_pointer_cast&lt;U&gt;</code>
+							to the <code>monitor_ptr</code>'s
+							underlying <code>shared_ptr</code>.
+						</para>
+					</description>
+				</function>
+				<function name="dynamic_pointer_cast">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="Mutex"/>
+					</template>
+					<type>monitor_ptr&lt;T, Mutex&gt;</type>
+					<parameter name="p">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;U, Mutex&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Casts a <code>monitor_ptr</code> by applying <code>boost::dynamic_pointer_cast&lt;U&gt;</code>
+							to the <code>monitor_ptr</code>'s
+							underlying <code>shared_ptr</code>.
+						</para>
+					</description>
+				</function>
+				<function name="const_pointer_cast">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="Mutex"/>
+					</template>
+					<type>monitor_ptr&lt;T, Mutex&gt;</type>
+					<parameter name="p">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;U, Mutex&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Casts a <code>monitor_ptr</code> by applying <code>boost::const_pointer_cast&lt;U&gt;</code>
+							to the <code>monitor_ptr</code>'s
+							underlying <code>shared_ptr</code>.
+						</para>
+					</description>
+				</function>
+			</free-function-group>
+			<free-function-group name="free functions: comparison">
+				<function name="operator==">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="MutexA"/>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="MutexB"/>
+					</template>
+					<type>bool</type>
+					<parameter name="a">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;T, MutexT&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="b">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;U, MutexU&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Returns the result of applying <code>operator==</code> to the underlying <code>shared_ptr</code>s
+							of the two <code>monitor_ptr</code> arguments.
+						</para>
+					</description>
+				</function>
+				<function name="operator!=">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="MutexA"/>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="MutexB"/>
+					</template>
+					<type>bool</type>
+					<parameter name="a">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;T, MutexT&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="b">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;U, MutexU&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Returns the result of applying <code>operator!=</code> to the underlying <code>shared_ptr</code>s
+							of the two <code>monitor_ptr</code> arguments.
+						</para>
+					</description>
+				</function>
+				<function name="operator&lt;">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="MutexA"/>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="MutexB"/>
+					</template>
+					<type>bool</type>
+					<parameter name="a">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;T, MutexT&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="b">
+						<paramtype>const <classname>monitor_ptr</classname>&lt;U, MutexU&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Returns the result of applying <code>operator&lt;</code> to the underlying <code>shared_ptr</code>s
+							of the two <code>monitor_ptr</code> arguments.  Allows <code>monitor_ptr</code> objects to be used
+							as keys in associative containers.
+						</para>
+					</description>
+				</function>
+			</free-function-group>
 		</class>
 	</namespace>
 </header>
