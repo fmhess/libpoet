@@ -255,6 +255,11 @@ namespace poet
 		{}
 		acyclic_mutex(const Key &node_key): base_class(node_key)
 		{}
+		virtual ~acyclic_mutex()
+		{
+			mutex_grapher::scoped_lock lock;
+			lock->release_vertex(*this);
+		}
 	};
 };
 

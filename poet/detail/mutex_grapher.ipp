@@ -43,31 +43,7 @@ namespace poet
 
 		if(mutex.vertex() == 0)
 		{
-			typedef detail::vertex_finder<typename AcyclicMutex::key_type, typename AcyclicMutex::key_compare> vertex_finder_type;
-
-			const typename locking_order_graph::vertex_descriptor *found_vertex = 0;
-			typename locking_order_graph::vertex_descriptor target_vertex;
-			typename vertex_finder_type::scoped_lock finder;
-			if(mutex.node_key())
-			{
-				found_vertex = finder->find_vertex(*mutex.node_key());
-			}
-			if(found_vertex)
-			{
-				target_vertex = *found_vertex;
-			}else
-			{
-				target_vertex = boost::add_vertex(_graph);
-				std::ostringstream node_name;
-				if(mutex.node_key())
-					node_name << *mutex.node_key();
-				else
-					node_name << "mutex " << target_vertex;
-				_graph[target_vertex].name = node_name.str();
-				if(mutex.node_key())
-					finder->add_vertex(*mutex.node_key(), target_vertex);
-			}
-			mutex.set_vertex(target_vertex);
+			acquire_vertex(mutex);
 		}
 		if(mutex.will_really_lock())
 		{
@@ -121,6 +97,90 @@ namespace poet
 	{
 		std::cerr << __PRETTY_FUNCTION__ << ": cycle detected in mutex locking order." << std::endl;
 		std::abort();
+	}
+
+	template<typename AcyclicMutex>
+	void mutex_grapher::acquire_vertex(AcyclicMutex &mutex)
+	{
+		typedef detail::vertex_finder<typename AcyclicMutex::key_type, typename AcyclicMutex::key_compare> vertex_finder_type;
+		const typename locking_order_graph::vertex_descriptor *found_vertex = 0;
+		typename locking_order_graph::vertex_descriptor new_vertex;
+		typename vertex_finder_type::scoped_lock finder;
+		if(mutex.node_key())
+		{
+			found_vertex = finder->find_vertex(*mutex.node_key());
+		}
+		if(found_vertex)
+		{
+			new_vertex = *found_vertex;
+		}else
+		{
+			if(_free_vertices.size() > 0)
+			{
+				new_vertex = _free_vertices.back();
+				_free_vertices.pop_back();
+			}else
+			{
+				new_vertex = boost::add_vertex(_graph);
+			}
+			std::ostringstream node_name;
+			if(mutex.node_key())
+				node_name << *mutex.node_key();
+			else
+				node_name << "mutex " << new_vertex;
+			_graph[new_vertex].name = node_name.str();
+			if(mutex.node_key())
+				finder->add_vertex(*mutex.node_key(), new_vertex);
+		}
+		mutex.set_vertex(new_vertex);
+		++_graph[new_vertex].use_count;
+	}
+
+	template<typename AcyclicMutex>
+	void mutex_grapher::release_vertex(const AcyclicMutex &mutex)
+	{
+		// we want to ignore all locking events after the first cycle is detected.
+		if(_cycle_detected) return;
+
+		if(!mutex.vertex()) return;
+		const typename locking_order_graph::vertex_descriptor vertex = *mutex.vertex();
+
+		--_graph[vertex].use_count;
+		assert(_graph[vertex].use_count >= 0);
+		if(_graph[vertex].use_count > 0) return;
+
+		/* Connect all source vertices of incoming edges and to the target vertex of each outgoing edge,
+		then delete all edges connected to the removed vertex. */
+		std::pair<locking_order_graph::in_edge_iterator, locking_order_graph::in_edge_iterator> in_edges =
+			boost::in_edges(vertex, _graph);
+		locking_order_graph::in_edge_iterator in_it;
+		for(in_it = in_edges.first; in_it != in_edges.second; ++in_it)
+		{
+			std::pair<locking_order_graph::out_edge_iterator, locking_order_graph::out_edge_iterator> out_edges =
+				boost::out_edges(vertex, _graph);
+			locking_order_graph::out_edge_iterator out_it;
+			for(out_it = out_edges.first; out_it != out_edges.second; ++out_it)
+			{
+				const locking_order_graph::vertex_descriptor source = boost::source(*in_it, _graph);
+				const locking_order_graph::vertex_descriptor target = boost::target(*out_it, _graph);
+				assert(source != vertex);
+				assert(target != vertex);
+				boost::add_edge(source, target, _graph);
+			}
+		}
+		boost::clear_vertex(vertex, _graph);
+
+		// clear key key from finder
+		if(mutex.node_key())
+		{
+			typedef detail::vertex_finder<typename AcyclicMutex::key_type, typename AcyclicMutex::key_compare> vertex_finder_type;
+			typename vertex_finder_type::scoped_lock finder;
+			finder->remove_vertex(*mutex.node_key());
+		}
+
+		/* We don't actually remove the vertex from the graph, since that would invalidate all the
+		other vertex descriptors. Instead, we maintain a list of vertices available for reuse. */
+		_free_vertices.push_back(vertex);
 	}
 };
 

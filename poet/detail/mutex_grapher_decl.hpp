@@ -30,6 +30,8 @@ namespace poet
 {
 	// forward declarations
 	class acyclic_mutex_base;
+	template<typename Mutex, typename Key, typename KeyCompare>
+	class acyclic_mutex;
 	namespace detail
 	{
 		template<typename AcyclicMutex, typename Lock>
@@ -42,14 +44,16 @@ namespace poet
 	public:
 		struct vertex_properties
 		{
+			vertex_properties(): use_count(0) {}
 			std::string name;
+			int use_count;
 		};
 		struct edge_properties
 		{
 			edge_properties(): locking_order_violation(false) {}
 			bool locking_order_violation;
 		};
-		typedef boost::adjacency_list<boost::setS, boost::vecS, boost::directedS, vertex_properties, edge_properties>
+		typedef boost::adjacency_list<boost::setS, boost::vecS, boost::bidirectionalS, vertex_properties, edge_properties>
 			locking_order_graph;
 		typedef std::list<const acyclic_mutex_base *> mutex_list_type;
 		class scoped_lock: public monitor_type::scoped_lock
@@ -148,6 +152,8 @@ namespace poet
 		friend class detail::acyclic_scoped_lock;
 		template<typename AcyclicMutex>
 		friend class tracker;
+		template<typename Mutex, typename Key, typename KeyCompare>
+		friend class acyclic_mutex;
 
 		inline mutex_grapher();
 
@@ -167,6 +173,10 @@ namespace poet
 		inline bool track_lock(AcyclicMutex &_mutex);
 		inline void track_unlock(const acyclic_mutex_base &_mutex);
 		inline void check_for_cycles() const;
+		template<typename AcyclicMutex>
+		inline void acquire_vertex(AcyclicMutex &mutex);
+		template<typename AcyclicMutex>
+		inline void release_vertex(const AcyclicMutex &mutex);
 
 		// static functions
 		static monitor_type& instance()
@@ -182,6 +192,7 @@ namespace poet
 		bool _cycle_detected;
 		mutable boost::thread_specific_ptr<mutex_list_type> _locked_mutexes;
 		boost::function<void ()> _cycle_handler;
+		std::vector<locking_order_graph::vertex_descriptor> _free_vertices;
 	};
 
 	namespace detail
@@ -216,6 +227,10 @@ namespace poet
 			void add_vertex(const Key &key, vertex_descriptor_type vertex)
 			{
 				_vertex_map[key] = vertex;
+			}
+			void remove_vertex(const Key &key)
+			{
+				_vertex_map.erase(key);
 			}
 		private:
 			vertex_finder() {}
