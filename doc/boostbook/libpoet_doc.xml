@@ -76,7 +76,7 @@
 				The most recent release is available from the
 				<ulink url="http://www.boost-consulting.com/vault/index.php?&amp;direction=0&amp;order=&amp;directory=Concurrent%20Programming/Active%20Objects">
 				boost vault</ulink>
-				(get the "libpoet-xxxx-xx-xx.tgz" file).
+				(get the latest "libpoet-xxxx-xx-xx.tgz" file).
 			</para>
 			<para>
 				The current source code is also availabe via anonymous cvs:
