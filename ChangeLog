@@ -1,3 +1,100 @@
+2008-01-25 08:46  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Added a word.
+
+2008-01-23 10:18  fmhess
+
+	* poet/acyclic_mutex.hpp, poet/detail/mutex_grapher.ipp,
+	  poet/detail/mutex_grapher_decl.hpp, test/acyclic_mutex_test.cpp:
+	  Added support for disconnecting unused nodes in the locking order
+	  graph and reusing them, to prevent unbounded growth of the
+	  locking order graph when mutexes are continually created and
+	  destroyed.
+
+2008-01-22 15:06  fmhess
+
+	* poet/monitor_ptr.hpp: Actually, the default copy constructor for
+	  monitor_ptr was fine.  Got rid of a bunch of unneeded
+	  set_monitor_ptr() calls in monitor_ptr constructors.
+
+2008-01-22 14:58  fmhess
+
+	* poet/monitor.hpp, test/monitor_test.cpp: Fixed problem with
+	  monitor default assignment operator getting used.
+
+2008-01-22 14:31  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Fixed monitor docs with respect to
+	  wrapped object (not) needing to be copy-constructible.
+
+2008-01-22 14:13  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, doc/boostbook/monitor_ptr_hpp.xml,
+	  poet/monitor.hpp, poet/monitor_ptr.hpp, test/monitor_test.cpp:
+	  Made copy constructors for monitor and monitor_ptr take const
+	  references.  Fixed some problems with default copy constructors
+	  getting called.
+
+2008-01-22 13:29  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp,
+	  test/monitor_test.cpp: Made poet::monitor assignment operator
+	  take a const reference.  Got rid of pointless overload.
+
+2008-01-22 12:22  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Added documentation for new
+	  templated poet::monitor constructors.
+
+2008-01-22 11:43  fmhess
+
+	* poet/monitor.hpp, poet/monitor_ptr.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/preprocessor_macros.hpp, test/acyclic_mutex_test.cpp,
+	  test/monitor_test.cpp: Added support for forwarding poet::monitor
+	  constructor arguments to constructor for its templated value
+	  type.
+
+2008-01-21 19:57  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Used "returns" elements
+	  instead of "description" for monitor_ptr comparison operators.
+
+2008-01-21 19:25  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added docs for monitor_ptr
+	  cast and comparison functions.
+
+2008-01-21 19:24  fmhess
+
+	* poet/monitor_ptr.hpp: Allow comparison operators to be applied to
+	  two monitor_ptr with different mutex types.
+
+2008-01-21 17:44  fmhess
+
+	* poet/monitor_ptr.hpp, test/monitor_test.cpp: Added support for
+	  static/dynamic/const_pointer_cast to poet::monitor_ptr.
+
+2008-01-15 16:21  fmhess
+
+	* doc/boostbook/libpoet_doc.xml, poet/monitor.hpp,
+	  poet/monitor_ptr.hpp, poet/detail/mutex_grapher.ipp,
+	  poet/detail/mutex_grapher_decl.hpp: Updated some copyright
+	  notices with year 2008
+
+2008-01-14 11:59  fmhess
+
+	* poet/monitor.hpp, poet/monitor_ptr.hpp, test/monitor_test.cpp:
+	  Added const overloads to make const monitor and monitor_ptr
+	  objects useable.  Fixed monitor::scoped_timed_lock constructor to
+	  take timeout.
+
+2007-12-31 13:28  tag v2007_12_31
+
+2007-12-31 13:28  fmhess
+
+	* ChangeLog: Added ChangeLog, generated with "cvs2cl -T"
+
 2007-12-31 13:13  fmhess
 
 	* doc/boostbook/mutex_grapher_hpp.xml: mutex_grapher mutex isn't
