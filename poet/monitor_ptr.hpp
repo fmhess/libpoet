@@ -93,6 +93,11 @@ namespace poet
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other): _pointer(other._pointer),
 				_syncer(other._syncer)
 			{}
+			// aliasing constructor
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other, T *ptr):
+				_pointer(other._pointer, ptr), _syncer(other._syncer)
+			{}
 			// support static_pointer_cast
 			template<typename U>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other,
@@ -133,7 +138,27 @@ namespace poet
 				boost::shared_ptr<T> smart_pointer(pointer);
 				reset(smart_pointer);
 			};
+			void reset()
+			{
+				_pointer.reset();
+				_syncer.reset();
+			}
+			// aliasing reset
+			template<typename U>
+			void reset(const specialized_monitor_ptr<U, Mutex, mutex_concept> &other, T *raw_ptr)
+			{
+				_pointer.reset(other._pointer, raw_ptr);
+				_syncer = other._syncer;
+				set_monitor_ptr(_pointer.get());
+			};
+
 			operator bool() const {return _pointer;}
+
+			void _internal_swap(specialized_monitor_ptr &other)
+			{
+				swap(_pointer, other._pointer);
+				swap(_syncer, other._syncer);
+			}
 		private:
 			template<typename U, typename M, enum mutex_model>
 			friend class specialized_monitor_ptr;
@@ -183,6 +208,10 @@ namespace poet
 			template<typename U>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, try_mutex_concept> &other): base_class(other)
 			{}
+			// aliasing constructor
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, try_mutex_concept> &other, T *ptr): base_class(other, ptr)
+			{}
 			template<typename U, typename CastTag>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, try_mutex_concept> &other,
 				CastTag tag): base_class(other, tag)
@@ -226,6 +255,11 @@ namespace poet
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, timed_mutex_concept> &other):
 				base_class(other)
 			{}
+			// aliasing constructor
+			template<typename U>
+			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, timed_mutex_concept> &other, T *ptr):
+				base_class(other, ptr)
+			{}
 			template<typename U, typename CastTag>
 			specialized_monitor_ptr(const specialized_monitor_ptr<U, Mutex, timed_mutex_concept> &other,
 				CastTag tag): base_class(other, tag)
@@ -247,6 +281,10 @@ namespace poet
 		{}
 		template<typename U>
 		monitor_ptr(const monitor_ptr<U, Mutex> &other): base_class(other)
+		{}
+		// aliasing constructor
+		template<typename U>
+		monitor_ptr(const monitor_ptr<U, Mutex> &other, T *ptr): base_class(other, ptr)
 		{}
 		template<typename U, typename CastTag>
 		monitor_ptr(const monitor_ptr<U, Mutex> &other, CastTag tag): base_class(other, tag)
@@ -285,6 +323,12 @@ namespace poet
 	inline monitor_ptr<T, Mutex> const_pointer_cast(const monitor_ptr<U, Mutex> &pointer)
 	{
 		return monitor_ptr<T, Mutex>(pointer, detail::const_cast_tag());
+	}
+
+	template<typename T, typename Mutex>
+	void swap(poet::monitor_ptr<T, Mutex> &mon0, poet::monitor_ptr<T, Mutex> &mon1)
+	{
+		mon0._internal_swap(mon1);
 	}
 };
 

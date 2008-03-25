@@ -10,7 +10,7 @@
 			<purpose>A smart pointer which provides automatically locked access to an object.</purpose>
 			<description>
 				<para>
-					<code>monitor_ptr</code> allows for the easy creation of simple monitor objects.  A
+					<code>monitor_ptr</code> allows for the easy creation of monitor objects.  A
 					<code>monitor_ptr</code> provides automatically locked access to an object's members
 					when they are accessed through the overloaded <methodname>operator-&gt;</methodname>,
 					or alternatively through one of <code>monitor_ptr</code>'s scoped lock classes.
@@ -292,17 +292,41 @@
 								<paramtype>const boost::shared_ptr&lt;T&gt; &amp;</paramtype>
 							</parameter>
 						</signature>
+						<signature>
+							<type>void</type>
+						</signature>
+						<signature>
+							<template>
+								<template-type-parameter name="U"/>
+							</template>
+							<type>void</type>
+							<parameter name="other">
+								<paramtype>const monitor_ptr&lt;U, Mutex&gt; &amp;</paramtype>
+							</parameter>
+							<parameter name="pointer">
+								<paramtype>T*</paramtype>
+							</parameter>
+						</signature>
 						<description>
 							<para>
-								Resets the <code>monitor_ptr</code>'s underlying pointer.  The <code>monitor_ptr</code>
-								also gets a new mutex and condition.
+								Resets the <code>monitor_ptr</code>'s underlying pointer using the specified parameter(s).
+								A new mutex and condition are also created (except in the no-parameter case, where
+								they are simply deleted).
+							</para>
+							<para>
+								The overload which takes a <code>monitor_ptr</code> and
+								<code>T*</code> argument makes <code>*this</code> into an aliased <code>monitor_ptr</code>,
+								which shares ownership and its mutex with
+								<code>other</code>, but which points at the address given by <code>pointer</code>.  See the
+								description of the <link linkend="monitor-ptr-constructor-aliasing">aliasing constructor</link>
+								for more information.
 							</para>
 						</description>
 					</overloaded-method>
 				</method-group>
 				<constructor>
 					<description>
-						<para>The default constructor creates a null <code>monitor_ptr</code>.
+						<para>The default constructor creates an empty <code>monitor_ptr</code>.
 						</para>
 					</description>
 				</constructor>
@@ -345,14 +369,54 @@
 				<constructor>
 					<template>
 						<template-type-parameter name="U"/>
-						<template-type-parameter name="M"/>
 					</template>
 					<parameter name="other">
-						<paramtype>const monitor_ptr&lt;U, M&gt; &amp;</paramtype>
+						<paramtype>const monitor_ptr&lt;U, Mutex&gt; &amp;</paramtype>
 					</parameter>
 					<description>
 						<para>This constructor creates a <code>monitor_ptr</code> which shares the same pointer
 							(implicitly converted), mutex, and condition as the original.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<template>
+						<template-type-parameter name="U"/>
+					</template>
+					<parameter name="other">
+						<paramtype>const monitor_ptr&lt;U, Mutex&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="pointer">
+						<paramtype>T*</paramtype>
+					</parameter>
+					<description>
+						<para id="monitor-ptr-constructor-aliasing">
+							This is an aliasing constructor, similar in function to the aliasing constructor of <code>shared_ptr</code>.
+							It creates a <code>monitor_ptr</code> which shares
+							ownership and uses the same mutex as <code>other</code>, but which points at the
+							object specified by <code>pointer</code> when dereferenced.  The types <code>T</code> and
+							<code>U</code> may be unrelated.
+							It is useful for creating
+							<code>monitor_ptr</code>s to objects which are only indirectly owned by a <code>monitor_ptr</code>,
+							for example:
+<programlisting>struct coordinates
+{
+	int x;
+	int y;
+};
+
+// ...
+
+poet::monitor_ptr&lt;coordinates&gt; coords(new coordinates());
+// x_mon shares ownership of coords object, but points at coords-&gt;x.
+// x_mon might be needed to pass the x member of the coords object to a function
+// expecting an argument of type poet::monitor_ptr&lt;int&gt;.
+poet::monitor_ptr&lt;int&gt; x_mon(coords, &amp;coords-&gt;x);
+// same effect as "coords-&gt;x = 5;"
+{
+	poet::monitor_ptr&lt;int&gt;::scoped_lock x_lock(x_mon);
+	*x_lock = 5;
+}</programlisting>
 						</para>
 					</description>
 				</constructor>
@@ -487,6 +551,24 @@
 							of the two <code>monitor_ptr</code> arguments.
 						</para>
 					</returns>
+				</function>
+			</free-function-group>
+			<free-function-group name="free function: swap">
+				<function name="swap">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="Mutex"/>
+					</template>
+					<parameter name="monitor0"><paramtype>monitor_ptr&lt;T, Mutex&gt; &amp;</paramtype></parameter>
+					<parameter name="monitor1"><paramtype>monitor_ptr&lt;T, Mutex&gt; &amp;</paramtype></parameter>
+					<type>void</type>
+					<description>
+						<para>
+							Swaps the values of <code>monitor0</code> and <code>monitor1</code>.  This
+							function is provided to
+							enhance efficiency with generic algorithms.
+						</para>
+					</description>
 				</function>
 			</free-function-group>
 		</class>

@@ -10,13 +10,13 @@
 			<purpose>A wrapper which provides insures locked access to an object.</purpose>
 			<description>
 				<para>
-					<code>monitor</code> allows for the easy creation of simple monitor objects.
+					<code>monitor</code> allows for the easy creation of monitor objects.
 					A <code>monitor</code> provides automatically locked access to its contained object's members
 					through its scoped lock classes, which can be used like pointers.
 					It stores its contained object by value, as an alternative to the pointer-like
 					interface of <classname>monitor_ptr</classname>.
-					Copies of a <code>monitor</code> object are deep copies, which do not share
-					the same mutex/condition.
+					Copies of a <code>monitor</code> object are deep copies with independent values, and
+					do not share the same mutex/condition.
 				</para>
 				<para>
 					Although any object may be wrapped in a <code>monitor</code>,
@@ -34,6 +34,14 @@
 					is also available for "timed locking".  Libpoet determines if the <code>Mutex</code>
 					template type parameter supports try or timed locking by testing the value of
 					mutex_properties&lt;Mutex&gt;::model.
+				</para>
+				<para>
+					It is possible to obtain <classname>monitor_ptr</classname>s from a <code>monitor</code> which shares
+					ownership/mutex/condition and points at
+					the value wrapped in a <code>monitor</code> object, via the <methodname>get_monitor_ptr</methodname>
+					method.  The value wrapped in a <code>monitor</code> object will not be destructed until
+					the last such <code>monitor_ptr</code> is destroyed, along with the <code>monitor</code>
+					object wrapping it, and any scoped locks which reference it.
 				</para>
 				<itemizedlist>
 					<title>Example Code</title>
@@ -234,53 +242,9 @@
 							</para>
 						</description>
 					</method>
-					<method name="swap">
-						<template>
-							<template-type-parameter name="M"/>
-						</template>
-						<type>void</type>
-						<parameter name="other">
-							<paramtype>monitor&lt;T, M&gt; &amp;</paramtype>
-						</parameter>
+					<method name="get_monitor_ptr" cv="const">
+						<type>const monitor_ptr&lt;T, Mutex&gt; &amp;</type>
 						<description>
-							<para>
-								Swaps the values of <code>*this</code> and <code>other</code>.  This
-								function is provided to implement
-								<functionname>swap</functionname> for this class, which may
-								enhance efficiency with generic algorithms.
-							</para>
-							<para>
-								Care is taken
-								not to lock both <code>monitor</code> objects simultaneously to avoid violating
-								or establishing a locking order between the two monitors (which might result in deadlock).
-								The swap operation performs the following steps:
-							</para>
-							<itemizedlist>
-								<listitem>
-									<para>
-										Copy constructs a temporary value of type T from the value in <code>other</code>, while
-										<code>other</code> is locked.
-									</para>
-								</listitem>
-								<listitem>
-									<para>
-										Swaps the temporary value with the value of <code>*this</code>, while
-										<code>*this</code> is locked.
-									</para>
-								</listitem>
-								<listitem>
-									<para>
-										Swaps the temporary value with the value of <code>other</code>, while
-										<code>other</code> is locked.
-									</para>
-								</listitem>
-							</itemizedlist>
-							<para>
-								Therefore, it is possible another thread could lock <code>other</code> and
-								perform some operation on it between the point where its value is copied
-								out, and the point where the value from <code>*this</code> is swapped back into
-								<code>other</code>.
-							</para>
 						</description>
 					</method>
 				</method-group>
@@ -358,15 +322,56 @@
 				</constructor>
 				<destructor specifiers="virtual"/>
 			</access>
+			<free-function-group name="free function: swap">
+				<function name="swap">
+					<template>
+						<template-type-parameter name="T"/>
+						<template-type-parameter name="Mutex"/>
+					</template>
+					<parameter name="monitor0"><paramtype>monitor&lt;T, Mutex&gt; &amp;</paramtype></parameter>
+					<parameter name="monitor1"><paramtype>monitor&lt;T, Mutex&gt; &amp;</paramtype></parameter>
+					<type>void</type>
+					<description>
+						<para>
+							Swaps the values of <code>monitor0</code> and <code>monitor1</code>.  This
+							function is provided to
+							enhance efficiency with generic algorithms.
+						</para>
+						<para>
+							Care is taken
+							not to lock both <code>monitor</code> objects simultaneously to avoid violating
+							or establishing a locking order between the two monitors (which might result in deadlock).
+							The swap operation performs the following steps:
+						</para>
+						<itemizedlist>
+							<listitem>
+								<para>
+									Copy constructs a temporary value of type T from the value in <code>other</code>, while
+									<code>monitor1</code> is locked.
+								</para>
+							</listitem>
+							<listitem>
+								<para>
+									Swaps the temporary value with the value of <code>monitor0</code>, while
+									<code>monitor0</code> is locked.
+								</para>
+							</listitem>
+							<listitem>
+								<para>
+									Swaps the temporary value with the value of <code>monitor1</code>, while
+									<code>monitor1</code> is locked.
+								</para>
+							</listitem>
+						</itemizedlist>
+						<para>
+							Therefore, it is possible another thread could lock <code>monitor1</code> and
+							perform some operation on it between the point where its value is copied
+							out, and the point where the value from <code>monitor0</code> is swapped back into
+							<code>monitor1</code>.
+						</para>
+					</description>
+				</function>
+			</free-function-group>
 		</class>
-		<function name="swap">
-			<template>
-				<template-type-parameter name="T"/>
-				<template-type-parameter name="Mutex"/>
-			</template>
-			<parameter name="monitor0"><paramtype>monitor&lt;T, Mutex&gt; &amp;</paramtype></parameter>
-			<parameter name="monitor1"><paramtype>monitor&lt;T, Mutex&gt; &amp;</paramtype></parameter>
-			<type>void</type>
-		</function>
 	</namespace>
 </header>

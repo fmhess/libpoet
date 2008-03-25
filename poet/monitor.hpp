@@ -109,7 +109,7 @@ namespace poet
 			}
 
 			template<typename M>
-			void swap(specialized_monitor<T, M, mutex_concept> &other)
+			void _internal_swap(specialized_monitor<T, M, mutex_concept> &other)
 			{
 				using std::swap;
 				boost::optional<T> temp;
@@ -130,6 +130,10 @@ namespace poet
 				}
 			}
 
+			const monitor_ptr<T, Mutex>& get_monitor_ptr() const
+			{
+				return _monitor_pointer;
+			}
 		protected:
 			template<typename U, typename M, enum mutex_model model>
 			friend class specialized_monitor;
@@ -233,7 +237,7 @@ namespace poet
 	template<typename T, typename Mutex>
 	void swap(poet::monitor<T, Mutex> &mon0, poet::monitor<T, Mutex> &mon1)
 	{
-		mon0.swap(mon1);
+		mon0._internal_swap(mon1);
 	}
 };
 

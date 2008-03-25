@@ -177,15 +177,46 @@ void monitor_ptr_cast_test()
 	assert(mon_base->get() == test_value);
 }
 
+struct point
+{
+	point(): x(0), y(0)
+	{}
+	int x;
+	int y;
+};
+
+void monitor_ptr_aliasing_constructor_test()
+{
+	poet::monitor_ptr<point> mypoint(new point());
+	mypoint->x = 1;
+	poet::monitor_ptr<int> int_pointer(mypoint, &mypoint->x);
+	{
+		poet::monitor_ptr<int>::scoped_lock x_lock(int_pointer);
+		*x_lock = 2;
+	}
+	assert(mypoint->x == 2);
+	int_pointer.reset(mypoint, &mypoint->y);
+	point *plain_old_pointer = mypoint.direct().get();
+	mypoint.reset();
+	{
+		poet::monitor_ptr<int>::scoped_lock y_lock(int_pointer);
+		*y_lock = 3;
+	}
+	assert(plain_old_pointer->y == 3);
+}
+
 void monitor_ptr_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
 	monitor_ptr_comparison_test();
 	monitor_ptr_const_test();
 	monitor_ptr_cast_test();
+	monitor_ptr_aliasing_constructor_test();
+
 	step_counter = 0;
 	monitor_ptr_type mymonitor(new Monitored);
 	monitor_ptr_type mymonitor_too(mymonitor);
+	swap(mymonitor, mymonitor_too);
 	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor));
 	boost::thread thread1(boost::bind(&monitor_ptr_thread1_function, mymonitor));
 	thread0.join();
@@ -293,6 +324,8 @@ void monitor_test()
 	monitor_assignment_test();
 	step_counter = 0;
 	monitor_type mymonitor;
+	monitor_type mymonitor_too;
+	swap(mymonitor, mymonitor_too);
 	boost::thread thread0(boost::bind(&monitor_thread0_function, boost::ref(mymonitor)));
 	boost::thread thread1(boost::bind(&monitor_thread1_function, boost::ref(mymonitor)));
 	thread0.join();
