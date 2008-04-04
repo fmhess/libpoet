@@ -13,8 +13,8 @@
 					<code>monitor</code> allows for the easy creation of monitor objects.
 					A <code>monitor</code> provides automatically locked access to its contained object's members
 					through its scoped lock classes, which can be used like pointers.
-					It stores its contained object by value, as an alternative to the pointer-like
-					interface of <classname>monitor_ptr</classname>.
+					It is similar to a <classname>monitor_ptr</classname>, except it behaves like a value
+					instead of a smart pointer when copied.
 					Copies of a <code>monitor</code> object are deep copies with independent values, and
 					do not share the same mutex/condition.
 				</para>
@@ -242,11 +242,39 @@
 							</para>
 						</description>
 					</method>
-					<method name="get_monitor_ptr" cv="const">
-						<type>const monitor_ptr&lt;T, Mutex&gt; &amp;</type>
+					<overloaded-method name="get_monitor_ptr">
+						<signature>
+							<type>const <classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</type>
+						</signature>
+						<signature cv="const">
+							<type><classname>monitor_ptr</classname>&lt;const T, Mutex&gt;</type>
+						</signature>
 						<description>
+							<para>
+								The <code>get_monitor_ptr</code> method can be used to obtain a <classname>monitor_ptr</classname> which shares
+								ownership/mutex/condition with <code>*this</code>.
+							</para>
 						</description>
-					</method>
+					</overloaded-method>
+					<overloaded-method name="operator->">
+						<signature>
+							<type>const <classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</type>
+						</signature>
+						<signature cv="const">
+							<type><classname>monitor_ptr</classname>&lt;const T, Mutex&gt;</type>
+						</signature>
+						<description>
+							<para>
+								Provides automatically locked access to members of the wrapped value.
+							</para>
+							<para>
+								If more flexibility is desired, the <classname>monitor::scoped_lock</classname>,
+								<classname>monitor::scoped_try_lock</classname>, and
+								<classname>monitor::scoped_timed_lock</classname>
+								classes provides alternatives to <code>monitor::operator-&gt;</code>.
+							</para>
+						</description>
+					</overloaded-method>
 				</method-group>
 				<constructor>
 					<description>

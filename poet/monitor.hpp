@@ -130,7 +130,20 @@ namespace poet
 				}
 			}
 
-			const monitor_ptr<T, Mutex>& get_monitor_ptr() const
+			const monitor_ptr<T, Mutex> & operator->()
+			{
+				return _monitor_pointer;
+			}
+			monitor_ptr<const T, Mutex> operator->() const
+			{
+				return _monitor_pointer;
+			}
+
+			const monitor_ptr<T, Mutex> & get_monitor_ptr()
+			{
+				return _monitor_pointer;
+			}
+			monitor_ptr<const T, Mutex> get_monitor_ptr() const
 			{
 				return _monitor_pointer;
 			}

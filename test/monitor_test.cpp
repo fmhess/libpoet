@@ -179,7 +179,7 @@ void monitor_ptr_cast_test()
 
 struct point
 {
-	point(): x(0), y(0)
+	point(int x_val = 0, int y_val = 0): x(x_val), y(y_val)
 	{}
 	int x;
 	int y;
@@ -316,12 +316,37 @@ void monitor_assignment_test()
 	}
 }
 
+void monitor_to_monitor_ptr_test()
+{
+	static const int test_value = 4;
+	poet::monitor<point> mymon;
+	mymon->x = test_value;
+	poet::monitor_ptr<point> mymon_ptr = mymon.get_monitor_ptr();
+	assert(mymon_ptr->x == test_value);
+
+	{
+		const poet::monitor<point> const_mymon(test_value, 0);
+		poet::monitor_ptr<const point> const_mymon_ptr = const_mymon.get_monitor_ptr();
+		assert(const_mymon_ptr->x == test_value);
+		assert(const_mymon->x == test_value);
+	}
+
+	{
+		poet::monitor<const point> const_mymon(test_value, 0);
+		poet::monitor_ptr<const point> const_mymon_ptr = const_mymon.get_monitor_ptr();
+		assert(const_mymon_ptr->x == test_value);
+		assert(const_mymon->x == test_value);
+	}
+}
+
 void monitor_test()
 {
 	std::cerr << __PRETTY_FUNCTION__;
 	monitor_const_test();
 	monitor_construction_test();
 	monitor_assignment_test();
+	monitor_to_monitor_ptr_test();
+
 	step_counter = 0;
 	monitor_type mymonitor;
 	monitor_type mymonitor_too;
