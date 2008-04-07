@@ -28,223 +28,157 @@
 
 namespace poet
 {
-	namespace detail
+	template<typename T, typename Mutex = boost::mutex>
+	class monitor
 	{
-		template<typename T, typename Mutex, enum mutex_model>
-		class specialized_monitor
+	public:
+		typedef T value_type;
+		typedef Mutex mutex_type;
+
+		class scoped_lock: public monitor_ptr<T, Mutex>::scoped_lock
 		{
-		private:
-			specialized_monitor() {}
+			typedef typename monitor_ptr<T, Mutex>::scoped_lock base_class;
+		public:
+			scoped_lock(monitor<T, Mutex> &mon):
+				base_class(mon._monitor_pointer)
+			{}
+			explicit scoped_lock(const monitor<T, Mutex> &mon):
+				base_class(mon._monitor_pointer)
+			{}
+			scoped_lock(monitor<T, Mutex> &mon, bool do_lock):
+				base_class(mon._monitor_pointer, do_lock)
+			{}
+			explicit scoped_lock(const monitor<T, Mutex> &mon, bool do_lock):
+				base_class(mon._monitor_pointer, do_lock)
+			{}
 		};
 
-		template<typename T, typename Mutex>
-		class specialized_monitor<T, Mutex, mutex_concept>
+		class scoped_try_lock: public monitor_ptr<T, Mutex>::scoped_try_lock
 		{
+			typedef typename monitor_ptr<T, Mutex>::scoped_try_lock base_class;
 		public:
-			typedef T value_type;
-			typedef Mutex mutex_type;
-
-			class scoped_lock: public monitor_ptr<T, Mutex>::scoped_lock
-			{
-				typedef typename monitor_ptr<T, Mutex>::scoped_lock base_class;
-			public:
-				scoped_lock(specialized_monitor<T, Mutex, mutex_concept> &mon):
-					base_class(mon._monitor_pointer)
-				{}
-				explicit scoped_lock(const specialized_monitor<T, Mutex, mutex_concept> &mon):
-					base_class(mon._monitor_pointer)
-				{}
-				scoped_lock(specialized_monitor<T, Mutex, mutex_concept> &mon, bool do_lock):
-					base_class(mon._monitor_pointer, do_lock)
-				{}
-				explicit scoped_lock(const specialized_monitor<T, Mutex, mutex_concept> &mon, bool do_lock):
-					base_class(mon._monitor_pointer, do_lock)
-				{}
-			};
-
-			specialized_monitor(): _monitor_pointer(new T)
+			scoped_try_lock(monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
 			{}
-			specialized_monitor(const T &object): _monitor_pointer(new T(object))
+			explicit scoped_try_lock(const monitor<T, Mutex> &mon): base_class(mon._monitor_pointer)
 			{}
-			specialized_monitor(const specialized_monitor &other)
-			{
-				scoped_lock lock(other);
-				_monitor_pointer.reset(new T((*lock)));
-			}
-			template<typename U, typename M>
-			specialized_monitor(const specialized_monitor<U, M, mutex_concept> &other)
-			{
-				typename specialized_monitor<U, M, mutex_concept>::scoped_lock lock(other);
-				_monitor_pointer.reset(new T((*lock)));
-			}
+			scoped_try_lock(monitor<T, Mutex> &mon, bool do_lock):
+				base_class(mon._monitor_pointer, do_lock)
+			{}
+			explicit scoped_try_lock(const monitor<T, Mutex> &mon, bool do_lock):
+				base_class(mon._monitor_pointer, do_lock)
+			{}
+		};
+
+		class scoped_timed_lock: public monitor_ptr<T, Mutex>::scoped_timed_lock
+		{
+			typedef typename monitor_ptr<T, Mutex>::scoped_timed_lock base_class;
+		public:
+			template<typename Timeout>
+			scoped_timed_lock(monitor<T, Mutex> &mon, const Timeout &t):
+				base_class(mon._monitor_pointer, t)
+			{}
+			template<typename Timeout>
+			explicit scoped_timed_lock(const monitor<T, Mutex> &mon, const Timeout &t):
+				base_class(mon._monitor_pointer, t)
+			{}
+			scoped_timed_lock(monitor<T, Mutex> &mon, bool do_lock):
+				base_class(mon._monitor_pointer, do_lock)
+			{}
+			explicit scoped_timed_lock(const monitor<T, Mutex> &mon, bool do_lock):
+				base_class(mon._monitor_pointer, do_lock)
+			{}
+		};
+
+		monitor(): _monitor_pointer(new T)
+		{}
+		monitor(const T &object): _monitor_pointer(new T(object))
+		{}
+		monitor(const monitor &other)
+		{
+			scoped_lock lock(other);
+			_monitor_pointer.reset(new T((*lock)));
+		}
+		template<typename U, typename M>
+		monitor(const monitor<U, M> &other)
+		{
+			typename monitor<U, M>::scoped_lock lock(other);
+			_monitor_pointer.reset(new T((*lock)));
+		}
 #define POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
 	template<POET_REPEATED_TYPENAMES(n, U)> \
-	specialized_monitor(POET_REPEATED_ARG_DECLARATIONS(n, U)): _monitor_pointer(new T(POET_REPEATED_ARG_NAMES(n, arg))) \
+	monitor(POET_REPEATED_ARG_DECLARATIONS(n, U)): _monitor_pointer(new T(POET_REPEATED_ARG_NAMES(n, arg))) \
 	{}
-			BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR, x)
+		BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR, x)
 #undef POET_BASE_MONITOR_TEMPLATE_CONSTRUCTOR
-			virtual ~specialized_monitor() {}
+		virtual ~monitor() {}
 
-			specialized_monitor& operator=(const specialized_monitor &rhs)
-			{
-				return operator=<T, Mutex>(rhs);
-			}
-			template<typename U, typename M>
-			specialized_monitor& operator=(const specialized_monitor<U, M, mutex_concept> &rhs)
-			{
-				if(&rhs == this) return *this;
-
-				boost::optional<T> temp;
-				/* Avoid locking the mutexes of both this monitor and the
-				other monitor simultaneously, since we don't want to invite
-				any potential locking order violations. */
-				{
-					typename specialized_monitor<U, M, mutex_concept>::scoped_lock other_lock(rhs);
-					temp = *other_lock;
-				}
-				scoped_lock lock(*this);
-				using std::swap;
-				swap(*lock, *temp);
-				return *this;
-			}
-
-			template<typename M>
-			void _internal_swap(specialized_monitor<T, M, mutex_concept> &other)
-			{
-				using std::swap;
-				boost::optional<T> temp;
-				/* Avoid locking the mutexes of both this monitor and the
-				other monitor simultaneously, since we don't want to invite
-				any potential locking order violations. */
-				{
-					typename specialized_monitor<T, M, mutex_concept>::scoped_lock other_lock(other);
-					temp = *other_lock;
-				}
-				{
-					scoped_lock lock(*this);
-					swap(*lock, *temp);
-				}
-				{
-					typename specialized_monitor<T, M, mutex_concept>::scoped_lock other_lock(other);
-					swap(*other_lock, *temp);
-				}
-			}
-
-			const monitor_ptr<T, Mutex> & operator->()
-			{
-				return _monitor_pointer;
-			}
-			monitor_ptr<const T, Mutex> operator->() const
-			{
-				return _monitor_pointer;
-			}
-
-			const monitor_ptr<T, Mutex> & get_monitor_ptr()
-			{
-				return _monitor_pointer;
-			}
-			monitor_ptr<const T, Mutex> get_monitor_ptr() const
-			{
-				return _monitor_pointer;
-			}
-		protected:
-			template<typename U, typename M, enum mutex_model model>
-			friend class specialized_monitor;
-
-			monitor_ptr<T, Mutex> _monitor_pointer;
-		};
-
-		template<typename T, typename Mutex>
-		class specialized_monitor<T, Mutex, try_mutex_concept>:
-			public specialized_monitor<T, Mutex, mutex_concept>
+		monitor& operator=(const monitor &rhs)
 		{
-			typedef specialized_monitor<T, Mutex, mutex_concept> base_class;
-		public:
-			class scoped_try_lock: public monitor_ptr<T, Mutex>::scoped_try_lock
-			{
-				typedef typename monitor_ptr<T, Mutex>::scoped_try_lock base_class;
-			public:
-				scoped_try_lock(specialized_monitor<T, Mutex, try_mutex_concept> &mon): base_class(mon._monitor_pointer)
-				{}
-				explicit scoped_try_lock(const specialized_monitor<T, Mutex, try_mutex_concept> &mon): base_class(mon._monitor_pointer)
-				{}
-				scoped_try_lock(specialized_monitor<T, Mutex, try_mutex_concept> &mon, bool do_lock):
-					base_class(mon._monitor_pointer, do_lock)
-				{}
-				explicit scoped_try_lock(const specialized_monitor<T, Mutex, try_mutex_concept> &mon, bool do_lock):
-					base_class(mon._monitor_pointer, do_lock)
-				{}
-			};
-
-			specialized_monitor()
-			{}
-			specialized_monitor(const T &object): base_class(object)
-			{}
-			template<typename U, typename M, enum mutex_model model>
-			specialized_monitor(const specialized_monitor<U, M, model> &other): base_class(other)
-			{}
-#define POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
-	template<POET_REPEATED_TYPENAMES(n, U)> \
-	specialized_monitor(POET_REPEATED_ARG_DECLARATIONS(n, U)): base_class(POET_REPEATED_ARG_NAMES(n, arg)) \
-	{}
-			BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR, x)
-		};
-
-		template<typename T, typename Mutex>
-		class specialized_monitor<T, Mutex, timed_mutex_concept>:
-			public specialized_monitor<T, Mutex, try_mutex_concept>
-		{
-			typedef specialized_monitor<T, Mutex, try_mutex_concept> base_class;
-		public:
-			class scoped_timed_lock: public monitor_ptr<T, Mutex>::scoped_timed_lock
-			{
-				typedef typename monitor_ptr<T, Mutex>::scoped_timed_lock base_class;
-			public:
-				template<typename Timeout>
-				scoped_timed_lock(specialized_monitor<T, Mutex, timed_mutex_concept> &mon, const Timeout &t):
-					base_class(mon._monitor_pointer, t)
-				{}
-				template<typename Timeout>
-				explicit scoped_timed_lock(const specialized_monitor<T, Mutex, timed_mutex_concept> &mon, const Timeout &t):
-					base_class(mon._monitor_pointer, t)
-				{}
-				scoped_timed_lock(specialized_monitor<T, Mutex, timed_mutex_concept> &mon, bool do_lock):
-					base_class(mon._monitor_pointer, do_lock)
-				{}
-				explicit scoped_timed_lock(const specialized_monitor<T, Mutex, timed_mutex_concept> &mon, bool do_lock):
-					base_class(mon._monitor_pointer, do_lock)
-				{}
-			};
-
-			specialized_monitor()
-			{}
-			specialized_monitor(const T &object): base_class(object)
-			{}
-			template<typename U, typename M, enum mutex_model model>
-			specialized_monitor(const specialized_monitor<U, M, model> &other): base_class(other)
-			{}
-			BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_SPECIALIZED_MONITOR_TEMPLATE_CONSTRUCTOR, x)
-		};
-	};
-
-	template<typename T, typename Mutex = boost::mutex>
-	class monitor: public detail::specialized_monitor<T, Mutex, mutex_properties<Mutex>::model>
-	{
-		typedef typename detail::specialized_monitor<T, Mutex, mutex_properties<Mutex>::model> base_class;
-	public:
-		monitor()
-		{}
-		monitor(const T &object): base_class(object)
-		{}
+			return operator=<T, Mutex>(rhs);
+		}
 		template<typename U, typename M>
-		monitor(const monitor<U, M> &other): base_class(other)
-		{}
-#define POET_MONITOR_TEMPLATE_CONSTRUCTOR(z, n, dummy) \
-	template<POET_REPEATED_TYPENAMES(n, U)> \
-	monitor(POET_REPEATED_ARG_DECLARATIONS(n, U)): base_class(POET_REPEATED_ARG_NAMES(n, arg)) \
-	{}
-		BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(POET_MONITOR_MAX_CONSTRUCTOR_ARGS), POET_MONITOR_TEMPLATE_CONSTRUCTOR, x)
-#undef POET_MONITOR_TEMPLATE_CONSTRUCTOR
+		monitor& operator=(const monitor<U, M> &rhs)
+		{
+			if(&rhs == this) return *this;
+
+			boost::optional<T> temp;
+			/* Avoid locking the mutexes of both this monitor and the
+			other monitor simultaneously, since we don't want to invite
+			any potential locking order violations. */
+			{
+				typename monitor<U, M>::scoped_lock other_lock(rhs);
+				temp = *other_lock;
+			}
+			scoped_lock lock(*this);
+			using std::swap;
+			swap(*lock, *temp);
+			return *this;
+		}
+
+		template<typename M>
+		void _internal_swap(monitor<T, M> &other)
+		{
+			using std::swap;
+			boost::optional<T> temp;
+			/* Avoid locking the mutexes of both this monitor and the
+			other monitor simultaneously, since we don't want to invite
+			any potential locking order violations. */
+			{
+				typename monitor<T, M>::scoped_lock other_lock(other);
+				temp = *other_lock;
+			}
+			{
+				scoped_lock lock(*this);
+				swap(*lock, *temp);
+			}
+			{
+				typename monitor<T, M>::scoped_lock other_lock(other);
+				swap(*other_lock, *temp);
+			}
+		}
+
+		const monitor_ptr<T, Mutex> & operator->()
+		{
+			return _monitor_pointer;
+		}
+		monitor_ptr<const T, Mutex> operator->() const
+		{
+			return _monitor_pointer;
+		}
+
+		const monitor_ptr<T, Mutex> & get_monitor_ptr()
+		{
+			return _monitor_pointer;
+		}
+		monitor_ptr<const T, Mutex> get_monitor_ptr() const
+		{
+			return _monitor_pointer;
+		}
+	protected:
+		template<typename U, typename M>
+		friend class monitor;
+
+		monitor_ptr<T, Mutex> _monitor_pointer;
 	};
 
 	template<typename T, typename Mutex>
