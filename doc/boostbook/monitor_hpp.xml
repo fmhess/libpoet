@@ -59,7 +59,7 @@
 				</itemizedlist>
 			</description>
 			<access name="public">
-				<typedef name="value_type">
+				<typedef name="element_type">
 					<type>T</type>
 				</typedef>
 				<typedef name="mutex_type">

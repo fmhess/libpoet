@@ -16,12 +16,16 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
-#include <poet/detail/monitor_locks.hpp>
+#include <poet/monitor_locks.hpp>
 #include <poet/detail/monitor_synchronizer.hpp>
 #include <poet/monitor_base.hpp>
+#include <poet/monitor_locks.hpp>
 
 namespace poet
 {
+	template<typename Monitor>
+	class monitor_unique_lock;
+
 	// uses default copy constructor/assignment operators
 	template<typename T, typename Mutex = boost::mutex>
 	class monitor_ptr
@@ -30,62 +34,72 @@ namespace poet
 		typedef T element_type;
 		typedef Mutex mutex_type;
 
-		class scoped_lock: public detail::monitor_scoped_lock<T, Mutex>
+		class scoped_lock: public monitor_unique_lock<monitor_ptr>
 		{
-			typedef typename detail::monitor_scoped_lock<T, Mutex> base_class;
+			typedef monitor_unique_lock<monitor_ptr> base_class;
 		public:
-			scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer):
-				base_class(monitor_pointer._syncer,
-					monitor_pointer._pointer)
+			scoped_lock(monitor_ptr &monitor_pointer):
+				base_class(monitor_pointer)
 			{}
 			explicit scoped_lock(const monitor_ptr<T, Mutex> &monitor_pointer):
-				base_class(monitor_pointer._syncer,
-					monitor_pointer._pointer)
+				base_class(monitor_pointer)
 			{}
-			scoped_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
-			{}
-			explicit scoped_lock(const monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
-			{}
+			scoped_lock(monitor_ptr &monitor_pointer, bool do_lock):
+				base_class(monitor_pointer, boost::defer_lock_t())
+			{
+				if(do_lock) base_class::lock();
+			}
+			explicit scoped_lock(const monitor_ptr &monitor_pointer, bool do_lock):
+				base_class(monitor_pointer, boost::defer_lock_t())
+			{
+				if(do_lock) base_class::lock();
+			}
 		};
 
-		class scoped_try_lock: public detail::monitor_scoped_try_lock<T, Mutex>
+		class scoped_try_lock: public monitor_unique_lock<monitor_ptr>
 		{
-			typedef typename detail::monitor_scoped_try_lock<T, Mutex> base_class;
+			typedef monitor_unique_lock<monitor_ptr> base_class;
 		public:
-			scoped_try_lock(monitor_ptr<T, Mutex> &monitor_pointer):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer)
+			scoped_try_lock(monitor_ptr &monitor_pointer):
+				base_class(monitor_pointer, boost::try_to_lock_t())
 			{}
-			explicit scoped_try_lock(const monitor_ptr<T, Mutex> &monitor_pointer):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer)
+			explicit scoped_try_lock(const monitor_ptr &monitor_pointer):
+				base_class(monitor_pointer, boost::try_to_lock_t())
 			{}
-			scoped_try_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
-			{}
-			explicit scoped_try_lock(const monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
-			{}
+			scoped_try_lock(monitor_ptr &monitor_pointer, bool do_lock):
+				base_class(monitor_pointer, boost::defer_lock_t())
+			{
+				if(do_lock) base_class::lock();
+			}
+			explicit scoped_try_lock(const monitor_ptr &monitor_pointer, bool do_lock):
+				base_class(monitor_pointer, boost::defer_lock_t())
+			{
+				if(do_lock) base_class::lock();
+			}
 		};
 
-		class scoped_timed_lock: public detail::monitor_scoped_timed_lock<T, Mutex>
+		class scoped_timed_lock: public monitor_unique_lock<monitor_ptr>
 		{
-			typedef typename detail::monitor_scoped_timed_lock<T, Mutex> base_class;
+			typedef monitor_unique_lock<monitor_ptr> base_class;
 		public:
 			template<typename Timeout>
-			scoped_timed_lock(monitor_ptr<T, Mutex> &monitor_pointer, const Timeout &timeout):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, timeout)
+			scoped_timed_lock(monitor_ptr &monitor_pointer, const Timeout &timeout):
+				base_class(monitor_pointer, timeout)
 			{}
 			template<typename Timeout>
 			explicit scoped_timed_lock(const monitor_ptr<T, Mutex> &monitor_pointer, const Timeout &timeout):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, timeout)
+				base_class(monitor_pointer, timeout)
 			{}
 			scoped_timed_lock(monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
-			{}
+				base_class(monitor_pointer, boost::defer_lock_t())
+			{
+				if(do_lock) base_class::lock();
+			}
 			explicit scoped_timed_lock(const monitor_ptr<T, Mutex> &monitor_pointer, bool do_lock):
-				base_class(monitor_pointer._syncer, monitor_pointer._pointer, do_lock)
-			{}
+				base_class(monitor_pointer, boost::defer_lock_t())
+			{
+				if(do_lock) base_class::lock();
+			}
 		};
 
 		class call_proxy
@@ -169,9 +183,35 @@ namespace poet
 			swap(_pointer, other._pointer);
 			swap(_syncer, other._syncer);
 		}
+
+		// Boost.Threads interface for Lockable concepts
+		// Lockable
+		void lock() const {_syncer->_mutex.lock();}
+		bool try_lock() const {return _syncer->_mutex.try_lock();}
+		void unlock() const {_syncer->_mutex.unlock();}
+		// TimedLockable
+		template<typename Timeout>
+		bool timed_lock(const Timeout &timeout) const {return _syncer->_mutex.timed_lock(timeout);}
+		// SharedLockable
+		void lock_shared() const {_syncer->_mutex.lock_shared();}
+		bool try_lock_shared() const {return _syncer->_mutex.try_lock_shared();}
+		template<typename Timeout>
+		bool timed_lock_shared(const Timeout &timeout) const
+		{
+			return _syncer->_mutex.timed_lock_shared(timeout);
+		}
+		void unlock_shared() const {_syncer->_mutex.unlock_shared();}
+		// UpgradeLockable
+		void lock_upgrade() const {_syncer->_mutex.lock_upgrade();}
+		void unlock_upgrade() const {_syncer->_mutex.unlock_upgrade();}
+		void unlock_upgrade_and_lock() const {_syncer->_mutex.unlock_upgrade_and_lock();}
+		void unlock_upgrade_and_lock_shared() const {_syncer->_mutex.unlock_upgrade_and_lock_shared();}
+		void unlock_and_lock_upgrade() const {_syncer->_mutex.unlock_and_lock_upgrade();}
 	private:
 		template<typename U, typename M>
 		friend class monitor_ptr;
+		template<typename Monitor>
+		friend class monitor_unique_lock;
 
 		void set_monitor_ptr(const monitor_base *monitor)
 		{
