@@ -31,9 +31,7 @@
 					a model of the TryMutex or TimedMutex concept then the nested class <classname>monitor::scoped_try_lock</classname>
 					is available for "try locking".  If <code>Mutex</code> is a model of the TimedMutex
 					concept then the nested class <classname>monitor::scoped_timed_lock</classname>
-					is also available for "timed locking".  Libpoet determines if the <code>Mutex</code>
-					template type parameter supports try or timed locking by testing the value of
-					mutex_properties&lt;Mutex&gt;::model.
+					is also available for "timed locking".
 				</para>
 				<para>
 					It is possible to obtain <classname>monitor_ptr</classname>s from a <code>monitor</code> which shares

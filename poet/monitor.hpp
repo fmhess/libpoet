@@ -20,7 +20,6 @@
 #include <poet/detail/monitor_locks.hpp>
 #include <poet/detail/preprocessor_macros.hpp>
 #include <poet/monitor_ptr.hpp>
-#include <poet/mutex_properties.hpp>
 
 #ifndef POET_MONITOR_MAX_CONSTRUCTOR_ARGS
 #define POET_MONITOR_MAX_CONSTRUCTOR_ARGS 10

@@ -10,9 +10,8 @@
 			<description>
 				<para>
 					The <code>mutex_properties</code> class is used by libpoet to discover the properties
-					of mutex types passed as template type parameters to classes such as
-					<classname>acyclic_mutex</classname>, <classname>monitor</classname>, and
-					<classname>monitor_ptr</classname>.  These properties are used internally to
+					of mutex types passed as template type parameters to
+					<classname>acyclic_mutex</classname>.  These properties are used internally to
 					perform partial template specializations according to the properties of the
 					mutex being used.
 				</para>
@@ -20,8 +19,9 @@
 					Specializations of <code>mutex_properties</code> are provided by libpoet
 					for all the mutex
 					types defined by the Boost Thread library, as well as all mutex types defined
-					by libpoet itself.  If you wish to use some other custom class with libpoet
-					as a Mutex template type parameter, you will need to also define a
+					by libpoet itself.  If you wish to use some other custom class with
+					<classname>acyclic_mutex</classname>
+					as the Mutex template type parameter, you will need to also define a
 					specialization of <code>poet::mutex_properties</code> for your custom
 					mutex class.
 				</para>
@@ -35,14 +35,15 @@
 				<static-constant name="model">
 					<type>enum <enumname>mutex_model</enumname></type>
 					<default><emphasis>varies</emphasis></default>
-					<purpose>Specifies the Mutex, TryMutex, or TimedMutex concept from Boost.Thread.</purpose>
+					<purpose>Specifies the one of the mutex concepts from Boost.Thread (version 1.35.0 or later).</purpose>
 				</static-constant>
 			</access>
 		</class>
 		<enum name="mutex_model">
-			<enumvalue name="mutex_concept"/>
-			<enumvalue name="try_mutex_concept"/>
-			<enumvalue name="timed_mutex_concept"/>
+			<enumvalue name="Lockable"/>
+			<enumvalue name="TimedLockable"/>
+			<enumvalue name="SharedLockable"/>
+			<enumvalue name="UpgradeLockable"/>
 		</enum>
 	</namespace>
 </header>

@@ -19,7 +19,6 @@
 #include <poet/detail/monitor_locks.hpp>
 #include <poet/detail/monitor_synchronizer.hpp>
 #include <poet/monitor_base.hpp>
-#include <poet/mutex_properties.hpp>
 
 namespace poet
 {

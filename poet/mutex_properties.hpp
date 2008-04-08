@@ -17,20 +17,20 @@ namespace boost
 {
 	// forward declarations
 	class mutex;
-	class try_mutex;
 	class timed_mutex;
 	class recursive_mutex;
-	class recursive_try_mutex;
 	class recursive_timed_mutex;
+	class shared_mutex;
 };
 
 namespace poet
 {
 	enum mutex_model
 	{
-		mutex_concept,
-		try_mutex_concept,
-		timed_mutex_concept
+		Lockable,
+		TimedLockable,
+		SharedLockable,
+		UpgradeLockable
 	};
 
 	// forward declarations
@@ -50,15 +50,7 @@ namespace poet
 	{
 	public:
 		static const bool recursive = false;
-		static const mutex_model model = mutex_concept;
-	};
-
-	template<>
-	class mutex_properties<boost::try_mutex>
-	{
-	public:
-		static const bool recursive = false;
-		static const mutex_model model = try_mutex_concept;
+		static const mutex_model model = Lockable;
 	};
 
 	template<>
@@ -66,7 +58,7 @@ namespace poet
 	{
 	public:
 		static const bool recursive = false;
-		static const mutex_model model = timed_mutex_concept;
+		static const mutex_model model = TimedLockable;
 	};
 
 	template<>
@@ -74,15 +66,7 @@ namespace poet
 	{
 	public:
 		static const bool recursive = true;
-		static const mutex_model model = mutex_concept;
-	};
-
-	template<>
-	class mutex_properties<boost::recursive_try_mutex>
-	{
-	public:
-		static const bool recursive = true;
-		static const mutex_model model = try_mutex_concept;
+		static const mutex_model model = Lockable;
 	};
 
 	template<>
@@ -90,7 +74,15 @@ namespace poet
 	{
 	public:
 		static const bool recursive = true;
-		static const mutex_model model = timed_mutex_concept;
+		static const mutex_model model = TimedLockable;
+	};
+
+	template<>
+	class mutex_properties<boost::shared_mutex>
+	{
+	public:
+		static const bool recursive = true;
+		static const mutex_model model = UpgradeLockable;
 	};
 
 	template<typename Mutex, typename Key, typename KeyCompare>

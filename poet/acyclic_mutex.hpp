@@ -33,14 +33,14 @@ namespace poet
 		{
 		public:
 			acyclic_scoped_lock(AcyclicMutex &mutex): _tracker(mutex),
-				_lock(mutex._wrapped_mutex, false)
+				_lock(mutex._wrapped_mutex, boost::defer_lock_t())
 			{
 				_tracker.track_lock();
 				_lock.lock();
 			}
 			acyclic_scoped_lock(AcyclicMutex &mutex, bool do_lock):
 				_tracker(mutex),
-				_lock(mutex._wrapped_mutex, false)
+				_lock(mutex._wrapped_mutex, boost::defer_lock_t())
 			{
 				if(do_lock)
 				{
@@ -135,7 +135,7 @@ namespace poet
 
 		// non-recursive mutex
 		template<typename Mutex, typename Key, typename KeyCompare>
-		class specialized_acyclic_mutex<Mutex, false, mutex_concept, Key, KeyCompare>:
+		class specialized_acyclic_mutex<Mutex, false, Lockable, Key, KeyCompare>:
 			public acyclic_mutex_base
 		{
 		public:
@@ -143,6 +143,7 @@ namespace poet
 			typedef Key key_type;
 			typedef KeyCompare key_compare;
 			typedef detail::acyclic_scoped_lock<specialized_acyclic_mutex> scoped_lock;
+			typedef detail::acyclic_scoped_try_lock<specialized_acyclic_mutex> scoped_try_lock;
 
 			specialized_acyclic_mutex()
 			{}
@@ -160,10 +161,10 @@ namespace poet
 
 		// recursive mutex
 		template<typename Mutex, typename Key, typename KeyCompare>
-		class specialized_acyclic_mutex<Mutex, true, mutex_concept, Key, KeyCompare>:
-			public specialized_acyclic_mutex<Mutex, false, mutex_concept, Key, KeyCompare>
+		class specialized_acyclic_mutex<Mutex, true, Lockable, Key, KeyCompare>:
+			public specialized_acyclic_mutex<Mutex, false, Lockable, Key, KeyCompare>
 		{
-			typedef specialized_acyclic_mutex<Mutex, false, mutex_concept, Key, KeyCompare> base_class;
+			typedef specialized_acyclic_mutex<Mutex, false, Lockable, Key, KeyCompare> base_class;
 		public:
 			specialized_acyclic_mutex()
 			{}
@@ -205,30 +206,12 @@ namespace poet
 			mutable boost::thread_specific_ptr<int> _lock_count;
 		};
 
-		// try mutex
-		template<typename Mutex, bool recursive, typename Key, typename KeyCompare>
-		class specialized_acyclic_mutex<Mutex, recursive, try_mutex_concept, Key, KeyCompare>:
-			public specialized_acyclic_mutex<Mutex, recursive, mutex_concept, Key, KeyCompare>
-		{
-			typedef specialized_acyclic_mutex<Mutex, recursive, mutex_concept, Key, KeyCompare> base_class;
-		public:
-			typedef detail::acyclic_scoped_try_lock<specialized_acyclic_mutex> scoped_try_lock;
-
-			specialized_acyclic_mutex()
-			{}
-			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
-			{}
-		private:
-			template<typename M, typename L>
-			friend class detail::acyclic_scoped_try_lock;
-		};
-
 		// timed mutex
 		template<typename Mutex, bool recursive, typename Key, typename KeyCompare>
-		class specialized_acyclic_mutex<Mutex, recursive, timed_mutex_concept, Key, KeyCompare>:
-			public specialized_acyclic_mutex<Mutex, recursive, try_mutex_concept, Key, KeyCompare>
+		class specialized_acyclic_mutex<Mutex, recursive, TimedLockable, Key, KeyCompare>:
+			public specialized_acyclic_mutex<Mutex, recursive, Lockable, Key, KeyCompare>
 		{
-			typedef specialized_acyclic_mutex<Mutex, recursive, try_mutex_concept, Key, KeyCompare> base_class;
+			typedef specialized_acyclic_mutex<Mutex, recursive, Lockable, Key, KeyCompare> base_class;
 		public:
 			typedef detail::acyclic_scoped_timed_lock<specialized_acyclic_mutex> scoped_timed_lock;
 

@@ -31,9 +31,7 @@
 					<classname>monitor_ptr::scoped_timed_lock</classname> classes.  However, these
 					types exist only if the <code>monitor_ptr</code>'s <code>Mutex</code> template
 					parameter type is a model of the TryMutex or TimedMutex concepts from
-					the Boost Thread library.  Libpoet determines if the <code>Mutex</code> type
-					supports try or timed locking by testing the value of
-					<code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>.
+					the Boost Thread library.
 				</para>
 				<itemizedlist>
 					<title>Example Code</title>
