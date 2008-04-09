@@ -174,30 +174,6 @@ namespace poet
 		{
 			return _monitor_pointer;
 		}
-
-		// Boost.Threads interface for Lockable concepts
-		// Lockable
-		void lock() const {_monitor_pointer->lock();}
-		bool try_lock() const {return _monitor_pointer->try_lock();}
-		void unlock() const {_monitor_pointer->unlock();}
-		// TimedLockable
-		template<typename Timeout>
-		bool timed_lock(const Timeout &timeout) const {return _monitor_pointer->timed_lock(timeout);}
-		// SharedLockable
-		void lock_shared() const {_monitor_pointer->lock_shared();}
-		bool try_lock_shared() const {return _monitor_pointer->try_lock_shared();}
-		template<typename Timeout>
-		bool timed_lock_shared(const Timeout &timeout) const
-		{
-			return _monitor_pointer->timed_lock_shared(timeout);
-		}
-		void unlock_shared() const {_monitor_pointer->unlock_shared();}
-		// UpgradeLockable
-		void lock_upgrade() const {_monitor_pointer->lock_upgrade();}
-		void unlock_upgrade() const {_monitor_pointer->unlock_upgrade();}
-		void unlock_upgrade_and_lock() const {_monitor_pointer->unlock_upgrade_and_lock();}
-		void unlock_upgrade_and_lock_shared() const {_monitor_pointer->unlock_upgrade_and_lock_shared();}
-		void unlock_and_lock_upgrade() const {_monitor_pointer->unlock_and_lock_upgrade();}
 	protected:
 		template<typename U, typename M>
 		friend class monitor;
@@ -209,6 +185,17 @@ namespace poet
 	void swap(poet::monitor<T, Mutex> &mon0, poet::monitor<T, Mutex> &mon1)
 	{
 		mon0._internal_swap(mon1);
+	}
+
+	template<typename T, typename Mutex>
+	const monitor_ptr<T, Mutex> & get_monitor_ptr(monitor<T, Mutex> &mon)
+	{
+		return mon.get_monitor_ptr();
+	}
+	template<typename T, typename Mutex>
+	monitor_ptr<const T, Mutex> get_monitor_ptr(const monitor<T, Mutex> &mon)
+	{
+		return mon.get_monitor_ptr();
 	}
 };
 

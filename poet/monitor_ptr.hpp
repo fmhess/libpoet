@@ -34,9 +34,9 @@ namespace poet
 		typedef T element_type;
 		typedef Mutex mutex_type;
 
-		class scoped_lock: public monitor_unique_lock<monitor_ptr>
+		class scoped_lock: public monitor_unique_lock<const monitor_ptr>
 		{
-			typedef monitor_unique_lock<monitor_ptr> base_class;
+			typedef monitor_unique_lock<const monitor_ptr> base_class;
 		public:
 			scoped_lock(monitor_ptr &monitor_pointer):
 				base_class(monitor_pointer)
@@ -56,9 +56,9 @@ namespace poet
 			}
 		};
 
-		class scoped_try_lock: public monitor_unique_lock<monitor_ptr>
+		class scoped_try_lock: public monitor_unique_lock<const monitor_ptr>
 		{
-			typedef monitor_unique_lock<monitor_ptr> base_class;
+			typedef monitor_unique_lock<const monitor_ptr> base_class;
 		public:
 			scoped_try_lock(monitor_ptr &monitor_pointer):
 				base_class(monitor_pointer, boost::try_to_lock_t())
@@ -78,9 +78,9 @@ namespace poet
 			}
 		};
 
-		class scoped_timed_lock: public monitor_unique_lock<monitor_ptr>
+		class scoped_timed_lock: public monitor_unique_lock<const monitor_ptr>
 		{
-			typedef monitor_unique_lock<monitor_ptr> base_class;
+			typedef monitor_unique_lock<const monitor_ptr> base_class;
 		public:
 			template<typename Timeout>
 			scoped_timed_lock(monitor_ptr &monitor_pointer, const Timeout &timeout):
@@ -262,6 +262,17 @@ namespace poet
 	void swap(poet::monitor_ptr<T, Mutex> &mon0, poet::monitor_ptr<T, Mutex> &mon1)
 	{
 		mon0._internal_swap(mon1);
+	}
+
+	template<typename T, typename Mutex>
+	monitor_ptr<T, Mutex> & get_monitor_ptr(monitor_ptr<T, Mutex> &mon)
+	{
+		return mon;
+	}
+	template<typename T, typename Mutex>
+	const monitor_ptr<T, Mutex> & get_monitor_ptr(const monitor_ptr<T, Mutex> &mon)
+	{
+		return mon;
 	}
 };
 

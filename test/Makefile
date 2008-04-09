@@ -7,7 +7,7 @@ RM=rm -f
 LD=g++
 
 PROGRAMS = active_function_test active_object_test acyclic_mutex_test \
-	exception_test future_test future_void_test monitor_test \
+	exception_test future_test future_void_test monitor_test new_mutex_api_test \
 	not_default_constructible_test promise_count_test timed_join_test undead_active_function_test
 
 CPPFLAGS= -pthread -I.. -I$(THREAD_SAFE_SIGNALS_DIR) -I/usr/local/boost_1_35_0/include/boost-1_35

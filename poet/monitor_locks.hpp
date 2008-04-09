@@ -27,21 +27,43 @@ namespace poet
 {
 	template<typename T, typename Mutex>
 	class monitor_ptr;
+	template<typename T, typename Mutex>
+	class monitor;
+
+	namespace detail
+	{
+		// figure out const-correct monitor_ptr type to use as handle
+		// default
+		template<typename Monitor>
+		class monitor_handle
+		{
+		public:
+			typedef monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> type;
+		};
+		// partial specialization for poet::monitor, whose constness is transitive
+		template<typename T, typename Mutex>
+		class monitor_handle<const monitor<T, Mutex> >
+		{
+		public:
+			typedef monitor_ptr<const T, Mutex> type;
+		};
+	}
 
 	template<typename Monitor>
 	class monitor_unique_lock
 	{
+		typedef typename detail::monitor_handle<Monitor>::type monitor_ptr_type;
 	public:
-		typedef typename Monitor::element_type element_type;
+		typedef typename monitor_ptr_type::element_type element_type;
 
-		monitor_unique_lock(const Monitor &mon):
-			_mon(mon), _lock(_mon)
+		monitor_unique_lock(Monitor &mon):
+			_mon(get_monitor_ptr(mon)), _lock(_mon)
 		{
 			set_wait_function();
 		}
-		template<typename T>
-		monitor_unique_lock(const Monitor &mon, const T &arg):
-			_mon(mon), _lock(_mon, arg)
+		template<typename U>
+		monitor_unique_lock(Monitor &mon, const U &arg):
+			_mon(get_monitor_ptr(mon)), _lock(_mon, arg)
 		{
 			set_wait_function();
 		}
@@ -139,8 +161,8 @@ namespace poet
 			else
 				condition.wait(_lock, pred);
 		}
-		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> _mon;
-		boost::unique_lock<Monitor> _lock;
+		monitor_ptr_type _mon;
+		boost::unique_lock<monitor_ptr_type> _lock;
 	};
 };
 
