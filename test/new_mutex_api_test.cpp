@@ -5,6 +5,8 @@
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/thread.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <poet/monitor.hpp>
 #include <poet/monitor_ptr.hpp>
 
@@ -93,8 +95,54 @@ void monitor_unique_lock_test()
 	}
 }
 
+// monitor and monitor_ptr should be useable with Boost.Thread locks
+void lockable_concept_test()
+{
+	{
+		typedef poet::monitor_ptr<int> monitor_type;
+		monitor_type mon(new int(0));
+		{
+			boost::lock_guard<monitor_type> lock(mon);
+		}
+		{
+			boost::unique_lock<monitor_type> lock(mon);
+		}
+	}
+	{
+		typedef poet::monitor_ptr<int, boost::shared_mutex> monitor_type;
+		monitor_type mon(new int(0));
+		{
+			boost::shared_lock<monitor_type> shared(mon);
+			boost::upgrade_lock<monitor_type> upgrade(mon);
+			shared.unlock();
+			boost::upgrade_to_unique_lock<monitor_type> unique(upgrade);
+		}
+	}
+	{
+		typedef poet::monitor<int> monitor_type;
+		monitor_type mon(0);
+		{
+			boost::lock_guard<monitor_type> lock(mon);
+		}
+		{
+			boost::unique_lock<monitor_type> lock(mon);
+		}
+	}
+	{
+		typedef poet::monitor<int, boost::shared_mutex> monitor_type;
+		monitor_type mon(0);
+		{
+			boost::shared_lock<monitor_type> shared(mon);
+			boost::upgrade_lock<monitor_type> upgrade(mon);
+			shared.unlock();
+			boost::upgrade_to_unique_lock<monitor_type> unique(upgrade);
+		}
+	}
+}
+
 int main(int argc, const char **argv)
 {
 	monitor_unique_lock_test();
+	lockable_concept_test();
 	return 0;
 }
