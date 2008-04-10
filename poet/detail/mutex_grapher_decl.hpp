@@ -34,7 +34,7 @@ namespace poet
 	class acyclic_mutex;
 	namespace detail
 	{
-		template<typename AcyclicMutex, typename Lock>
+		template<typename AcyclicMutex>
 		class acyclic_scoped_lock;
 	};
 
@@ -76,46 +76,6 @@ namespace poet
 			return *_locked_mutexes;
 		}
 	private:
-		template<typename AcyclicMutex>
-		class tracker
-		{
-		public:
-			tracker(AcyclicMutex &mutex): _tracking(false), _mutex(mutex)
-			{
-			}
-			~tracker()
-			{
-				track_unlock();
-			}
-			void track_lock()
-			{
-				if(_tracking) return;
-				_tracking = true;
-				bool cycle_detected;
-				{
-					mutex_grapher::scoped_lock lock;
-					cycle_detected = lock->track_lock(_mutex);
-				};
-				/* _cycle_handler is run with no locks held by libpoet,
-				to minimize chance of deadlock with user-provided cycle handler.
-				tracking of locking events is disabled after the first cycle
-				is detected. */
-				if(cycle_detected) mutex_grapher::instance().direct()->_cycle_handler();
-				_mutex.increment_recursive_lock_count();
-			}
-			void track_unlock()
-			{
-				if(_tracking == false) return;
-				_tracking = false;
-				_mutex.decrement_recursive_lock_count();
-				mutex_grapher::scoped_lock lock;
-				lock->track_unlock(_mutex);
-			}
-
-		private:
-			bool _tracking;
-			AcyclicMutex &_mutex;
-		};
 		class vertex_labeler
 		{
 		public:
@@ -148,10 +108,8 @@ namespace poet
 		private:
 			const locking_order_graph &_graph;
 		};
-		template<typename AcyclicMutex, typename Lock>
-		friend class detail::acyclic_scoped_lock;
-		template<typename AcyclicMutex>
-		friend class tracker;
+		template<typename Mutex, bool recursive, enum mutex_model model, typename Key, typename KeyCompare>
+		friend class detail::specialized_acyclic_mutex;
 		template<typename Mutex, typename Key, typename KeyCompare>
 		friend class acyclic_mutex;
 

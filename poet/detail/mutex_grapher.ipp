@@ -45,25 +45,22 @@ namespace poet
 		{
 			acquire_vertex(mutex);
 		}
-		if(mutex.will_really_lock())
+		if(locked_mutexes().empty() == false)
 		{
-			if(locked_mutexes().empty() == false)
+			const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex();
+			typename locking_order_graph::edge_descriptor new_edge = boost::add_edge(source_vertex,
+				*mutex.vertex(), _graph).first;
+			try
 			{
-				const typename locking_order_graph::vertex_descriptor source_vertex = *locked_mutexes().back()->vertex();
-				typename locking_order_graph::edge_descriptor new_edge = boost::add_edge(source_vertex,
-					*mutex.vertex(), _graph).first;
-				try
-				{
-					check_for_cycles();
-				}
-				catch(const boost::not_a_dag &error)
-				{
-					_cycle_detected = true;
-					_graph[new_edge].locking_order_violation = true;
-				}
+				check_for_cycles();
 			}
-			internal_locked_mutexes().push_back(&mutex);
+			catch(const boost::not_a_dag &error)
+			{
+				_cycle_detected = true;
+				_graph[new_edge].locking_order_violation = true;
+			}
 		}
+		internal_locked_mutexes().push_back(&mutex);
 		return _cycle_detected;
 	};
 
@@ -72,12 +69,9 @@ namespace poet
 		// we want to ignore all locking events after the first cycle is detected.
 		if(_cycle_detected) return;
 
-		if(mutex.will_really_unlock())
-		{
-			mutex_list_type::reverse_iterator rit = std::find(internal_locked_mutexes().rbegin(), internal_locked_mutexes().rend(), &mutex);
-			assert(rit != internal_locked_mutexes().rend());
-			internal_locked_mutexes().erase(--(rit.base()));
-		}
+		mutex_list_type::reverse_iterator rit = std::find(internal_locked_mutexes().rbegin(), internal_locked_mutexes().rend(), &mutex);
+		assert(rit != internal_locked_mutexes().rend());
+		internal_locked_mutexes().erase(--(rit.base()));
 	}
 
 	void mutex_grapher::write_graphviz(std::ostream &out_stream) const

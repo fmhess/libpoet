@@ -14,6 +14,7 @@
 
 #include <boost/graph/graphviz.hpp>
 #include <boost/optional.hpp>
+#include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/tss.hpp>
 #include <cassert>
@@ -28,89 +29,51 @@ namespace poet
 {
 	namespace detail
 	{
-		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::mutex_type::scoped_lock>
-		class acyclic_scoped_lock
+		template<typename AcyclicMutex>
+		class acyclic_scoped_lock: public boost::unique_lock<AcyclicMutex>
 		{
 		public:
-			acyclic_scoped_lock(AcyclicMutex &mutex): _tracker(mutex),
-				_lock(mutex._wrapped_mutex, boost::defer_lock_t())
+			acyclic_scoped_lock(AcyclicMutex &mutex):
+				boost::unique_lock<AcyclicMutex>(mutex, boost::defer_lock_t())
 			{
-				_tracker.track_lock();
-				_lock.lock();
+				this->lock();
 			}
 			acyclic_scoped_lock(AcyclicMutex &mutex, bool do_lock):
-				_tracker(mutex),
-				_lock(mutex._wrapped_mutex, boost::defer_lock_t())
+				boost::unique_lock<AcyclicMutex>(mutex, boost::defer_lock_t())
 			{
 				if(do_lock)
 				{
-					_tracker.track_lock();
-					_lock.lock();
+					this->lock();
 				}
 			}
-			bool locked() const {return _lock.locked();}
-			operator const void*() const {return static_cast<const void*>(_lock);}
-			void lock()
-			{
-				_tracker.track_lock();
-				_lock.lock();
-			}
-			void unlock()
-			{
-				_tracker.track_unlock();
-				_lock.unlock();
-			}
-		protected:
-			mutex_grapher::tracker<AcyclicMutex> _tracker;
-			Lock _lock;
+			bool locked() const {return this->owns_lock();}
 		};
 
-		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::mutex_type::scoped_try_lock>
-		class acyclic_scoped_try_lock: public acyclic_scoped_lock<AcyclicMutex, Lock>
+		template<typename AcyclicMutex>
+		class acyclic_scoped_try_lock: public acyclic_scoped_lock<AcyclicMutex>
 		{
-			typedef acyclic_scoped_lock<AcyclicMutex, Lock> base_class;
+			typedef acyclic_scoped_lock<AcyclicMutex> base_class;
 		public:
 			acyclic_scoped_try_lock(AcyclicMutex &mutex): base_class(mutex, false)
 			{
-				try_lock();
+				this->try_lock();
 			}
 			acyclic_scoped_try_lock(AcyclicMutex &mutex, bool do_lock): base_class(mutex, do_lock)
 			{}
-			bool try_lock()
-			{
-				this->_tracker.track_lock();
-				bool locked = this->_lock.try_lock();
-				if(locked == false)
-				{
-					this->_tracker.track_unlock();
-				}
-				return locked;
-			}
 		};
 
-		template<typename AcyclicMutex, typename Lock = typename AcyclicMutex::mutex_type::scoped_timed_lock>
-		class acyclic_scoped_timed_lock: public acyclic_scoped_try_lock<AcyclicMutex, Lock>
+		template<typename AcyclicMutex>
+		class acyclic_scoped_timed_lock: public acyclic_scoped_try_lock<AcyclicMutex>
 		{
-			typedef acyclic_scoped_try_lock<AcyclicMutex, Lock> base_class;
+			typedef acyclic_scoped_try_lock<AcyclicMutex> base_class;
 		public:
 			template<typename Timeout>
 			acyclic_scoped_timed_lock(AcyclicMutex &mutex, const Timeout &t): base_class(mutex, false)
 			{
-				timed_lock(t);
+				this->timed_lock(t);
 			}
 			acyclic_scoped_timed_lock(AcyclicMutex &mutex, bool do_lock): base_class(mutex, do_lock)
 			{}
-			template<typename Timeout>
-			bool timed_lock(const Timeout &t)
-			{
-				this->_tracker.track_lock();
-				bool locked = this->lock.timed_lock(t);
-				if(locked == false)
-				{
-					this->_tracker.track_unlock();
-				}
-				return locked;
-			}
 		};
 
 		template<typename Mutex, bool recursive, enum mutex_model model, typename Key, typename KeyCompare>
@@ -151,12 +114,62 @@ namespace poet
 			{}
 
 			boost::optional<Key> node_key() const {return _node_key;}
-		protected:
-			template<typename M, typename L>
-			friend class detail::acyclic_scoped_lock;
 
+			// Boost.Threads interface for Lockable concepts
+			// Lockable
+			void lock()
+			{
+				track_lock();
+				_wrapped_mutex.lock();
+			}
+			bool try_lock()
+			{
+				track_lock();
+				bool successful = _wrapped_mutex.try_lock();
+				if(successful == false) track_unlock();
+				return successful;
+			}
+			void unlock()
+			{
+				_wrapped_mutex.unlock();
+				track_unlock();
+			}
+#if 0	//TODO
+			// SharedLockable
+			void lock_shared() {}
+			bool try_lock_shared() {}
+			template<typename Timeout>
+			bool timed_lock_shared(const Timeout &timeout) {}
+			void unlock_shared() {}
+			// UpgradeLockable
+			void lock_upgrade() {}
+			void unlock_upgrade() {}
+			void unlock_upgrade_and_lock() {}
+			void unlock_upgrade_and_lock_shared() {}
+			void unlock_and_lock_upgrade() {}
+#endif
+		protected:
 			boost::optional<Key> _node_key;
 			Mutex _wrapped_mutex;
+		private:
+			void track_lock()
+			{
+				bool cycle_detected;
+				{
+					mutex_grapher::scoped_lock lock;
+					cycle_detected = lock->track_lock(*this);
+				};
+				/* _cycle_handler is run with no locks held by libpoet,
+				to minimize chance of deadlock with user-provided cycle handler.
+				tracking of locking events is disabled after the first cycle
+				is detected. */
+				if(cycle_detected) mutex_grapher::instance().direct()->_cycle_handler();
+			}
+			void track_unlock()
+			{
+				mutex_grapher::scoped_lock lock;
+				lock->track_unlock(*this);
+			}
 		};
 
 		// recursive mutex
@@ -170,37 +183,62 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
-			virtual ~specialized_acyclic_mutex() {}
-		protected:
-			virtual bool will_really_lock() const
+			~specialized_acyclic_mutex() {}
+
+			void lock()
 			{
-				check_lock_count_init();
-				return *_lock_count == 0;
+				track_lock();
+				this->_wrapped_mutex.lock();
 			}
-			virtual bool will_really_unlock() const
+			bool try_lock()
 			{
-				check_lock_count_init();
-				return *_lock_count == 0;
+				track_lock();
+				bool successful = this->_wrapped_mutex.try_lock();
+				if(successful == false) track_unlock();
+				return successful;
 			}
-			virtual void increment_recursive_lock_count()
+			void unlock()
+			{
+				this->_wrapped_mutex.unlock();
+				track_unlock();
+			}
+		private:
+			void check_lock_count_init() const
+			{
+				if(_lock_count.get() == 0) _lock_count.reset(new int(0));
+			}
+			void increment_recursive_lock_count()
 			{
 				check_lock_count_init();
 				++(*_lock_count);
 				assert(*_lock_count >= 0);
 			}
-			virtual void decrement_recursive_lock_count()
+			void decrement_recursive_lock_count()
 			{
 				check_lock_count_init();
 				--(*_lock_count);
 				assert(*_lock_count >= 0);
 			}
-		private:
-			template<typename M, typename L>
-			friend class detail::acyclic_scoped_lock;
-
-			void check_lock_count_init() const
+			int get_recursive_lock_count() const
 			{
-				if(_lock_count.get() == 0) _lock_count.reset(new int(0));
+				check_lock_count_init();
+				return *_lock_count;
+			}
+			void track_lock()
+			{
+				if(get_recursive_lock_count() == 0)
+				{
+					base_class::track_lock();
+				}
+				increment_recursive_lock_count();
+			}
+			void track_unlock()
+			{
+				decrement_recursive_lock_count();
+				if(get_recursive_lock_count() == 0)
+				{
+					base_class::track_unlock();
+				}
 			}
 
 			mutable boost::thread_specific_ptr<int> _lock_count;
@@ -219,6 +257,16 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
+
+			// TimedLockable
+			template<typename Timeout>
+			bool timed_lock(const Timeout &timeout)
+			{
+				base_class::track_lock();
+				bool successful = this->_wrapped_mutex.try_lock(timeout);
+				if(successful == false) base_class::track_unlock();
+				return successful;
+			}
 		private:
 			template<typename M, typename L>
 			friend class detail::acyclic_scoped_timed_lock;
@@ -238,7 +286,7 @@ namespace poet
 		{}
 		acyclic_mutex(const Key &node_key): base_class(node_key)
 		{}
-		virtual ~acyclic_mutex()
+		~acyclic_mutex()
 		{
 			mutex_grapher::scoped_lock lock;
 			lock->release_vertex(*this);
