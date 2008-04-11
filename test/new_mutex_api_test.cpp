@@ -95,6 +95,18 @@ void monitor_unique_lock_test()
 	}
 }
 
+void monitor_rw_lock_test()
+{
+	static const int test_value = 3;
+	{
+		typedef poet::monitor<point, boost::shared_mutex> monitor_type;
+		monitor_type mon = point(test_value);
+		poet::monitor_shared_lock<monitor_type> shared(mon);
+		assert(shared->x == test_value);
+		shared->const_function();
+	}
+}
+
 // monitor and monitor_ptr should be useable with Boost.Thread locks
 void lockable_concept_test()
 {
@@ -143,6 +155,7 @@ void lockable_concept_test()
 int main(int argc, const char **argv)
 {
 	monitor_unique_lock_test();
+	monitor_rw_lock_test();
 	lockable_concept_test();
 	return 0;
 }

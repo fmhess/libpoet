@@ -47,123 +47,161 @@ namespace poet
 		public:
 			typedef monitor_ptr<const T, Mutex> type;
 		};
+
+		template<typename Monitor, typename MonitorHandle, typename Lock>
+		class lock_wrapper
+		{
+			typedef MonitorHandle monitor_ptr_type;
+		public:
+			typedef typename monitor_ptr_type::element_type element_type;
+
+			explicit lock_wrapper(Monitor &mon):
+				_mon(get_monitor_ptr(mon)), _lock(_mon)
+			{
+				set_wait_function();
+			}
+			template<typename U>
+			lock_wrapper(Monitor &mon, const U &arg):
+				_mon(get_monitor_ptr(mon)), _lock(_mon, arg)
+			{
+				set_wait_function();
+			}
+
+			// unique/shared_lock interface
+			void swap(lock_wrapper &other)
+			{
+				poet::swap(_mon, other._mon);
+				_lock.swap(other._lock);
+				set_wait_function();
+				other.set_wait_function();
+			}
+			void lock()
+			{
+				_lock.lock();
+				set_wait_function();
+			}
+			bool try_lock()
+			{
+				bool successful = _lock.try_lock();
+				set_wait_function();
+				return successful;
+			}
+			template<typename Timeout>
+			bool timed_lock(const Timeout &timeout)
+			{
+				bool successful = _lock.timed_lock(timeout);
+				set_wait_function();
+				return successful;
+			}
+			void unlock()
+			{
+				_lock.unlock();
+			}
+			bool owns_lock() const
+			{
+				return _lock.owns_lock();
+			}
+			bool locked() const // backwards compatibility
+			{
+				return owns_lock();
+			}
+			// safe bool idiom, somewhat safer than providing conversion to bool operator
+			typedef Lock * Lock::* unspecified_bool_type;
+			operator unspecified_bool_type() const
+			{
+				return !_lock ? 0 : &_lock;
+			}
+			bool operator!() const
+			{
+				return !_lock;
+			}
+			Monitor* mutex() const
+			{
+				return _lock.mutex();
+			}
+			Monitor* release()
+			{
+				return _lock.release();
+			}
+
+			// extensions to unique_lock interface
+			element_type* operator->() const
+			{
+				if(owns_lock() == false)
+				{
+					throw boost::lock_error();
+				}
+				return _mon.direct().get();
+			}
+			element_type& operator*() const
+			{
+				if(owns_lock() == false)
+				{
+					throw boost::lock_error();
+				}
+				return *_mon.direct().get();
+			}
+
+		private:
+			void set_wait_function()
+			{
+				if(_lock.owns_lock())
+				{
+					typename detail::monitor_synchronizer<typename Monitor::mutex_type>::wait_function_type wait_func = boost::bind(
+						&lock_wrapper::wait_function, this, _1, _2);
+					_mon._syncer->set_wait_function(wait_func);
+				}
+			}
+
+			void wait_function(boost::condition &condition, const boost::function<bool ()> &pred)
+			{
+				if(pred == 0)
+					condition.wait(_lock);
+				else
+					condition.wait(_lock, pred);
+			}
+			monitor_ptr_type _mon;
+			Lock _lock;
+		};
+
 	}
 
 	template<typename Monitor>
-	class monitor_unique_lock
+	class monitor_unique_lock: public detail::lock_wrapper<Monitor,
+		typename detail::monitor_handle<Monitor>::type,
+		boost::unique_lock<typename detail::monitor_handle<Monitor>::type> >
 	{
-		typedef typename detail::monitor_handle<Monitor>::type monitor_ptr_type;
+		typedef detail::lock_wrapper<Monitor,
+			typename detail::monitor_handle<Monitor>::type,
+			boost::unique_lock<typename detail::monitor_handle<Monitor>::type> >
+			base_class;
 	public:
-		typedef typename monitor_ptr_type::element_type element_type;
-
-		monitor_unique_lock(Monitor &mon):
-			_mon(get_monitor_ptr(mon)), _lock(_mon)
-		{
-			set_wait_function();
-		}
+		explicit monitor_unique_lock(Monitor &mon): base_class(mon)
+		{}
 		template<typename U>
 		monitor_unique_lock(Monitor &mon, const U &arg):
-			_mon(get_monitor_ptr(mon)), _lock(_mon, arg)
-		{
-			set_wait_function();
-		}
-
-		// unique_lock interface
-		void swap(monitor_unique_lock &other)
-		{
-			poet::swap(_mon, other._mon);
-			_lock.swap(other._lock);
-			set_wait_function();
-			other.set_wait_function();
-		}
-		void lock()
-		{
-			_lock.lock();
-			set_wait_function();
-		}
-		bool try_lock()
-		{
-			bool successful = _lock.try_lock();
-			set_wait_function();
-			return successful;
-		}
-		template<typename Timeout>
-		bool timed_lock(const Timeout &timeout)
-		{
-			bool successful = _lock.timed_lock(timeout);
-			set_wait_function();
-			return successful;
-		}
-		void unlock()
-		{
-			_lock.unlock();
-		}
-		bool owns_lock() const
-		{
-			return _lock.owns_lock();
-		}
-		bool locked() const // backwards compatibility
-		{
-			return owns_lock();
-		}
-		// safe bool idiom, somewhat safer than providing conversion to bool operator
-		typedef boost::unique_lock<Monitor> * ::poet::monitor_unique_lock<Monitor>::* unspecified_bool_type;
-		operator unspecified_bool_type() const
-		{
-			return !_lock ? 0 : &_lock;
-		}
-		bool operator!() const
-		{
-			return !_lock;
-		}
-		Monitor* mutex() const
-		{
-			return _lock.mutex();
-		}
-		Monitor* release()
-		{
-			return _lock.release();
-		}
-
-		// extensions to unique_lock interface
-		element_type* operator->() const
-		{
-			if(owns_lock() == false)
-			{
-				throw boost::lock_error();
-			}
-			return _mon.direct().get();
-		}
-		element_type& operator*() const
-		{
-			if(owns_lock() == false)
-			{
-				throw boost::lock_error();
-			}
-			return *_mon.direct().get();
-		}
-
-	private:
-		void set_wait_function()
-		{
-			if(_lock.owns_lock())
-			{
-				typename detail::monitor_synchronizer<typename Monitor::mutex_type>::wait_function_type wait_func = boost::bind(
-					&poet::monitor_unique_lock<Monitor>::wait_function, this, _1, _2);
-				_mon._syncer->set_wait_function(wait_func);
-			}
-		}
-
-		void wait_function(boost::condition &condition, const boost::function<bool ()> &pred)
-		{
-			if(pred == 0)
-				condition.wait(_lock);
-			else
-				condition.wait(_lock, pred);
-		}
-		monitor_ptr_type _mon;
-		boost::unique_lock<monitor_ptr_type> _lock;
+			base_class(mon, arg)
+		{}
 	};
+
+	template<typename Monitor>
+	class monitor_shared_lock: public detail::lock_wrapper<Monitor,
+		monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
+		boost::shared_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+	{
+		typedef detail::lock_wrapper<Monitor,
+			monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
+			boost::shared_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+			base_class;
+	public:
+		explicit monitor_shared_lock(Monitor &mon): base_class(mon)
+		{}
+		template<typename U>
+		monitor_shared_lock(Monitor &mon, const U &arg):
+			base_class(mon, arg)
+		{}
+	};
+
 };
 
 #endif // _POET_MONITOR_LOCKS_HPP

@@ -25,6 +25,11 @@ namespace poet
 {
 	template<typename Monitor>
 	class monitor_unique_lock;
+	namespace detail
+	{
+		template<typename Monitor, typename MonitorHandle, typename Lock>
+		class lock_wrapper;
+	}
 
 	// uses default copy constructor/assignment operators
 	template<typename T, typename Mutex = boost::mutex>
@@ -210,8 +215,8 @@ namespace poet
 	private:
 		template<typename U, typename M>
 		friend class monitor_ptr;
-		template<typename Monitor>
-		friend class monitor_unique_lock;
+		template<typename Monitor, typename MonitorHandle, typename Lock>
+		friend class detail::lock_wrapper;
 
 		void set_monitor_ptr(const monitor_base *monitor)
 		{
