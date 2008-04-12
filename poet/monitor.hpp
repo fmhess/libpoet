@@ -136,7 +136,7 @@ namespace poet
 		}
 
 		template<typename M>
-		void _internal_swap(monitor<T, M> &other)
+		void swap(monitor<T, M> &other)
 		{
 			using std::swap;
 			boost::optional<T> temp;
@@ -207,7 +207,7 @@ namespace poet
 	template<typename T, typename Mutex>
 	void swap(poet::monitor<T, Mutex> &mon0, poet::monitor<T, Mutex> &mon1)
 	{
-		mon0._internal_swap(mon1);
+		mon0.swap(mon1);
 	}
 
 	template<typename T, typename Mutex>

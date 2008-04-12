@@ -104,6 +104,11 @@ void monitor_rw_lock_test()
 		poet::monitor_shared_lock<monitor_type> shared(mon);
 		assert(shared->x == test_value);
 		shared->const_function();
+		poet::monitor_upgrade_lock<monitor_type> upgrade(mon);
+		shared.unlock();
+		poet::monitor_upgrade_to_unique_lock<monitor_type> unique(upgrade);
+		unique->const_function();
+		unique->nonconst_function();
 	}
 }
 

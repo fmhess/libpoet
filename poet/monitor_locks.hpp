@@ -29,6 +29,8 @@ namespace poet
 	class monitor_ptr;
 	template<typename T, typename Mutex>
 	class monitor;
+	template<typename UpgradeLock>
+	class monitor_upgrade_to_unique_lock;
 
 	namespace detail
 	{
@@ -53,6 +55,7 @@ namespace poet
 		{
 			typedef MonitorHandle monitor_ptr_type;
 		public:
+			typedef Monitor monitor_type;
 			typedef typename monitor_ptr_type::element_type element_type;
 
 			explicit lock_wrapper(Monitor &mon):
@@ -124,7 +127,7 @@ namespace poet
 				return _lock.release();
 			}
 
-			// extensions to unique_lock interface
+			// monitor extensions to lock interface
 			element_type* operator->() const
 			{
 				if(owns_lock() == false)
@@ -143,6 +146,9 @@ namespace poet
 			}
 
 		private:
+			template<typename UpgradeLock>
+			friend class monitor_upgrade_to_unique_lock;
+
 			void set_wait_function()
 			{
 				if(_lock.owns_lock())
@@ -202,6 +208,58 @@ namespace poet
 		{}
 	};
 
+	template<typename Monitor>
+	class monitor_upgrade_lock: public detail::lock_wrapper<Monitor,
+		monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
+		boost::upgrade_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+	{
+		typedef detail::lock_wrapper<Monitor,
+			monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
+			boost::upgrade_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+			base_class;
+	public:
+		explicit monitor_upgrade_lock(Monitor &mon): base_class(mon)
+		{}
+		template<typename U>
+		monitor_upgrade_lock(Monitor &mon, const U &arg):
+			base_class(mon, arg)
+		{}
+	};
+
+	template<typename Monitor>
+	class monitor_upgrade_to_unique_lock:
+		public boost::upgrade_to_unique_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> >
+	{
+		typedef boost::upgrade_to_unique_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > base_type;
+		typedef typename detail::monitor_handle<Monitor>::type monitor_ptr_type;
+	public:
+		typedef typename monitor_ptr_type::element_type element_type;
+
+		explicit monitor_upgrade_to_unique_lock(monitor_upgrade_lock<Monitor> &upgrade_lock):
+			base_type(upgrade_lock._lock),
+			_mon(const_pointer_cast<typename monitor_ptr_type::element_type>(upgrade_lock._mon))
+		{}
+
+		// monitor extensions to lock interface
+		element_type* operator->() const
+		{
+			if(this->owns_lock() == false)
+			{
+				throw boost::lock_error();
+			}
+			return _mon.direct().get();
+		}
+		element_type& operator*() const
+		{
+			if(this->owns_lock() == false)
+			{
+				throw boost::lock_error();
+			}
+			return *_mon.direct().get();
+		}
+	private:
+		monitor_ptr_type _mon;
+	};
 };
 
 #endif // _POET_MONITOR_LOCKS_HPP

@@ -183,8 +183,9 @@ namespace poet
 
 		operator bool() const {return _pointer;}
 
-		void _internal_swap(monitor_ptr &other)
+		void swap(monitor_ptr &other)
 		{
+			using std::swap;
 			swap(_pointer, other._pointer);
 			swap(_syncer, other._syncer);
 		}
@@ -266,7 +267,7 @@ namespace poet
 	template<typename T, typename Mutex>
 	void swap(poet::monitor_ptr<T, Mutex> &mon0, poet::monitor_ptr<T, Mutex> &mon1)
 	{
-		mon0._internal_swap(mon1);
+		mon0.swap(mon1);
 	}
 
 	template<typename T, typename Mutex>
