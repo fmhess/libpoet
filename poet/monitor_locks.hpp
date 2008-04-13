@@ -31,7 +31,9 @@ namespace poet
 	class monitor;
 	template<typename UpgradeLock>
 	class monitor_upgrade_to_unique_lock;
-
+	template<typename T, typename U, typename Mutex>
+	inline monitor_ptr<T, Mutex> const_pointer_cast(const monitor_ptr<U, Mutex> &pointer);
+	
 	namespace detail
 	{
 		// figure out const-correct monitor_ptr type to use as handle
@@ -73,8 +75,9 @@ namespace poet
 			// unique/shared_lock interface
 			void swap(lock_wrapper &other)
 			{
-				poet::swap(_mon, other._mon);
-				_lock.swap(other._lock);
+				using std::swap;
+				swap(_mon, other._mon);
+				swap(_lock, other._lock);
 				set_wait_function();
 				other.set_wait_function();
 			}
@@ -237,8 +240,9 @@ namespace poet
 
 		explicit monitor_upgrade_to_unique_lock(monitor_upgrade_lock<Monitor> &upgrade_lock):
 			base_type(upgrade_lock._lock),
-			_mon(const_pointer_cast<typename monitor_ptr_type::element_type>(upgrade_lock._mon))
-		{}
+			_mon(poet::const_pointer_cast<typename monitor_ptr_type::element_type>(upgrade_lock._mon))
+		{
+		}
 
 		// monitor extensions to lock interface
 		element_type* operator->() const

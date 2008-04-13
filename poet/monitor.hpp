@@ -17,8 +17,9 @@
 #include <boost/optional.hpp>
 #include <boost/preprocessor/repetition.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <poet/monitor_locks.hpp>
 #include <poet/detail/preprocessor_macros.hpp>
+#include <poet/detail/utility.hpp>
+#include <poet/monitor_locks.hpp>
 #include <poet/monitor_ptr.hpp>
 
 #ifndef POET_MONITOR_MAX_CONSTRUCTOR_ARGS
@@ -120,41 +121,21 @@ namespace poet
 		monitor& operator=(const monitor<U, M> &rhs)
 		{
 			if(&rhs == this) return *this;
-
-			boost::optional<T> temp;
-			/* Avoid locking the mutexes of both this monitor and the
-			other monitor simultaneously, since we don't want to invite
-			any potential locking order violations. */
-			{
-				typename monitor<U, M>::scoped_lock other_lock(rhs);
-				temp = *other_lock;
-			}
-			scoped_lock lock(*this);
-			using std::swap;
-			swap(*lock, *temp);
+			monitor_unique_lock<const monitor_ptr<U, M> > other_lock(rhs._monitor_pointer, boost::defer_lock_t());
+			monitor_unique_lock<monitor_ptr<T, Mutex> > this_lock(_monitor_pointer, boost::defer_lock_t());
+			detail::lock_pair(this_lock, other_lock);
+			*this_lock = *other_lock;
 			return *this;
 		}
 
 		template<typename M>
 		void swap(monitor<T, M> &other)
 		{
+			monitor_unique_lock<monitor_ptr<T, M> > other_lock(other._monitor_pointer, boost::defer_lock_t());
+			monitor_unique_lock<monitor_ptr<T, Mutex> > this_lock(_monitor_pointer, boost::defer_lock_t());
+			detail::lock_pair(this_lock, other_lock);
 			using std::swap;
-			boost::optional<T> temp;
-			/* Avoid locking the mutexes of both this monitor and the
-			other monitor simultaneously, since we don't want to invite
-			any potential locking order violations. */
-			{
-				typename monitor<T, M>::scoped_lock other_lock(other);
-				temp = *other_lock;
-			}
-			{
-				scoped_lock lock(*this);
-				swap(*lock, *temp);
-			}
-			{
-				typename monitor<T, M>::scoped_lock other_lock(other);
-				swap(*other_lock, *temp);
-			}
+			swap(*this_lock, *other_lock);
 		}
 
 		const monitor_ptr<T, Mutex> & operator->()
@@ -175,14 +156,14 @@ namespace poet
 			return _monitor_pointer;
 		}
 // Boost.Threads interface for Lockable concepts
-		// Lockable
+// Lockable
 		void lock() const {_monitor_pointer.lock();}
 		bool try_lock() const {return _monitor_pointer.try_lock();}
 		void unlock() const {_monitor_pointer.unlock();}
-		// TimedLockable
+// TimedLockable
 		template<typename Timeout>
 		bool timed_lock(const Timeout &timeout) const {return _monitor_pointer.timed_lock(timeout);}
-		// SharedLockable
+// SharedLockable
 		void lock_shared() const {_monitor_pointer.lock_shared();}
 		bool try_lock_shared() const {return _monitor_pointer.try_lock_shared();}
 		template<typename Timeout>
@@ -191,7 +172,7 @@ namespace poet
 			return _monitor_pointer.timed_lock_shared(timeout);
 		}
 		void unlock_shared() const {_monitor_pointer.unlock_shared();}
-		// UpgradeLockable
+// UpgradeLockable
 		void lock_upgrade() const {_monitor_pointer.lock_upgrade();}
 		void unlock_upgrade() const {_monitor_pointer.unlock_upgrade();}
 		void unlock_upgrade_and_lock() const {_monitor_pointer.unlock_upgrade_and_lock();}
