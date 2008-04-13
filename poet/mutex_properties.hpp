@@ -81,7 +81,7 @@ namespace poet
 	class mutex_properties<boost::shared_mutex>
 	{
 	public:
-		static const bool recursive = true;
+		static const bool recursive = false;
 		static const mutex_model model = UpgradeLockable;
 	};
 

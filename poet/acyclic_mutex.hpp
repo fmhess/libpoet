@@ -29,6 +29,30 @@ namespace poet
 {
 	namespace detail
 	{
+		template<int initial_value = 0>
+		class thread_specific_count
+		{
+		public:
+			thread_specific_count()
+			{}
+			int& get()
+			{
+				check_lock_count_init();
+				return *_lock_count;
+			}
+			const int& get() const
+			{
+				check_lock_count_init();
+				return *_lock_count;
+			}
+		private:
+			void check_lock_count_init() const
+			{
+				if(_lock_count.get() == 0) _lock_count.reset(new int(initial_value));
+			}
+			mutable boost::thread_specific_ptr<int> _lock_count;
+		};
+		
 		template<typename AcyclicMutex>
 		class acyclic_scoped_lock: public boost::unique_lock<AcyclicMutex>
 		{
@@ -134,24 +158,10 @@ namespace poet
 				_wrapped_mutex.unlock();
 				track_unlock();
 			}
-#if 0	//TODO
-			// SharedLockable
-			void lock_shared() {}
-			bool try_lock_shared() {}
-			template<typename Timeout>
-			bool timed_lock_shared(const Timeout &timeout) {}
-			void unlock_shared() {}
-			// UpgradeLockable
-			void lock_upgrade() {}
-			void unlock_upgrade() {}
-			void unlock_upgrade_and_lock() {}
-			void unlock_upgrade_and_lock_shared() {}
-			void unlock_and_lock_upgrade() {}
-#endif
 		protected:
 			boost::optional<Key> _node_key;
 			Mutex _wrapped_mutex;
-		private:
+			
 			void track_lock()
 			{
 				bool cycle_detected;
@@ -203,30 +213,19 @@ namespace poet
 				track_unlock();
 			}
 		private:
-			void check_lock_count_init() const
-			{
-				if(_lock_count.get() == 0) _lock_count.reset(new int(0));
-			}
 			void increment_recursive_lock_count()
 			{
-				check_lock_count_init();
-				++(*_lock_count);
-				assert(*_lock_count >= 0);
+				++(_lock_count.get());
+				assert(_lock_count.get() >= 0);
 			}
 			void decrement_recursive_lock_count()
 			{
-				check_lock_count_init();
-				--(*_lock_count);
-				assert(*_lock_count >= 0);
-			}
-			int get_recursive_lock_count() const
-			{
-				check_lock_count_init();
-				return *_lock_count;
+				--(_lock_count.get());
+				assert(_lock_count.get() >= 0);
 			}
 			void track_lock()
 			{
-				if(get_recursive_lock_count() == 0)
+				if(_lock_count.get() == 0)
 				{
 					base_class::track_lock();
 				}
@@ -235,13 +234,12 @@ namespace poet
 			void track_unlock()
 			{
 				decrement_recursive_lock_count();
-				if(get_recursive_lock_count() == 0)
+				if(_lock_count.get() == 0)
 				{
 					base_class::track_unlock();
 				}
 			}
-
-			mutable boost::thread_specific_ptr<int> _lock_count;
+			detail::thread_specific_count<> _lock_count;
 		};
 
 		// timed mutex
@@ -267,9 +265,116 @@ namespace poet
 				if(successful == false) base_class::track_unlock();
 				return successful;
 			}
-		private:
-			template<typename M, typename L>
-			friend class detail::acyclic_scoped_timed_lock;
+		};
+
+		// SharedLockable
+		template<typename Mutex, typename Key, typename KeyCompare>
+		class specialized_acyclic_mutex<Mutex, false, SharedLockable, Key, KeyCompare>:
+			public specialized_acyclic_mutex<Mutex, false, Lockable, Key, KeyCompare>
+		{
+			typedef specialized_acyclic_mutex<Mutex, false, Lockable, Key, KeyCompare> base_class;
+		public:
+			specialized_acyclic_mutex()
+			{}
+			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
+			{}
+			
+			// SharedLockable
+			void lock_shared()
+			{
+				track_lock_shared();
+				this->_wrapped_mutex.lock_shared();
+			}
+			bool try_lock_shared()
+			{
+				track_lock_shared();
+				bool successful = this->_wrapped_mutex.try_lock_shared();
+				if(successful == false) track_unlock_shared();
+				return successful;
+			}
+			template<typename Timeout>
+			bool timed_lock_shared(const Timeout &timeout)
+			{
+				track_lock_shared();
+				bool successful = this->_wrapped_mutex.timed_lock_shared(timeout);
+				if(successful == false) track_unlock_shared();
+				return successful;
+			}
+			void unlock_shared()
+			{
+				this->_wrapped_mutex.unlock_shared();
+				track_unlock_shared();
+			}
+		protected:
+			void track_lock_shared()
+			{
+				if(_shared_lock_count.get() == 0)
+				{
+					base_class::track_lock();
+				}
+				++_shared_lock_count.get();
+				assert(_shared_lock_count.get() >= 0);
+			}
+			void track_unlock_shared()
+			{
+				--_shared_lock_count.get();
+				assert(_shared_lock_count.get() >= 0);
+				if(_shared_lock_count.get() == 0)
+				{
+					base_class::track_unlock();
+				}
+			}
+		private:	
+			detail::thread_specific_count<0> _shared_lock_count;
+		};
+
+		// UpgradeLockable
+		template<typename Mutex, typename Key, typename KeyCompare>
+		class specialized_acyclic_mutex<Mutex, false, UpgradeLockable, Key, KeyCompare>:
+			public specialized_acyclic_mutex<Mutex, false, SharedLockable, Key, KeyCompare>
+		{
+			typedef specialized_acyclic_mutex<Mutex, false, SharedLockable, Key, KeyCompare> base_class;
+		public:
+			specialized_acyclic_mutex()
+			{}
+			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
+			{}
+			
+			// UpgradeLockable
+			void lock_upgrade()
+			{
+				base_class::track_lock_shared();
+				this->_wrapped_mutex.lock_upgrade();
+			}
+			void unlock_upgrade()
+			{
+				this->_wrapped_mutex.unlock_upgrade();
+				base_class::track_unlock_shared();
+			}
+			void unlock_upgrade_and_lock()
+			{
+				bool safe_to_upgrade;
+				{
+					mutex_grapher::scoped_lock lock;
+					// if this is the most recently locked mutex the current thread is holding,
+					// then it is always okay to upgrade
+					safe_to_upgrade = lock->locked_mutexes().back() == this;
+				}
+				if(safe_to_upgrade == false)
+				{
+					// this should cause a cycle to be detected
+					this->track_lock();
+				}
+				this->_wrapped_mutex.unlock_upgrade_and_lock();
+			}
+			void unlock_upgrade_and_lock_shared()
+			{
+				this->_wrapped_mutex.unlock_upgrade_and_lock_shared();
+			}
+			void unlock_and_lock_upgrade()
+			{
+				this->_wrapped_mutex.unlock_and_lock_upgrade();
+			}
 		};
 #endif	// ACYCLIC_MUTEX_NDEBUG
 	};
