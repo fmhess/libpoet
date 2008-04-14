@@ -6,6 +6,7 @@
 
 #include <poet/exception_ptr.hpp>
 #include <exception>
+#include <poet/detail/template_static.hpp>
 #include <stdexcept>
 // for libpoet exceptions
 #include <poet/exceptions.hpp>
@@ -21,7 +22,14 @@ namespace poet
 	namespace detail
 	{
 		static poet::exception_ptr _exp_current_exception();
-		static poet::exception_ptr s_bad_alloc( new poet::detail::_exp_throwable_impl< std::bad_alloc > );
+		class s_bad_alloc
+		{
+		public:
+			s_bad_alloc():
+				ep(new poet::detail::_exp_throwable_impl< std::bad_alloc >)
+			{}
+			poet::exception_ptr ep;
+		};
 	}
 }
 
@@ -77,7 +85,7 @@ poet::exception_ptr poet::current_exception()
     }
     catch( std::bad_alloc const & )
     {
-        return detail::s_bad_alloc;
+        return detail::template_static<exception_ptr, detail::s_bad_alloc>::object.ep;
     }
 }
 
