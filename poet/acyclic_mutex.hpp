@@ -52,7 +52,7 @@ namespace poet
 			}
 			mutable boost::thread_specific_ptr<int> _lock_count;
 		};
-		
+
 		template<typename AcyclicMutex>
 		class acyclic_scoped_lock: public boost::unique_lock<AcyclicMutex>
 		{
@@ -161,7 +161,7 @@ namespace poet
 		protected:
 			boost::optional<Key> _node_key;
 			Mutex _wrapped_mutex;
-			
+
 			void track_lock()
 			{
 				bool cycle_detected;
@@ -278,7 +278,7 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
-			
+
 			// SharedLockable
 			void lock_shared()
 			{
@@ -324,7 +324,7 @@ namespace poet
 					base_class::track_unlock();
 				}
 			}
-		private:	
+		protected:
 			detail::thread_specific_count<0> _shared_lock_count;
 		};
 
@@ -339,42 +339,67 @@ namespace poet
 			{}
 			specialized_acyclic_mutex(const Key &node_key): base_class(node_key)
 			{}
-			
+
 			// UpgradeLockable
 			void lock_upgrade()
 			{
-				base_class::track_lock_shared();
+				track_lock_upgrade();
 				this->_wrapped_mutex.lock_upgrade();
 			}
 			void unlock_upgrade()
 			{
 				this->_wrapped_mutex.unlock_upgrade();
-				base_class::track_unlock_shared();
+				track_unlock_upgrade();
 			}
 			void unlock_upgrade_and_lock()
 			{
-				bool safe_to_upgrade;
+				if(safe_to_upgrade() == false)
 				{
-					mutex_grapher::scoped_lock lock;
-					// if this is the most recently locked mutex the current thread is holding,
-					// then it is always okay to upgrade
-					safe_to_upgrade = lock->locked_mutexes().back() == this;
-				}
-				if(safe_to_upgrade == false)
-				{
-					// this should cause a cycle to be detected
+					// this should always cause a cycle to be detected
 					this->track_lock();
 				}
 				this->_wrapped_mutex.unlock_upgrade_and_lock();
 			}
 			void unlock_upgrade_and_lock_shared()
 			{
+				--_upgrade_lock_count.get();
+				assert(_upgrade_lock_count.get() >= 0);
 				this->_wrapped_mutex.unlock_upgrade_and_lock_shared();
 			}
 			void unlock_and_lock_upgrade()
 			{
 				this->_wrapped_mutex.unlock_and_lock_upgrade();
 			}
+		private:
+			bool safe_to_upgrade() const
+			{
+				if(this->_shared_lock_count.get() != 1) return false;
+				mutex_grapher::scoped_lock lock;
+				// if this is the most recently locked mutex the current thread is holding,
+				// then it is okay to upgrade
+				return lock->locked_mutexes().back() == this;
+			}
+			void track_lock_upgrade()
+			{
+				if(_upgrade_lock_count.get() == 0)
+				{
+					base_class::track_lock_shared();
+				}else
+				{
+					// this should always cause a cycle to be detected
+					this->track_lock();
+				}
+				++_upgrade_lock_count.get();
+				assert(_upgrade_lock_count.get() >= 0);
+			}
+			void track_unlock_upgrade()
+			{
+				--_upgrade_lock_count.get();
+				assert(_upgrade_lock_count.get() >= 0);
+				base_class::track_unlock_shared();
+			}
+
+			detail::thread_specific_count<0> _upgrade_lock_count;
 		};
 #endif	// ACYCLIC_MUTEX_NDEBUG
 	};
