@@ -157,10 +157,59 @@ void lockable_concept_test()
 	}
 }
 
+template<typename Lock1, typename Lock2, typename Monitor>
+void monitor_lock_move_test(Monitor &mon)
+{
+	{
+		Lock1 lock1(mon);
+		Lock2 lock2(mon, boost::defer_lock_t());
+		assert(lock1.owns_lock());
+		assert(lock2.owns_lock() == false);
+		lock2 = lock1.move();
+		assert(lock2.owns_lock());
+	}
+}
+
+template<typename Lock, typename Monitor>
+void monitor_temp_lock_move_test(Monitor &mon)
+{
+	Lock lock = Lock(mon);
+	assert(lock.owns_lock());
+}
+
+void monitor_lock_move_tests()
+{
+	std::cerr << __FUNCTION__ << "... ";
+	{
+		typedef poet::monitor_ptr<int> monitor_type;
+		monitor_type mon(new int(0));
+		monitor_lock_move_test<poet::monitor_unique_lock<monitor_type>, poet::monitor_unique_lock<monitor_type> >(mon);
+	}
+	{
+		typedef poet::monitor_ptr<int, boost::shared_mutex> monitor_type;
+		monitor_type mon(new int(0));
+		monitor_lock_move_test<poet::monitor_upgrade_lock<monitor_type>, poet::monitor_unique_lock<monitor_type> >(mon);
+		// moves into upgrade_lock
+		monitor_lock_move_test<poet::monitor_unique_lock<monitor_type>, poet::monitor_upgrade_lock<monitor_type> >(mon);
+		monitor_lock_move_test<poet::monitor_upgrade_lock<monitor_type>, poet::monitor_upgrade_lock<monitor_type> >(mon);
+		// moves into shared_lock
+		monitor_lock_move_test<poet::monitor_unique_lock<monitor_type>, poet::monitor_shared_lock<monitor_type> >(mon);
+		monitor_lock_move_test<poet::monitor_upgrade_lock<monitor_type>, poet::monitor_shared_lock<monitor_type> >(mon);
+		monitor_lock_move_test<poet::monitor_shared_lock<monitor_type>, poet::monitor_shared_lock<monitor_type> >(mon);
+		// moves from temporary
+		monitor_temp_lock_move_test<poet::monitor_unique_lock<monitor_type> >(mon);
+		monitor_temp_lock_move_test<poet::monitor_upgrade_lock<monitor_type> >(mon);
+		monitor_temp_lock_move_test<poet::monitor_shared_lock<monitor_type> >(mon);
+	}
+	std::cerr << "OK" << std::endl;
+}
+
 int main(int argc, const char **argv)
 {
 	monitor_unique_lock_test();
 	monitor_rw_lock_test();
 	lockable_concept_test();
+	monitor_lock_move_tests();
+
 	return 0;
 }

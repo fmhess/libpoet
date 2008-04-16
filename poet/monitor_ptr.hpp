@@ -207,6 +207,7 @@ namespace poet
 			return _syncer->_mutex.timed_lock_shared(timeout);
 		}
 		void unlock_shared() const {_syncer->_mutex.unlock_shared();}
+		void unlock_and_lock_shared() const {_syncer->_mutex.unlock_and_lock_shared();}
 		// UpgradeLockable
 		void lock_upgrade() const {_syncer->_mutex.lock_upgrade();}
 		void unlock_upgrade() const {_syncer->_mutex.unlock_upgrade();}

@@ -172,6 +172,7 @@ namespace poet
 			return _monitor_pointer.timed_lock_shared(timeout);
 		}
 		void unlock_shared() const {_monitor_pointer.unlock_shared();}
+		void unlock_and_lock_shared() const {_monitor_pointer.unlock_and_lock_shared();}
 // UpgradeLockable
 		void lock_upgrade() const {_monitor_pointer.lock_upgrade();}
 		void unlock_upgrade() const {_monitor_pointer.unlock_upgrade();}

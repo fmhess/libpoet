@@ -15,7 +15,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/exceptions.hpp>
@@ -29,11 +28,13 @@ namespace poet
 	class monitor_ptr;
 	template<typename T, typename Mutex>
 	class monitor;
+	template<typename Monitor>
+	class monitor_upgrade_lock;
 	template<typename UpgradeLock>
 	class monitor_upgrade_to_unique_lock;
 	template<typename T, typename U, typename Mutex>
 	inline monitor_ptr<T, Mutex> const_pointer_cast(const monitor_ptr<U, Mutex> &pointer);
-	
+
 	namespace detail
 	{
 		// figure out const-correct monitor_ptr type to use as handle
@@ -61,23 +62,28 @@ namespace poet
 			typedef typename monitor_ptr_type::element_type element_type;
 
 			explicit lock_wrapper(Monitor &mon):
-				_mon(get_monitor_ptr(mon)), _lock(_mon)
+				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon), _lock(_mon)
 			{
 				set_wait_function();
 			}
 			template<typename U>
 			lock_wrapper(Monitor &mon, const U &arg):
-				_mon(get_monitor_ptr(mon)), _lock(_mon, arg)
+				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon), _lock(_mon, arg)
 			{
 				set_wait_function();
 			}
+			template<typename OtherLock>
+			lock_wrapper(boost::detail::thread_move_t<OtherLock> other):
+				_mon(other->_mon), _mon_raw_ptr(other->_mon_raw_ptr), _lock(other->_lock.move())
+			{}
 
 			// unique/shared_lock interface
 			void swap(lock_wrapper &other)
 			{
 				using std::swap;
 				swap(_mon, other._mon);
-				swap(_lock, other._lock);
+				swap(_mon_raw_ptr, other._mon_raw_ptr);
+				_lock.swap(other._lock);
 				set_wait_function();
 				other.set_wait_function();
 			}
@@ -123,11 +129,12 @@ namespace poet
 			}
 			Monitor* mutex() const
 			{
-				return _lock.mutex();
+				return _mon_raw_ptr;
 			}
 			Monitor* release()
 			{
-				return _lock.release();
+				_lock.release();
+				return _mon_raw_ptr;
 			}
 
 			// monitor extensions to lock interface
@@ -147,10 +154,15 @@ namespace poet
 				}
 				return *_mon.direct().get();
 			}
-
 		private:
+			template<typename Lockable>
+			friend class monitor_shared_lock;
+			template<typename Lockable>
+			friend class monitor_upgrade_lock;
 			template<typename UpgradeLock>
 			friend class monitor_upgrade_to_unique_lock;
+			template<typename M, typename MH, typename L>
+			friend class lock_wrapper;
 
 			void set_wait_function()
 			{
@@ -161,7 +173,6 @@ namespace poet
 					_mon._syncer->set_wait_function(wait_func);
 				}
 			}
-
 			void wait_function(boost::condition &condition, const boost::function<bool ()> &pred)
 			{
 				if(pred == 0)
@@ -169,10 +180,14 @@ namespace poet
 				else
 					condition.wait(_lock, pred);
 			}
+			// non-copyable
+			lock_wrapper(lock_wrapper &);
+			lock_wrapper& operator=(lock_wrapper&);
+
 			monitor_ptr_type _mon;
+			Monitor *_mon_raw_ptr;
 			Lock _lock;
 		};
-
 	}
 
 	template<typename Monitor>
@@ -191,16 +206,40 @@ namespace poet
 		monitor_unique_lock(Monitor &mon, const U &arg):
 			base_class(mon, arg)
 		{}
+		// move constructors
+		monitor_unique_lock(boost::detail::thread_move_t<monitor_unique_lock> other):
+			base_class(other)
+		{}
+		monitor_unique_lock(boost::detail::thread_move_t<monitor_upgrade_lock<Monitor> > other):
+			base_class(other)
+		{}
+
+		// move emulation
+		boost::detail::thread_move_t<monitor_unique_lock> move()
+		{
+			return boost::detail::thread_move_t<monitor_unique_lock>(*this);
+		}
+		template<typename Lock>
+		monitor_unique_lock& operator=(boost::detail::thread_move_t<Lock> other)
+		{
+			monitor_unique_lock temp(other);
+			this->swap(temp);
+			return *this;
+		}
+		operator boost::detail::thread_move_t<monitor_unique_lock>()
+		{
+			return move();
+		}
 	};
 
 	template<typename Monitor>
 	class monitor_shared_lock: public detail::lock_wrapper<Monitor,
-		monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
-		boost::shared_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
+		boost::shared_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
 	{
 		typedef detail::lock_wrapper<Monitor,
-			monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
-			boost::shared_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+			monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
+			boost::shared_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
 			base_class;
 	public:
 		explicit monitor_shared_lock(Monitor &mon): base_class(mon)
@@ -209,16 +248,61 @@ namespace poet
 		monitor_shared_lock(Monitor &mon, const U &arg):
 			base_class(mon, arg)
 		{}
+		// move constructors
+		monitor_shared_lock(boost::detail::thread_move_t<monitor_shared_lock> other):
+			base_class(other)
+		{}
+		monitor_shared_lock(boost::detail::thread_move_t<monitor_upgrade_lock<Monitor> > other):
+			base_class(other)
+		{}
+		monitor_shared_lock(boost::detail::thread_move_t<monitor_unique_lock<Monitor> > other):
+			base_class(other)
+		{}
+
+		// monitor extensions to lock interface, only allow pointer to const access for shared_lock
+		const typename base_class::element_type* operator->() const
+		{
+			if(this->owns_lock() == false)
+			{
+				throw boost::lock_error();
+			}
+			return this->_mon.direct().get();
+		}
+		const typename base_class::element_type& operator*() const
+		{
+			if(this->owns_lock() == false)
+			{
+				throw boost::lock_error();
+			}
+			return *this->_mon.direct().get();
+		}
+
+		// move emulation
+		boost::detail::thread_move_t<monitor_shared_lock> move()
+		{
+			return boost::detail::thread_move_t<monitor_shared_lock>(*this);
+		}
+		template<typename Lock>
+		monitor_shared_lock& operator=(boost::detail::thread_move_t<Lock> other)
+		{
+			monitor_shared_lock temp(other);
+			this->swap(temp);
+			return *this;
+		}
+		operator boost::detail::thread_move_t<monitor_shared_lock>()
+		{
+			return move();
+		}
 	};
 
 	template<typename Monitor>
 	class monitor_upgrade_lock: public detail::lock_wrapper<Monitor,
-		monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
-		boost::upgrade_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
+		boost::upgrade_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
 	{
 		typedef detail::lock_wrapper<Monitor,
-			monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type>,
-			boost::upgrade_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > >
+			monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
+			boost::upgrade_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
 			base_class;
 	public:
 		explicit monitor_upgrade_lock(Monitor &mon): base_class(mon)
@@ -227,19 +311,61 @@ namespace poet
 		monitor_upgrade_lock(Monitor &mon, const U &arg):
 			base_class(mon, arg)
 		{}
+		// move constructors
+		monitor_upgrade_lock(boost::detail::thread_move_t<monitor_upgrade_lock> other):
+			base_class(other)
+		{}
+		monitor_upgrade_lock(boost::detail::thread_move_t<monitor_unique_lock<Monitor> > other):
+			base_class(other)
+		{}
+
+		// monitor extensions to lock interface, only allow pointer to const access for upgrade_lock
+		const typename base_class::element_type* operator->() const
+		{
+			if(this->owns_lock() == false)
+			{
+				throw boost::lock_error();
+			}
+			return this->_mon.direct().get();
+		}
+		const typename base_class::element_type& operator*() const
+		{
+			if(this->owns_lock() == false)
+			{
+				throw boost::lock_error();
+			}
+			return *this->_mon.direct().get();
+		}
+
+		// move emulation
+		boost::detail::thread_move_t<monitor_upgrade_lock> move()
+		{
+			return boost::detail::thread_move_t<monitor_upgrade_lock>(*this);
+		}
+		template<typename Lock>
+		monitor_upgrade_lock& operator=(boost::detail::thread_move_t<Lock> other)
+		{
+			monitor_upgrade_lock temp(other);
+			this->swap(temp);
+			return *this;
+		}
+		operator boost::detail::thread_move_t<monitor_upgrade_lock>()
+		{
+			return move();
+		}
 	};
 
 	template<typename Monitor>
 	class monitor_upgrade_to_unique_lock:
-		public boost::upgrade_to_unique_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> >
+		public boost::upgrade_to_unique_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> >
 	{
-		typedef boost::upgrade_to_unique_lock<monitor_ptr<const typename Monitor::element_type, typename Monitor::mutex_type> > base_type;
+		typedef boost::upgrade_to_unique_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > base_class;
 		typedef typename detail::monitor_handle<Monitor>::type monitor_ptr_type;
 	public:
 		typedef typename monitor_ptr_type::element_type element_type;
 
 		explicit monitor_upgrade_to_unique_lock(monitor_upgrade_lock<Monitor> &upgrade_lock):
-			base_type(upgrade_lock._lock),
+			base_class(upgrade_lock._lock),
 			_mon(poet::const_pointer_cast<typename monitor_ptr_type::element_type>(upgrade_lock._mon))
 		{
 		}

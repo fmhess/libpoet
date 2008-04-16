@@ -305,6 +305,12 @@ namespace poet
 				this->_wrapped_mutex.unlock_shared();
 				track_unlock_shared();
 			}
+			void unlock_and_lock_shared()
+			{
+				++_shared_lock_count.get();
+				assert(_shared_lock_count.get() >= 0);
+				this->_wrapped_mutex.unlock_and_lock_shared();
+			}
 		protected:
 			void track_lock_shared()
 			{
@@ -358,6 +364,10 @@ namespace poet
 					// this should always cause a cycle to be detected
 					this->track_lock();
 				}
+				--_upgrade_lock_count.get();
+				assert(_upgrade_lock_count.get() >= 0);
+				--this->_shared_lock_count.get();
+				assert(this->_shared_lock_count.get() >= 0);
 				this->_wrapped_mutex.unlock_upgrade_and_lock();
 			}
 			void unlock_upgrade_and_lock_shared()
@@ -368,6 +378,10 @@ namespace poet
 			}
 			void unlock_and_lock_upgrade()
 			{
+				++_upgrade_lock_count.get();
+				assert(_upgrade_lock_count.get() == 1);
+				++this->_shared_lock_count.get();
+				assert(this->_shared_lock_count.get() >= 0);
 				this->_wrapped_mutex.unlock_and_lock_upgrade();
 			}
 		private:

@@ -14,9 +14,12 @@
 
 bool cycle_detected = false;
 
+struct cycle_detected_tag {};
+
 void cycle_handler()
 {
 	cycle_detected = true;
+	throw cycle_detected_tag();
 }
 
 void upgrade_test()
@@ -38,10 +41,15 @@ void upgrade_test()
 		try
 		{
 			boost::upgrade_lock<mutex_type> upgrade2(m);
+			assert(false);
 		}
-		catch(const boost::thread_interrupted &)
-		{}
-		assert(cycle_detected == true);
+		catch(const struct cycle_detected_tag &)
+		{
+		}
+		catch(...)
+		{
+			assert(false);
+		}
 	}
 }
 
