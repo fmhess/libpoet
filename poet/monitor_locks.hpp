@@ -239,6 +239,13 @@ namespace poet
 	}
 
 	template<typename Monitor>
+	boost::detail::thread_move_t<monitor_unique_lock<Monitor> >
+		move(monitor_unique_lock<Monitor> &lock)
+	{
+		return lock.move();
+	}
+
+	template<typename Monitor>
 	class monitor_shared_lock: public detail::lock_wrapper<Monitor,
 		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
 		boost::shared_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
@@ -308,6 +315,13 @@ namespace poet
 	}
 
 	template<typename Monitor>
+	boost::detail::thread_move_t<monitor_shared_lock<Monitor> >
+		move(monitor_shared_lock<Monitor> &lock)
+	{
+		return lock.move();
+	}
+
+	template<typename Monitor>
 	class monitor_upgrade_lock: public detail::lock_wrapper<Monitor,
 		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
 		boost::upgrade_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
@@ -371,6 +385,13 @@ namespace poet
 	void swap(monitor_upgrade_lock<Monitor> &lockA, monitor_upgrade_lock<Monitor> &lockB)
 	{
 		lockA.swap(lockB);
+	}
+
+	template<typename Monitor>
+	boost::detail::thread_move_t<monitor_upgrade_lock<Monitor> >
+		move(monitor_upgrade_lock<Monitor> &lock)
+	{
+		return lock.move();
 	}
 
 	template<typename Monitor>
@@ -456,6 +477,30 @@ namespace poet
 	{
 		lockA.swap(lockB);
 	}
+
+	template<typename Monitor>
+	boost::detail::thread_move_t<monitor_upgrade_to_unique_lock<Monitor> >
+		move(monitor_upgrade_to_unique_lock<Monitor> &lock)
+	{
+		return lock.move();
+	}
 };
+
+namespace boost
+{
+	namespace detail
+	{
+		template<typename T>
+		const thread_move_t<T>& move(const thread_move_t<T> &x)
+		{
+			return x;
+		}
+		template<typename T>
+		thread_move_t<T>& move(thread_move_t<T> &x)
+		{
+			return x;
+		}
+	}
+}
 
 #endif // _POET_MONITOR_LOCKS_HPP
