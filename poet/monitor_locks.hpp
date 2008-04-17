@@ -233,6 +233,12 @@ namespace poet
 	};
 
 	template<typename Monitor>
+	void swap(monitor_unique_lock<Monitor> &lockA, monitor_unique_lock<Monitor> &lockB)
+	{
+		lockA.swap(lockB);
+	}
+
+	template<typename Monitor>
 	class monitor_shared_lock: public detail::lock_wrapper<Monitor,
 		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
 		boost::shared_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
@@ -296,6 +302,12 @@ namespace poet
 	};
 
 	template<typename Monitor>
+	void swap(monitor_shared_lock<Monitor> &lockA, monitor_shared_lock<Monitor> &lockB)
+	{
+		lockA.swap(lockB);
+	}
+
+	template<typename Monitor>
 	class monitor_upgrade_lock: public detail::lock_wrapper<Monitor,
 		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
 		boost::upgrade_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
@@ -356,18 +368,49 @@ namespace poet
 	};
 
 	template<typename Monitor>
-	class monitor_upgrade_to_unique_lock:
-		public boost::upgrade_to_unique_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> >
+	void swap(monitor_upgrade_lock<Monitor> &lockA, monitor_upgrade_lock<Monitor> &lockB)
 	{
-		typedef boost::upgrade_to_unique_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > base_class;
+		lockA.swap(lockB);
+	}
+
+	template<typename Monitor>
+	class monitor_upgrade_to_unique_lock
+	{
+		typedef boost::upgrade_to_unique_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > wrapped_lock_type;
 		typedef typename detail::monitor_handle<Monitor>::type monitor_ptr_type;
 	public:
 		typedef typename monitor_ptr_type::element_type element_type;
 
 		explicit monitor_upgrade_to_unique_lock(monitor_upgrade_lock<Monitor> &upgrade_lock):
-			base_class(upgrade_lock._lock),
-			_mon(poet::const_pointer_cast<typename monitor_ptr_type::element_type>(upgrade_lock._mon))
+			_mon(upgrade_lock._mon),
+			_lock(upgrade_lock._lock)
 		{
+		}
+		// move constructor
+		monitor_upgrade_to_unique_lock(boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> other):
+			_mon(other->_mon), _lock(boost::detail::thread_move_t<wrapped_lock_type>(other->_lock))
+		{}
+
+
+		void swap(monitor_upgrade_to_unique_lock &other)
+		{
+			using std::swap;
+			swap(_mon, other._mon);
+			_lock.swap(other._lock);
+		}
+		bool operator!()
+		{
+			return !_lock;
+		}
+		// safe bool idiom, somewhat safer than providing conversion to bool operator
+		typedef wrapped_lock_type * wrapped_lock_type::* unspecified_bool_type;
+		operator unspecified_bool_type() const
+		{
+			return !_lock ? 0 : &_lock;
+		}
+		bool owns_lock() const
+		{
+			return _lock.owns_lock();
 		}
 
 		// monitor extensions to lock interface
@@ -387,9 +430,32 @@ namespace poet
 			}
 			return *_mon.direct().get();
 		}
+
+		// move emulation
+		boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> move()
+		{
+			return boost::detail::thread_move_t<monitor_upgrade_to_unique_lock>(*this);
+		}
+		monitor_upgrade_to_unique_lock& operator=(boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> other)
+		{
+			monitor_upgrade_to_unique_lock temp(other);
+			swap(temp);
+			return *this;
+		}
+		operator boost::detail::thread_move_t<monitor_upgrade_to_unique_lock>()
+		{
+			return move();
+		}
 	private:
 		monitor_ptr_type _mon;
+		wrapped_lock_type _lock;
 	};
+
+	template<typename Monitor>
+	void swap(monitor_upgrade_to_unique_lock<Monitor> &lockA, monitor_upgrade_to_unique_lock<Monitor> &lockB)
+	{
+		lockA.swap(lockB);
+	}
 };
 
 #endif // _POET_MONITOR_LOCKS_HPP

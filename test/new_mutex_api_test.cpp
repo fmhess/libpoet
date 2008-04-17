@@ -186,6 +186,65 @@ void monitor_temp_lock_move_test(Monitor &mon)
 	assert(lock.owns_lock());
 }
 
+template<typename Lock, typename Monitor>
+void monitor_swap_test()
+{
+	Monitor mon1;
+	Lock lock1(mon1);
+	Monitor mon2;
+	Lock lock2(mon2);
+
+	using std::swap;
+	swap(lock1, lock2);
+	assert(lock1.owns_lock());
+	assert(lock1.mutex() == &mon2);
+	assert(lock2.owns_lock());
+	assert(lock2.mutex() == &mon1);
+
+	lock1.swap(lock2);
+	assert(lock1.owns_lock());
+	assert(lock1.mutex() == &mon1);
+	assert(lock2.owns_lock());
+	assert(lock2.mutex() == &mon2);
+}
+
+void upgrade_to_unique_move_test()
+{
+	typedef poet::monitor<int, boost::shared_mutex> monitor_type;
+	monitor_type mon1;
+	monitor_type mon2;
+	{
+		poet::monitor_upgrade_lock<monitor_type> upgrade1(mon1);
+		poet::monitor_upgrade_to_unique_lock<monitor_type> lock1(upgrade1);
+		assert(lock1.owns_lock());
+		poet::monitor_upgrade_lock<monitor_type> upgrade2(mon2);
+		poet::monitor_upgrade_to_unique_lock<monitor_type> lock2(upgrade2);
+		lock2 = lock1.move();
+		assert(lock1.owns_lock() == false);
+		assert(lock2.owns_lock());
+	}
+	{
+		poet::monitor_upgrade_lock<monitor_type> upgrade1(mon1);
+		poet::monitor_upgrade_to_unique_lock<monitor_type> lock1(upgrade1);
+		assert(lock1.owns_lock());
+		poet::monitor_upgrade_to_unique_lock<monitor_type> lock2(lock1.move());
+		assert(lock1.owns_lock() == false);
+		assert(lock2.owns_lock());
+	}
+	{
+		poet::monitor_upgrade_lock<monitor_type> upgrade1(mon1);
+		poet::monitor_upgrade_to_unique_lock<monitor_type> lock1(upgrade1);
+		assert(lock1.owns_lock());
+		poet::monitor_upgrade_lock<monitor_type> upgrade2(mon2);
+		poet::monitor_upgrade_to_unique_lock<monitor_type> lock2(upgrade2);
+		assert(lock2.owns_lock());
+		using std::swap;
+		swap(lock1, lock2);
+		assert(lock1.owns_lock());
+		assert(lock2.owns_lock());
+	}
+}
+
 void monitor_lock_move_tests()
 {
 	std::cerr << __FUNCTION__ << "... ";
@@ -210,6 +269,12 @@ void monitor_lock_move_tests()
 		monitor_temp_lock_move_test<poet::monitor_upgrade_lock<monitor_type> >(mon);
 		monitor_temp_lock_move_test<poet::monitor_shared_lock<monitor_type> >(mon);
 	}
+	{
+		monitor_swap_test<poet::monitor_unique_lock<poet::monitor<int> >, poet::monitor<int> >();
+		monitor_swap_test<poet::monitor_upgrade_lock<poet::monitor<int, boost::shared_mutex> >, poet::monitor<int, boost::shared_mutex> >();
+		monitor_swap_test<poet::monitor_shared_lock<poet::monitor<int, boost::shared_mutex> >, poet::monitor<int, boost::shared_mutex> >();
+	}
+	upgrade_to_unique_move_test();
 	std::cerr << "OK" << std::endl;
 }
 
