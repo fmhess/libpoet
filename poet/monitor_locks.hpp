@@ -133,8 +133,10 @@ namespace poet
 			}
 			Monitor* release()
 			{
+				Monitor * result = _mon_raw_ptr;
+				_mon_raw_ptr = 0;
 				_lock.release();
-				return _mon_raw_ptr;
+				return result;
 			}
 
 			// monitor extensions to lock interface

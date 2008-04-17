@@ -292,12 +292,29 @@ void monitor_lock_move_tests()
 	std::cerr << "OK" << std::endl;
 }
 
+void lock_release_test()
+{
+	typedef poet::monitor_ptr<int> monitor_type;
+	monitor_type mon(new int(0));
+	poet::monitor_unique_lock<monitor_type> lock(mon);
+	assert(lock.owns_lock() == true);
+	assert(lock.mutex() == &mon);
+	monitor_type *result = lock.release();
+	assert(result == &mon);
+	assert(lock.owns_lock() == false);
+	assert(lock.mutex() == 0);
+	poet::monitor_unique_lock<monitor_type> lock2(mon, boost::adopt_lock_t());
+	assert(lock2.owns_lock() == true);
+	assert(lock2.mutex() == &mon);
+}
+
 int main(int argc, const char **argv)
 {
 	monitor_unique_lock_test();
 	monitor_rw_lock_test();
 	lockable_concept_test();
 	monitor_lock_move_tests();
+	lock_release_test();
 
 	return 0;
 }
