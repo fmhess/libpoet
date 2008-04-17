@@ -167,6 +167,15 @@ void monitor_lock_move_test(Monitor &mon)
 		assert(lock2.owns_lock() == false);
 		lock2 = lock1.move();
 		assert(lock2.owns_lock());
+		assert(lock2.mutex() == &mon);
+	}
+	{
+		Lock1 lock1(mon);
+		assert(lock1.owns_lock());
+		Lock2 lock2(lock1.move());
+		assert(lock1.owns_lock() == false);
+		assert(lock2.owns_lock());
+		assert(lock2.mutex() == &mon);
 	}
 }
 
