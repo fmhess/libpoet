@@ -135,6 +135,7 @@ namespace poet
 			{
 				Monitor * result = _mon_raw_ptr;
 				_mon_raw_ptr = 0;
+				_mon.reset();
 				_lock.release();
 				return result;
 			}
