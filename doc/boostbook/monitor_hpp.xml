@@ -227,33 +227,6 @@
 							</para>
 						</description>
 					</overloaded-method>
-					<method name="operator=">
-						<template>
-							<template-type-parameter name="U"/>
-							<template-type-parameter name="M"/>
-						</template>
-						<type>monitor&lt;T, Mutex&gt; &amp;</type>
-						<parameter name="rhs">
-							<paramtype>const monitor&lt;U, M&gt; &amp;</paramtype>
-						</parameter>
-						<description>
-							<para>Copies the value of type <code>T</code> from <code>rhs</code>
-								into <code>*this</code>.
-							</para>
-							<para>
-								The mutex of the <code>rhs</code> parameter is locked while its contained value
-								is copied out of it.  Similarly, the mutex of <code>*this</code> is locked
-								while its new value is copied into it.  However, care is taken
-								not to lock both <code>*this</code> and <code>rhs</code>
-								simultaneously, to avoid violating
-								or establishing a locking order between the two monitors (which might result in deadlock).
-							</para>
-							<para>
-								Copies of a <code>monitor</code> object are deep copies, which do not share
-								the same mutex or condition.
-							</para>
-						</description>
-					</method>
 					<overloaded-method name="operator->">
 						<signature>
 							<type>const <classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</type>
@@ -298,6 +271,44 @@
 						</description>
 					</method>
 				</method-group>
+				<copy-assignment>
+					<template>
+						<template-type-parameter name="U"/>
+						<template-type-parameter name="M"/>
+					</template>
+					<type>monitor&lt;T, Mutex&gt; &amp;</type>
+					<parameter name="rhs">
+						<paramtype>const monitor&lt;U, M&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>Copies the value of type <code>T</code> from <code>rhs</code>
+							into <code>*this</code>.
+						</para>
+						<para>
+							The mutex of the <code>rhs</code> parameter is locked while its contained value
+							is copied out of it.  Similarly, the mutex of <code>*this</code> is locked
+							while its new value is copied into it.  However, care is taken
+							not to lock both <code>*this</code> and <code>rhs</code>
+							simultaneously, to avoid violating
+							or establishing a locking order between the two monitors (which might result in deadlock).
+						</para>
+						<para>
+							Copies of a <code>monitor</code> object are deep copies, which do not share
+							the same mutex or condition.
+						</para>
+					</description>
+				</copy-assignment>
+				<copy-assignment>
+					<parameter name="rhs">
+						<paramtype>const monitor &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Same as the templated assignment operator.  This overload is provided to
+							prevent a default assignment operator from being generated.
+						</para>
+					</description>
+				</copy-assignment>
 				<constructor>
 					<description>
 						<para>Creates a <code>monitor</code> with a default-constructed value.
