@@ -318,6 +318,8 @@ void lock_release_test()
 	poet::monitor_unique_lock<monitor_type> lock2(mon, boost::adopt_lock_t());
 	assert(lock2.owns_lock() == true);
 	assert(lock2.mutex() == &mon);
+	poet::monitor_unique_lock<monitor_type> lock3(mon, boost::defer_lock_t());
+	assert(lock3.try_lock() == false);
 }
 
 int main(int argc, const char **argv)
