@@ -236,17 +236,6 @@
 						<type>const boost::shared_ptr&lt;T&gt; &amp;</type>
 						<description><para>Gives direct unlocked access to the underlying pointer.</para></description>
 					</method>
-					<method name="operator=">
-						<type>monitor_ptr&lt;T, Mutex&gt; &amp;</type>
-						<parameter name="rhs">
-							<paramtype>const monitor_ptr&lt;T, Mutex&gt; &amp;</paramtype>
-						</parameter>
-						<description>
-							<para>After assignment, the two <code>monitor_ptr</code>s will share the same pointer,
-								mutex, and condition variable.
-							</para>
-						</description>
-					</method>
 					<method name="operator->" cv="const">
 						<type><classname>call_proxy</classname></type>
 						<description>
@@ -333,6 +322,16 @@
 						</description>
 					</method>
 				</method-group>
+				<copy-assignment>
+					<parameter name="rhs">
+						<paramtype>const monitor_ptr &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>After assignment, the two <code>monitor_ptr</code>s will share the same pointer,
+							mutex, and condition variable.
+						</para>
+					</description>
+				</copy-assignment>
 				<constructor>
 					<description>
 						<para>The default constructor creates an empty <code>monitor_ptr</code>.
