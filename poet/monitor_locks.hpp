@@ -491,18 +491,29 @@ namespace poet
 
 namespace boost
 {
-	namespace detail
+	template<typename T>
+	detail::thread_move_t<poet::monitor_unique_lock<T> >
+		move(const detail::thread_move_t<poet::monitor_unique_lock<T> > &x)
 	{
-		template<typename T>
-		const thread_move_t<T>& move(const thread_move_t<T> &x)
-		{
-			return x;
-		}
-		template<typename T>
-		thread_move_t<T>& move(thread_move_t<T> &x)
-		{
-			return x;
-		}
+		return x;
+	}
+	template<typename T>
+	detail::thread_move_t<poet::monitor_shared_lock<T> >
+		move(const detail::thread_move_t<poet::monitor_shared_lock<T> > &x)
+	{
+		return x;
+	}
+	template<typename T>
+	detail::thread_move_t<poet::monitor_upgrade_lock<T> >
+		move(const detail::thread_move_t<poet::monitor_upgrade_lock<T> > &x)
+	{
+		return x;
+	}
+	template<typename T>
+	detail::thread_move_t<poet::monitor_upgrade_to_unique_lock<T> >
+		move(const detail::thread_move_t<poet::monitor_upgrade_to_unique_lock<T> > &x)
+	{
+		return x;
 	}
 }
 
