@@ -213,6 +213,20 @@
 					</access>
 				</class>
 				<method-group name="public member functions">
+					<overloaded-method name="get_monitor_ptr">
+						<signature>
+							<type>const <classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</type>
+						</signature>
+						<signature cv="const">
+							<type><classname>monitor_ptr</classname>&lt;const T, Mutex&gt;</type>
+						</signature>
+						<description>
+							<para>
+								The <code>get_monitor_ptr</code> method can be used to obtain a <classname>monitor_ptr</classname> which shares
+								ownership/mutex/condition with <code>*this</code>.
+							</para>
+						</description>
+					</overloaded-method>
 					<method name="operator=">
 						<template>
 							<template-type-parameter name="U"/>
@@ -240,20 +254,6 @@
 							</para>
 						</description>
 					</method>
-					<overloaded-method name="get_monitor_ptr">
-						<signature>
-							<type>const <classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</type>
-						</signature>
-						<signature cv="const">
-							<type><classname>monitor_ptr</classname>&lt;const T, Mutex&gt;</type>
-						</signature>
-						<description>
-							<para>
-								The <code>get_monitor_ptr</code> method can be used to obtain a <classname>monitor_ptr</classname> which shares
-								ownership/mutex/condition with <code>*this</code>.
-							</para>
-						</description>
-					</overloaded-method>
 					<overloaded-method name="operator->">
 						<signature>
 							<type>const <classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</type>
@@ -273,6 +273,30 @@
 							</para>
 						</description>
 					</overloaded-method>
+					<method name="swap">
+						<template>
+							<template-type-parameter name="M"/>
+						</template>
+						<type>void</type>
+						<parameter name="other">
+							<paramtype>monitor&lt;T, M&gt; &amp;</paramtype>
+						</parameter>
+						<description>
+							<para>
+								Swaps the wrapped values of <code>*this</code> and <code>other</code>.
+								Only the wrapped values of the two monitors are swapped, not their mutexes
+								or condition variables.
+							</para>
+							<para>
+								The mutexes of both monitors are locked before
+								their values are swapped.  The mutexes are locked by trying each of the
+								two possible locking orders until both mutexes are successfully locked.
+								This avoids any possibility of deadlock due to locking order violation,
+								but may produce false positives when using debugging tools such as
+								<classname>acyclic_mutex</classname>.
+							</para>
+						</description>
+					</method>
 				</method-group>
 				<constructor>
 					<description>
@@ -363,39 +387,10 @@
 							function is provided to
 							enhance efficiency with generic algorithms.
 						</para>
-						<para>
-							Care is taken
-							not to lock both <code>monitor</code> objects simultaneously to avoid violating
-							or establishing a locking order between the two monitors (which might result in deadlock).
-							The swap operation performs the following steps:
-						</para>
-						<itemizedlist>
-							<listitem>
-								<para>
-									Copy constructs a temporary value of type T from the value in <code>other</code>, while
-									<code>monitor1</code> is locked.
-								</para>
-							</listitem>
-							<listitem>
-								<para>
-									Swaps the temporary value with the value of <code>monitor0</code>, while
-									<code>monitor0</code> is locked.
-								</para>
-							</listitem>
-							<listitem>
-								<para>
-									Swaps the temporary value with the value of <code>monitor1</code>, while
-									<code>monitor1</code> is locked.
-								</para>
-							</listitem>
-						</itemizedlist>
-						<para>
-							Therefore, it is possible another thread could lock <code>monitor1</code> and
-							perform some operation on it between the point where its value is copied
-							out, and the point where the value from <code>monitor0</code> is swapped back into
-							<code>monitor1</code>.
-						</para>
 					</description>
+					<effects>
+						<para><code>monitor0.swap(monitor1);</code></para>
+					</effects>
 				</function>
 			</free-function-group>
 		</class>
