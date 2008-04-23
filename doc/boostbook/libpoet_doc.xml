@@ -21,31 +21,40 @@
 	</libraryinfo>
 	<title>libpoet</title>
 	<section id="poet.section.main">
-			<title>Parallel Object Execution Threads</title>
+		<title>Parallel Object Execution Threads</title>
+		<using-namespace name="poet"/>
 		<section id="poet.section.introduction">
 			<title>Introduction</title>
 			<para>
-				libpoet is a C++ library whose goal is to make creation of active objects easy
-				enough for routine use.  It also includes support for monitor objects, and
-				mutex locking order debugging.
+				libpoet is a C++ parallel programing library.  It provides support for easily creating active objects,
+				creating monitor objects, and automatically validating mutex locking order.
+			</para>
 			<para>
-				Active objects provide concurrency, since each active object executes in its own
-				thread.  Futures are employed to communicate with active objects
+				Active objects provide concurrency and thread-safety, since each active object
+				executes in its own thread.  Futures are employed to communicate with active objects
 				in a thread-safe manner.  To learn
 				more about the active object concept, see the paper
-				<ulink url="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming." by
-				R. Greg Lavender and Douglas C. Schmidt</ulink>.
-			</para>
-				Some of the more important active object
-				classes in the library
+				<ulink url="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming."</ulink>
+				by R. Greg Lavender and Douglas C. Schmidt.
+				Some of the more important active object classes in libpoet
 				are <classname>poet::active_function</classname>, <classname>poet::future</classname>,
 				and <classname>poet::scheduler</classname>.
-					The
-					<classname>poet::monitor_ptr</classname>, <classname>poet::monitor</classname>,
-					and <classname>poet::monitor_base</classname> classes provide support for monitor
-					objects.  Finally, the <classname>poet::acyclic_mutex</classname> class provides
-					a wrapper for mutex classes which adds automatic validation of the program's
-					mutex locking order.
+			</para>
+			<para>
+				Monitor objects provide thread-safety via automatically locked access to an object.
+				See the paper
+				<ulink url="http://www.cse.wustl.edu/~schmidt/PDF/monitor.pdf">"Monitor Object, An Object Behavioral Pattern for Concurrent Programming"</ulink>
+				by Douglas C. Schmidt for more information about monitor objects.
+				The <classname>poet::monitor_ptr</classname>, <classname>poet::monitor</classname>,
+				and <classname>poet::monitor_base</classname> classes in libpoet provide support for monitor
+				objects.
+			</para>
+			<para>
+				Finally, the <classname>poet::acyclic_mutex</classname> class provides
+				a wrapper for mutex classes which adds automatic validation of a program's
+				mutex locking order.  Following a consistent locking order ensures your program
+				will not deadlock due to problems such as "deadly embrace" or the "dining philosophers"
+				problem.
 			</para>
 			<para>
 				A version of this documentation corresponding to the most recent release should
@@ -58,16 +67,26 @@
 			<para>
 				The library's API is still undergoing some development, and may be refined as feedback
 				and experience clairifies areas which could be improved.  It is anticipated that some
-				interfaces will change to keep in sync with API changes in boost, and to keep in
+				interfaces will change to keep in sync with API changes in the Boost libraries,
+				and to keep in
 				sync with relevant changes and additions to the C++ standard.
 			</para>
 		</section>
 		<section id="poet.section.dependencies">
 			<title>Dependencies</title>
 			<para>
-				libpoet depends on the <ulink url="http://www.boost.org">boost C++ libraries</ulink>,
+				libpoet depends on the <ulink url="http://www.boost.org">Boost C++ libraries</ulink>,
 				and requires linking to libboost_thread.
-				The headers from the active object portion of libpoet depend on <ulink url="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</ulink>.
+				The headers from the active object portion of libpoet depend on
+				<ulink url="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</ulink>.
+			</para>
+			<para>
+				libpoet versions 2008-04-24 or later require Boost version 1.35.0
+				or later, due to changes in the Boost.Thread interface.
+			</para>
+			<para>
+				libpoet versions 2008-01-28 or earlier require Boost version 1.34.1
+				or earlier due to changes in the Boost.Thread interface.
 			</para>
 		</section>
 		<section id="poet.section.download">
@@ -75,7 +94,7 @@
 			<para>
 				The most recent release is available from the
 				<ulink url="http://www.boost-consulting.com/vault/index.php?&amp;direction=0&amp;order=&amp;directory=Concurrent%20Programming/Active%20Objects">
-				boost vault</ulink>
+				Boost Vault</ulink>
 				(get the latest "libpoet-xxxx-xx-xx.tgz" file).
 			</para>
 			<para>
@@ -104,19 +123,8 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 		<section id="poet.section.discussion">
 			<title>Discussion</title>
 			<para>
-				libpoet now has a <ulink url="http://groups.google.com/group/libpoet">mailing list</ulink> hosted on Google Groups,
+				libpoet has a <ulink url="http://groups.google.com/group/libpoet">mailing list</ulink> hosted on Google Groups,
 				which may be used to discuss issues related to the library.
-			</para>
-		</section>
-		<section id="poet.section.caveats">
-			<title>Caveats</title>
-			<para>
-				The <classname>poet::monitor</classname> and <classname>poet::monitor_ptr</classname>
-				classes are intended to work with any mutex class which models one of the mutex concepts
-				described by the Boost Thread library.  However, due to limitations in the current
-				implementation of <classname>boost::condition</classname>, only the mutex classes
-				defined in the Boost Thread library will work.  This limitation will be lifted once the
-				ongoing rewrite of the Boost Thread library is completed and released.
 			</para>
 		</section>
 	</section>
