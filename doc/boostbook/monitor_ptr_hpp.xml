@@ -236,11 +236,14 @@
 						<type>const boost::shared_ptr&lt;T&gt; &amp;</type>
 						<description><para>Gives direct unlocked access to the underlying pointer.</para></description>
 					</method>
-					<method name="operator bool" cv="const">
+					<method name="operator=">
+						<type>monitor_ptr&lt;T, Mutex&gt; &amp;</type>
+						<parameter name="rhs">
+							<paramtype>const monitor_ptr&lt;T, Mutex&gt; &amp;</paramtype>
+						</parameter>
 						<description>
-							<para>
-								Conversion to <code>bool</code> results in <code>false</code> if the <code>monitor_ptr</code>'s underlying pointer
-								is null, <code>true</code> otherwise.
+							<para>After assignment, the two <code>monitor_ptr</code>s will share the same pointer,
+								mutex, and condition variable.
 							</para>
 						</description>
 					</method>
@@ -263,14 +266,11 @@
 							</para>
 						</description>
 					</method>
-					<method name="operator=">
-						<type>monitor_ptr&lt;T, Mutex&gt; &amp;</type>
-						<parameter name="rhs">
-							<paramtype>const monitor_ptr&lt;T, Mutex&gt; &amp;</paramtype>
-						</parameter>
+					<method name="operator bool" cv="const">
 						<description>
-							<para>After assignment, the two <code>monitor_ptr</code>s will share the same pointer,
-								mutex, and condition variable.
+							<para>
+								Conversion to <code>bool</code> results in <code>false</code> if the <code>monitor_ptr</code>'s underlying pointer
+								is null, <code>true</code> otherwise.
 							</para>
 						</description>
 					</method>
@@ -321,6 +321,17 @@
 							</para>
 						</description>
 					</overloaded-method>
+					<method name="swap">
+						<type>void</type>
+						<parameter name="other">
+							<paramtype>monitor_ptr &amp;</paramtype>
+						</parameter>
+						<description>
+							<para>
+								Swaps <code>*this</code> and <code>other</code>.
+							</para>
+						</description>
+					</method>
 				</method-group>
 				<constructor>
 					<description>
@@ -562,7 +573,7 @@ poet::monitor_ptr&lt;int&gt; x_mon(coords, &amp;coords-&gt;x);
 					<type>void</type>
 					<description>
 						<para>
-							Swaps the values of <code>monitor0</code> and <code>monitor1</code>.  This
+							Swaps <code>monitor0</code> and <code>monitor1</code>.  This
 							function is provided to
 							enhance efficiency with generic algorithms.
 						</para>
