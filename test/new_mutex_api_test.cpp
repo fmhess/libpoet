@@ -93,6 +93,18 @@ void monitor_unique_lock_test()
 		poet::monitor_unique_lock<monitor_type> lock(mon);
 		lock->const_function();
 	}
+	{
+		try
+		{
+			typedef poet::monitor_ptr<int> monitor_type;
+			monitor_type mon;
+			// locking an empty monitor_ptr throws
+			poet::monitor_unique_lock<monitor_type> lock(mon);
+			assert(false);
+		}
+		catch(boost::lock_error &err)
+		{}
+	}
 }
 
 void monitor_rw_lock_test()
