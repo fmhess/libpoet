@@ -5,10 +5,14 @@
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/shared_mutex.hpp>
+#include <unistd.h>
+#include <poet/acyclic_mutex.hpp>
 #include <poet/monitor.hpp>
 #include <poet/monitor_ptr.hpp>
+#include <poet/monitor_base.hpp>
 
 struct point
 {
@@ -322,6 +326,49 @@ void lock_release_test()
 	assert(lock3.try_lock() == false);
 }
 
+class waiting_class: public poet::monitor_base
+{
+public:
+	waiting_class(): _notified(false), _waiting(false)
+	{}
+	void do_wait()
+	{
+		while(_notified == false)
+		{
+			_waiting = true;
+			wait();
+			_waiting = false;
+		}
+	}
+	void do_notify()
+	{
+		_notified = true;
+		notify_all();
+	}
+	bool waiting() const {return _waiting;}
+private:
+	bool _notified;
+	bool _waiting;
+};
+
+typedef poet::monitor_ptr<waiting_class, poet::acyclic_mutex<boost::mutex> > acyclic_monitor_type;
+
+void acyclic_monitor_thread_func(acyclic_monitor_type mon)
+{
+	mon->do_wait();
+}
+
+void acyclic_monitor_test()
+{
+	/* new boost.thread implementation should allow non-boost.thread mutexes to
+	be used with conditions .*/
+	acyclic_monitor_type mon(new waiting_class);
+	boost::thread mythread(boost::bind(&acyclic_monitor_thread_func, mon));
+	while(mon->waiting() == false) usleep(10000);
+	mon->do_notify();
+	mythread.join();
+}
+
 int main(int argc, const char **argv)
 {
 	monitor_unique_lock_test();
@@ -329,6 +376,7 @@ int main(int argc, const char **argv)
 	lockable_concept_test();
 	monitor_lock_move_tests();
 	lock_release_test();
+	acyclic_monitor_test();
 
 	return 0;
 }
