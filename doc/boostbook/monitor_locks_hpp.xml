@@ -665,5 +665,151 @@
 				</constructor>
 			</access>
 		</class>
+		<class name="monitor_upgrade_to_unique_lock">
+			<template>
+				<template-type-parameter name="MonitorType"/>
+			</template>
+			<purpose>upgrade_to_unique_lock with monitor object access</purpose>
+			<description>
+				<para>
+					<code>monitor_upgrade_to_unique_lock</code> is an extension of <classname>boost::upgrade_to_unique_lock</classname>
+					from the
+					<ulink url="http://www.boost.org/doc/html/thread.html">Boost.Thread</ulink>
+					library.  It extends the interface of
+					<classname>boost::upgrade_to_unique_lock</classname> by adding <methodname>operator-&gt;</methodname>
+					and <methodname>operator*</methodname> methods, which permit access to
+					the object protected by the lock's associated monitor.  This tight
+					coupling of locking with access helps insure
+					the monitor's mutex is always locked when the object it is protecting
+					is accessed.
+				</para>
+				<para>
+					The <code>MonitorType</code>
+					template type parameter may be one of the <classname>monitor</classname>
+					or <classname>monitor_ptr</classname> types.
+				</para>
+				<description>
+					<para>
+						See the documentation of boost::upgrade_to_unique_lock in the Boost.Thread library for more information
+						about the upgrade_to_unique_lock interface.
+					</para>
+				</description>
+			</description>
+			<access name="public">
+				<typedef name="monitor_type">
+					<type>MonitorType</type>
+				</typedef>
+				<typedef name="element_type">
+					<type>MonitorType::element_type</type>
+					<purpose>will additionally be const-qualified if MonitorType is "const monitor&lt;T&gt;"</purpose>
+				</typedef>
+				<method-group name="public boost::upgrade_to_unique_lock interface">
+					<method name="move">
+						<type>boost::detail::thread_move_t&lt;monitor_upgrade_to_unique_lock&gt;</type>
+					</method>
+					<method name="operator=">
+						<type>monitor_upgrade_to_unique_lock &amp;</type>
+						<parameter>
+							<paramtype>boost::detail::thread_move_t&lt;monitor_upgrade_to_unique_lock&gt;</paramtype>
+						</parameter>
+					</method>
+					<method name="operator!" cv="const">
+						<type>bool</type>
+					</method>
+					<method name="operator boost::detail::thread_move_t&lt;monitor_upgrade_to_unique_lock&gt;">
+					</method>
+					<method name="operator unspecified_bool_type" cv="const">
+					</method>
+					<method name="owns_lock" cv="const">
+						<type>bool</type>
+					</method>
+					<method name="swap">
+						<type>void</type>
+						<parameter name="other">
+							<paramtype>monitor_upgrade_to_unique_lock &amp;</paramtype>
+						</parameter>
+					</method>
+				</method-group>
+				<method-group name="public member functions">
+					<method name="operator-&gt;" cv="const">
+						<type>element_type *</type>
+						<description>
+							<para>Provides access to the members of the object protected by the lock's associated
+								monitor.
+							</para>
+						</description>
+						<throws>
+							<para>
+								<classname>boost::lock_error</classname> if <code>owns_lock() != true</code>.
+							</para>
+						</throws>
+					</method>
+					<method name="operator*" cv="const">
+						<type>element_type &amp;</type>
+						<description>
+							<para>Provides access to the object protected by the lock's associated
+								monitor.
+							</para>
+						</description>
+						<throws>
+							<para>
+								<classname>boost::lock_error</classname> if <code>owns_lock() != true</code>.
+							</para>
+						</throws>
+					</method>
+				</method-group>
+				<constructor specifiers="explicit">
+					<parameter name="lock">
+						<paramtype>monitor_upgrade_lock&lt;MonitorType&gt; &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							If <code>lock.owns_lock()</code>, then <code>*this</code> takes exclusive ownership
+							of the upgrade lock's mutex.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
+					<parameter name="other">
+						<paramtype>boost::detail::thread_move_t&lt;monitor_upgrade_to_unique_lock&gt;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Move constructor.
+						</para>
+					</description>
+				</constructor>
+				<destructor>
+					<description>
+						<para>If <code>owns_lock()</code>, releases exclusive ownership and
+							returns upgrade ownership to the upgrade_lock <code>*this</code> was
+							constructed from.
+						</para>
+					</description>
+				</destructor>
+			</access>
+			<access name="private">
+				<copy-assignment>
+					<parameter name="other">
+						<paramtype>monitor_upgrade_to_unique_lock &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Locks are moveable but not copyable.
+						</para>
+					</description>
+				</copy-assignment>
+				<constructor>
+					<parameter name="other">
+						<paramtype>monitor_upgrade_to_unique_lock &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							Locks are moveable but not copyable.
+						</para>
+					</description>
+				</constructor>
+			</access>
+		</class>
 	</namespace>
 </header>
