@@ -61,6 +61,8 @@ namespace poet
 			typedef Monitor monitor_type;
 			typedef typename monitor_ptr_type::element_type element_type;
 
+			lock_wrapper(): _mon_raw_ptr(0)
+			{}
 			explicit lock_wrapper(Monitor &mon):
 				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon), _lock(_mon)
 			{
@@ -203,6 +205,8 @@ namespace poet
 			boost::unique_lock<typename detail::monitor_handle<Monitor>::type> >
 			base_class;
 	public:
+		monitor_unique_lock()
+		{}
 		explicit monitor_unique_lock(Monitor &mon): base_class(mon)
 		{}
 		template<typename U>
@@ -258,6 +262,8 @@ namespace poet
 			boost::shared_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
 			base_class;
 	public:
+		monitor_shared_lock()
+		{}
 		explicit monitor_shared_lock(Monitor &mon): base_class(mon)
 		{}
 		template<typename U>
@@ -334,6 +340,8 @@ namespace poet
 			boost::upgrade_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
 			base_class;
 	public:
+		monitor_upgrade_lock()
+		{}
 		explicit monitor_upgrade_lock(Monitor &mon): base_class(mon)
 		{}
 		template<typename U>
