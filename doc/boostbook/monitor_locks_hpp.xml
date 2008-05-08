@@ -129,9 +129,14 @@
 					</parameter>
 					<description>
 						<para>
-							Calls lock().  Internally, the monitor_unique_lock stores a <classname>monitor_ptr</classname>
+							Calls lock(), acquiring exclusive ownership of <code>mon</code> (in the
+							sense of a lock having ownership of a mutex).
+						</para>
+						<para>
+							Internally, the monitor_unique_lock stores a <classname>monitor_ptr</classname>
 							to use as a reference to the object protected by the <code>mon</code> argument.  Thus the
-							monitor_unique_lock shares ownership and may safely outlive the <code>mon</code> object.
+							monitor_unique_lock shares ownership (in the <code>shared_ptr</code> sense)
+							and may safely outlive the <code>mon</code> object.
 						</para>
 					</description>
 				</constructor>
@@ -353,9 +358,14 @@
 					</parameter>
 					<description>
 						<para>
-							Calls lock().  Internally, the monitor_shared_lock stores a <classname>monitor_ptr</classname>
+							Calls lock(), acquiring shared ownership of <code>mon</code>
+							(in the sense of a lock having ownership of a mutex).
+						</para>
+						<para>
+							Internally, the monitor_shared_lock stores a <classname>monitor_ptr</classname>
 							to use as a reference to the object protected by the <code>mon</code> argument.  Thus the
-							monitor_shared_lock shares ownership and may safely outlive the <code>mon</code> object.
+							monitor_shared_lock shares ownership (in the <code>shared_ptr</code> sense)
+							and may safely outlive the <code>mon</code> object.
 						</para>
 					</description>
 				</constructor>
@@ -583,9 +593,14 @@
 					</parameter>
 					<description>
 						<para>
-							Calls lock().  Internally, the monitor_upgrade_lock stores a <classname>monitor_ptr</classname>
+							Calls lock(), acquiring upgrade ownership of <code>mon</code>
+							(in the sense of a lock having ownership of a mutex).
+						</para>
+						<para>
+							Internally, the monitor_upgrade_lock stores a <classname>monitor_ptr</classname>
 							to use as a reference to the object protected by the <code>mon</code> argument.  Thus the
-							monitor_upgrade_lock shares ownership and may safely outlive the <code>mon</code> object.
+							monitor_upgrade_lock shares ownership (in the <code>shared_ptr</code> sense)
+							and may safely outlive the <code>mon</code> object.
 						</para>
 					</description>
 				</constructor>
