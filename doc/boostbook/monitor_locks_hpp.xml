@@ -215,6 +215,31 @@
 					</description>
 				</constructor>
 			</access>
+			<free-function-group name="free functions">
+				<function name="move">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>boost::detail::thread_move_t&lt;<classname>monitor_unique_lock</classname>&lt;Monitor&gt; &gt;</type>
+					<parameter name="lock">
+						<paramtype><classname>monitor_unique_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<returns><code>lock.move()</code></returns>
+				</function>
+				<function name="swap">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>void</type>
+					<parameter name="lock_a">
+						<paramtype><classname>monitor_unique_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="lock_b">
+						<paramtype><classname>monitor_unique_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<effects><code>lock_a.swap(lock_b)</code></effects>
+				</function>
+			</free-function-group>
 		</class>
 		<class name="monitor_shared_lock">
 			<template>
@@ -454,6 +479,31 @@
 					</description>
 				</constructor>
 			</access>
+			<free-function-group name="free functions">
+				<function name="move">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>boost::detail::thread_move_t&lt;<classname>monitor_shared_lock</classname>&lt;Monitor&gt; &gt;</type>
+					<parameter name="lock">
+						<paramtype><classname>monitor_shared_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<returns><code>lock.move()</code></returns>
+				</function>
+				<function name="swap">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>void</type>
+					<parameter name="lock_a">
+						<paramtype><classname>monitor_shared_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="lock_b">
+						<paramtype><classname>monitor_shared_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<effects><code>lock_a.swap(lock_b)</code></effects>
+				</function>
+			</free-function-group>
 		</class>
 		<class name="monitor_upgrade_lock">
 			<template>
@@ -679,6 +729,31 @@
 					</description>
 				</constructor>
 			</access>
+			<free-function-group name="free functions">
+				<function name="move">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>boost::detail::thread_move_t&lt;<classname>monitor_upgrade_lock</classname>&lt;Monitor&gt; &gt;</type>
+					<parameter name="lock">
+						<paramtype><classname>monitor_upgrade_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<returns><code>lock.move()</code></returns>
+				</function>
+				<function name="swap">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>void</type>
+					<parameter name="lock_a">
+						<paramtype><classname>monitor_upgrade_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="lock_b">
+						<paramtype><classname>monitor_upgrade_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<effects><code>lock_a.swap(lock_b)</code></effects>
+				</function>
+			</free-function-group>
 		</class>
 		<class name="monitor_upgrade_to_unique_lock">
 			<template>
@@ -825,6 +900,31 @@
 					</description>
 				</constructor>
 			</access>
+			<free-function-group name="free functions">
+				<function name="move">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>boost::detail::thread_move_t&lt;<classname>monitor_upgrade_to_unique_lock</classname>&lt;Monitor&gt; &gt;</type>
+					<parameter name="lock">
+						<paramtype><classname>monitor_upgrade_to_unique_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<returns><code>lock.move()</code></returns>
+				</function>
+				<function name="swap">
+					<template>
+						<template-type-parameter name="Monitor"/>
+					</template>
+					<type>void</type>
+					<parameter name="lock_a">
+						<paramtype><classname>monitor_upgrade_to_unique_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<parameter name="lock_b">
+						<paramtype><classname>monitor_upgrade_to_unique_lock</classname>&lt;Monitor&gt; &amp;</paramtype>
+					</parameter>
+					<effects><code>lock_a.swap(lock_b)</code></effects>
+				</function>
+			</free-function-group>
 		</class>
 	</namespace>
 </header>
