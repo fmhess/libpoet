@@ -411,18 +411,17 @@ namespace poet
 		typedef boost::upgrade_to_unique_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > wrapped_lock_type;
 		typedef typename detail::monitor_handle<Monitor>::type monitor_ptr_type;
 	public:
+		typedef Monitor monitor_type;
 		typedef typename monitor_ptr_type::element_type element_type;
 
 		explicit monitor_upgrade_to_unique_lock(monitor_upgrade_lock<Monitor> &upgrade_lock):
 			_mon(upgrade_lock._mon),
 			_lock(upgrade_lock._lock)
-		{
-		}
+		{}
 		// move constructor
 		monitor_upgrade_to_unique_lock(boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> other):
 			_mon(other->_mon), _lock(boost::detail::thread_move_t<wrapped_lock_type>(other->_lock))
 		{}
-
 
 		void swap(monitor_upgrade_to_unique_lock &other)
 		{
