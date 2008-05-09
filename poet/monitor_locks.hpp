@@ -15,6 +15,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/ref.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/exceptions.hpp>
@@ -64,13 +65,15 @@ namespace poet
 			lock_wrapper(): _mon_raw_ptr(0)
 			{}
 			explicit lock_wrapper(Monitor &mon):
-				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon), _lock(_mon)
+				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon),
+				_lock(_mon._syncer ? boost::ref(_mon._syncer->_mutex) : throw boost::lock_error())
 			{
 				set_wait_function();
 			}
 			template<typename U>
 			lock_wrapper(Monitor &mon, const U &arg):
-				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon), _lock(_mon, arg)
+				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon),
+				_lock(_mon._syncer ? boost::ref(_mon._syncer->_mutex) : throw boost::lock_error(), arg)
 			{
 				set_wait_function();
 			}
@@ -198,11 +201,11 @@ namespace poet
 	template<typename Monitor>
 	class monitor_unique_lock: public detail::lock_wrapper<Monitor,
 		typename detail::monitor_handle<Monitor>::type,
-		boost::unique_lock<typename detail::monitor_handle<Monitor>::type> >
+		boost::unique_lock<typename Monitor::mutex_type> >
 	{
 		typedef detail::lock_wrapper<Monitor,
 			typename detail::monitor_handle<Monitor>::type,
-			boost::unique_lock<typename detail::monitor_handle<Monitor>::type> >
+			boost::unique_lock<typename Monitor::mutex_type> >
 			base_class;
 	public:
 		monitor_unique_lock()
@@ -255,11 +258,11 @@ namespace poet
 	template<typename Monitor>
 	class monitor_shared_lock: public detail::lock_wrapper<Monitor,
 		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
-		boost::shared_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
+		boost::shared_lock<typename Monitor::mutex_type > >
 	{
 		typedef detail::lock_wrapper<Monitor,
 			monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
-			boost::shared_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
+			boost::shared_lock<typename Monitor::mutex_type> >
 			base_class;
 	public:
 		monitor_shared_lock()
@@ -333,11 +336,11 @@ namespace poet
 	template<typename Monitor>
 	class monitor_upgrade_lock: public detail::lock_wrapper<Monitor,
 		monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
-		boost::upgrade_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
+		boost::upgrade_lock<typename Monitor::mutex_type> >
 	{
 		typedef detail::lock_wrapper<Monitor,
 			monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type>,
-			boost::upgrade_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > >
+			boost::upgrade_lock<typename Monitor::mutex_type> >
 			base_class;
 	public:
 		monitor_upgrade_lock()
@@ -408,7 +411,7 @@ namespace poet
 	template<typename Monitor>
 	class monitor_upgrade_to_unique_lock
 	{
-		typedef boost::upgrade_to_unique_lock<monitor_ptr<typename Monitor::element_type, typename Monitor::mutex_type> > wrapped_lock_type;
+		typedef boost::upgrade_to_unique_lock<typename Monitor::mutex_type> wrapped_lock_type;
 		typedef typename detail::monitor_handle<Monitor>::type monitor_ptr_type;
 	public:
 		typedef Monitor monitor_type;
