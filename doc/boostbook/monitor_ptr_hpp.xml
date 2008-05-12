@@ -28,10 +28,23 @@
 				</para>
 				<para>
 					The <code>Mutex</code> template type parameter must model the <code>Lockable</code>
-					concept from the Boost.Thread library.  The monitor_ptr itself models the
+					concept from the Boost.Thread library.  The <code>monitor_ptr</code> itself models the
 					<code>Lockable</code> concept, and will also model any of the
 					<code>TimedLockable</code>, <code>SharedLockable</code>, or <code>UpgradeLockable</code>
 					concepts if the underlying <code>Mutex</code> template type supports them.
+					Note however, a <code>monitor_ptr</code> must not be empty when being used as
+					a mutex.  An empty <code>monitor_ptr</code> will throw a
+					<classname>boost::lock_error</classname> if any attempt is made to use
+					<methodname>lock</methodname>, <methodname>unlock</methodname>, or any other
+					part of the <code>monitor_ptr</code> interface which models the Boost.Thread concepts.
+				</para>
+				<para>
+					The interfaces defined by the Boost.Thread mutex concepts should generally
+					not be used directly by the user.  They are intended to be used by
+					scoped lock classes such as <classname>monitor_unique_lock</classname>,
+					which provide a safer means to perform locking.
+					See the "Mutex Concepts" documentation in the Boost.Thread library
+					for more information about the Lockable, etc. concepts.
 				</para>
 				<itemizedlist>
 					<title>Example Code</title>
@@ -66,7 +79,7 @@
 					<method name="operator->" cv="const">
 						<type><classname>monitor_unique_lock</classname>&lt;const monitor_ptr&gt;</type>
 						<description>
-							<para>Returns a temporary <classname>monitor_unique_lock</classname> which owns
+							<para>Returns a temporary <classname>monitor_unique_lock</classname> which
 								locks the <code>monitor_ptr</code>'s mutex.
 								The <code>operator-&gt;()</code> of the returned <classname>monitor_unique_lock</classname>
 								object will be
@@ -149,6 +162,68 @@
 								Swaps <code>*this</code> and <code>other</code>.
 							</para>
 						</description>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread Lockable concept support">
+					<method name="lock" cv="const">
+						<type>void</type>
+					</method>
+					<method name="try_lock" cv="const">
+						<type>bool</type>
+					</method>
+					<method name="unlock" cv="const">
+						<type>void</type>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread TimedLockable concept support">
+					<method name="timed_lock" cv="const">
+						<template>
+							<template-type-parameter name="Timeout"/>
+						</template>
+						<type>bool</type>
+						<parameter name="t" cv="const">
+							<paramtype>const Timeout &amp;</paramtype>
+						</parameter>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread SharedLockable concept support">
+					<method name="lock_shared" cv="const">
+						<type>void</type>
+					</method>
+					<method name="try_lock_shared" cv="const">
+						<type>bool</type>
+					</method>
+					<method name="timed_lock_shared" cv="const">
+						<template>
+							<template-type-parameter name="Timeout"/>
+						</template>
+						<type>bool</type>
+						<parameter name="t" cv="const">
+							<paramtype>const Timeout &amp;</paramtype>
+						</parameter>
+					</method>
+					<method name="unlock_shared" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_and_lock_shared" cv="const">
+						<type>void</type>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread UpgradeLockable concept support">
+					<method name="lock_upgrade" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade_and_lock" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade_and_lock_shared" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_and_lock_upgrade" cv="const">
+						<type>void</type>
 					</method>
 				</method-group>
 				<copy-assignment>

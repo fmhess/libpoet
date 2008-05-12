@@ -35,6 +35,14 @@
 					concepts if the underlying <code>Mutex</code> template type supports them.
 				</para>
 				<para>
+					The interfaces defined by the Boost.Thread mutex concepts should generally
+					not be used directly by the user.  They are intended to be used by
+					scoped lock classes such as <classname>monitor_unique_lock</classname>,
+					which provide a safer means to perform locking.
+					See the "Mutex Concepts" documentation in the Boost.Thread library
+					for more information about the Lockable, etc. concepts.
+				</para>
+				<para>
 					It is possible to obtain <classname>monitor_ptr</classname>s from a <code>monitor</code> which shares
 					ownership/mutex/condition and points at
 					the value wrapped in a <code>monitor</code> object, via the <methodname>get_monitor_ptr</methodname>
@@ -132,6 +140,68 @@
 								<classname>acyclic_mutex</classname>.
 							</para>
 						</description>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread Lockable concept support">
+					<method name="lock" cv="const">
+						<type>void</type>
+					</method>
+					<method name="try_lock" cv="const">
+						<type>bool</type>
+					</method>
+					<method name="unlock" cv="const">
+						<type>void</type>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread TimedLockable concept support">
+					<method name="timed_lock" cv="const">
+						<template>
+							<template-type-parameter name="Timeout"/>
+						</template>
+						<type>bool</type>
+						<parameter name="t" cv="const">
+							<paramtype>const Timeout &amp;</paramtype>
+						</parameter>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread SharedLockable concept support">
+					<method name="lock_shared" cv="const">
+						<type>void</type>
+					</method>
+					<method name="try_lock_shared" cv="const">
+						<type>bool</type>
+					</method>
+					<method name="timed_lock_shared" cv="const">
+						<template>
+							<template-type-parameter name="Timeout"/>
+						</template>
+						<type>bool</type>
+						<parameter name="t" cv="const">
+							<paramtype>const Timeout &amp;</paramtype>
+						</parameter>
+					</method>
+					<method name="unlock_shared" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_and_lock_shared" cv="const">
+						<type>void</type>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread UpgradeLockable concept support">
+					<method name="lock_upgrade" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade_and_lock" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade_and_lock_shared" cv="const">
+						<type>void</type>
+					</method>
+					<method name="unlock_and_lock_upgrade" cv="const">
+						<type>void</type>
 					</method>
 				</method-group>
 				<copy-assignment>
