@@ -24,5 +24,5 @@ clean:
 	$(RM) $(PROGRAMS)
 
 test: $(PROGRAMS)
-	(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(BOOST_LIB_DIR); for test_prog in $(PROGRAMS); do ./$$test_prog; done;)
+	(export LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(BOOST_LIB_DIR); for test_prog in $(PROGRAMS); do ./$$test_prog; done;)
 
