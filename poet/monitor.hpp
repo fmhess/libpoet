@@ -138,13 +138,13 @@ namespace poet
 			swap(*this_lock, *other_lock);
 		}
 
-		const monitor_ptr<T, Mutex> & operator->()
+		monitor_unique_lock<monitor> operator->()
 		{
-			return _monitor_pointer;
+			return monitor_unique_lock<monitor>(*this);
 		}
-		monitor_ptr<const T, Mutex> operator->() const
+		monitor_unique_lock<const monitor> operator->() const
 		{
-			return _monitor_pointer;
+			return monitor_unique_lock<const monitor>(*this);
 		}
 
 		const monitor_ptr<T, Mutex> & get_monitor_ptr()

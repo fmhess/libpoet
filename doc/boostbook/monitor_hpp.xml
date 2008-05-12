@@ -7,12 +7,14 @@
 					<default>boost::mutex</default>
 				</template-type-parameter>
 			</template>
-			<purpose>A wrapper which provides insures locked access to an object.</purpose>
+			<purpose>A wrapper which provides automatically locked access to an object.</purpose>
 			<description>
 				<para>
 					<code>monitor</code> allows for the easy creation of monitor objects.
 					A <code>monitor</code> provides automatically locked access to its contained object's members
-					through its scoped lock classes, which can be used like pointers.
+					when they are accessed through the overloaded <methodname>operator-&gt;</methodname>,
+					or alternatively through one of the lock classes from
+					<link linkend="header.poet.monitor_locks.hpp">poet/monitor_locks.hpp</link>.
 					It is similar to a <classname>monitor_ptr</classname>, except it behaves like a value
 					instead of a smart pointer when copied.
 					Copies of a <code>monitor</code> object are deep copies with independent values, and
@@ -26,12 +28,11 @@
 					releasing the <code>monitor</code>'s mutex until the condition is satisfied.
 				</para>
 				<para>
-					The <code>Mutex</code> template type must be a model of the Mutex concept as
-					described in the Boost Thread library.  If <code>Mutex</code> is additionally
-					a model of the TryMutex or TimedMutex concept then the nested class <classname>monitor::scoped_try_lock</classname>
-					is available for "try locking".  If <code>Mutex</code> is a model of the TimedMutex
-					concept then the nested class <classname>monitor::scoped_timed_lock</classname>
-					is also available for "timed locking".
+					The <code>Mutex</code> template type parameter must model the <code>Lockable</code>
+					concept from the Boost.Thread library.  The <code>monitor</code> itself models the
+					<code>Lockable</code> concept, and will also model any of the
+					<code>TimedLockable</code>, <code>SharedLockable</code>, or <code>UpgradeLockable</code>
+					concepts if the underlying <code>Mutex</code> template type supports them.
 				</para>
 				<para>
 					It is possible to obtain <classname>monitor_ptr</classname>s from a <code>monitor</code> which shares
@@ -39,7 +40,9 @@
 					the value wrapped in a <code>monitor</code> object, via the <methodname>get_monitor_ptr</methodname>
 					method.  The value wrapped in a <code>monitor</code> object will not be destructed until
 					the last such <code>monitor_ptr</code> is destroyed, along with the <code>monitor</code>
-					object wrapping it, and any scoped locks which reference it.
+					object containing it, and any locks from
+					<link linkend="header.poet.monitor_locks.hpp">poet/monitor_locks.hpp</link>
+					which reference it.
 				</para>
 				<itemizedlist>
 					<title>Example Code</title>
@@ -65,153 +68,6 @@
 				<typedef name="mutex_type">
 					<type>Mutex</type>
 				</typedef>
-				<class name="scoped_lock">
-					<inherit access="public">
-						<type><classname>detail::monitor_scoped_lock</classname>&lt;T, Mutex&gt;</type>
-					</inherit>
-					<purpose>Scoped lock with member access</purpose>
-					<description>
-						<para>
-							<code>monitor::scoped_lock</code> models the ScopedLock concept described by the
-							Boost Thread libarary, with its associated mutex type being <classname>monitor</classname>.
-							In addition, <code>scoped_lock</code> can be used like a pointer via its
-							member access and dereference operators, which provide safe access to an object owned
-							by a <classname>monitor</classname>.
-						</para>
-					</description>
-					<access name="public">
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object owned by a <code>monitor</code>, and calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>.
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == true</code></para>
-							</postconditions>
-						</constructor>
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="do_lock">
-								<paramtype>bool</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>.
-									If <code>do_lock</code> is <code>true</code>, calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == do_lock</code></para>
-							</postconditions>
-						</constructor>
-					</access>
-				</class>
-				<class name="scoped_try_lock">
-					<inherit access="public">
-						<type><classname>detail::monitor_scoped_try_lock</classname>&lt;T, Mutex&gt;</type>
-					</inherit>
-					<purpose>Scoped try lock with member access</purpose>
-					<description>
-						<para>
-							<code>monitor::scoped_try_lock</code> models the ScopedTryLock concept described by the
-							Boost Thread libarary, with its associated mutex type being <classname>monitor</classname>.
-							In addition, <code>scoped_try_lock</code> can be used like a pointer via its
-							member access and dereference operators, which provide safe access to an object contained
-							in a <classname>monitor</classname>.
-						</para>
-					</description>
-					<access name="public">
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>,
-									and calls <methodname alt="detail::monitor_scoped_try_lock::try_lock">try_lock</methodname>().
-								</para>
-							</description>
-						</constructor>
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="do_lock">
-								<paramtype>bool</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>.
-									If <code>do_lock</code> is <code>true</code>, calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == do_lock</code></para>
-							</postconditions>
-						</constructor>
-					</access>
-				</class>
-				<class name="scoped_timed_lock">
-					<inherit access="public">
-						<type><classname>detail::monitor_scoped_timed_lock</classname>&lt;T, Mutex&gt;</type>
-					</inherit>
-					<purpose>Scoped timed lock with member access</purpose>
-					<description>
-						<para>
-							<code>monitor::scoped_timed_lock</code> models the ScopedTimedLock concept described by the
-							Boost Thread libarary, with its associated mutex type being <classname>monitor</classname>.
-							In addition, <code>scoped_timed_lock</code> can be used like a pointer via its
-							member access and dereference operators, which provide safe access to an object contained
-							in a <classname>monitor</classname>.
-						</para>
-					</description>
-					<access name="public">
-						<constructor>
-							<template>
-								<template-type-parameter name="Timeout"/>
-							</template>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="timeout">
-								<paramtype>const Timeout &amp;</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>,
-									and calls <code><methodname alt="detail::monitor_scoped_timed_lock::timed_lock">timed_lock</methodname>(timeout)</code>.
-								</para>
-							</description>
-						</constructor>
-						<constructor>
-							<parameter name="mon">
-								<paramtype><classname>monitor</classname>&lt;T, Mutex&gt; &amp;</paramtype>
-							</parameter>
-							<parameter name="do_lock">
-								<paramtype>bool</paramtype>
-							</parameter>
-							<description>
-								<para>Creates a scoped lock which can be used to safely
-									access the object contained in a <code>monitor</code>.
-									If <code>do_lock</code> is <code>true</code>, calls
-									<methodname alt="detail::monitor_scoped_lock::lock">lock</methodname>().
-								</para>
-							</description>
-							<postconditions>
-								<para><code>locked() == do_lock</code></para>
-							</postconditions>
-						</constructor>
-					</access>
-				</class>
 				<method-group name="public member functions">
 					<overloaded-method name="get_monitor_ptr">
 						<signature>
@@ -229,20 +85,27 @@
 					</overloaded-method>
 					<overloaded-method name="operator->">
 						<signature>
-							<type>const <classname>monitor_ptr</classname>&lt;T, Mutex&gt; &amp;</type>
+							<type><classname>monitor_unique_lock</classname>&lt;monitor&gt;</type>
 						</signature>
 						<signature cv="const">
-							<type><classname>monitor_ptr</classname>&lt;const T, Mutex&gt;</type>
+							<type><classname>monitor_unique_lock</classname>&lt;const monitor&gt;</type>
 						</signature>
 						<description>
-							<para>
-								Provides automatically locked access to members of the wrapped value.
+							<para>Returns a temporary <classname>monitor_unique_lock</classname> which
+								locks the <code>monitor</code>'s mutex.
+								The <code>operator-&gt;()</code> of the returned <classname>monitor_unique_lock</classname>
+								object will be
+								automatically called in turn (overloading <code>operator-&gt;()</code> is special in that way), which will
+								utimately result in a call of <code>operator-&gt;()</code> on a pointer to the
+								<code>monitor</code>'s contained object.
+								The mutex is automatically unlocked after the member access completes by the
+								<classname>monitor_unique_lock</classname>
+								destructor.
 							</para>
 							<para>
-								If more flexibility is desired, the <classname>monitor::scoped_lock</classname>,
-								<classname>monitor::scoped_try_lock</classname>, and
-								<classname>monitor::scoped_timed_lock</classname>
-								classes provides alternatives to <code>monitor::operator-&gt;</code>.
+								If more flexibility is desired, the lock types from
+								<link linkend="header.poet.monitor_locks.hpp">poet/monitor_locks.hpp</link>
+								provide alternatives to <code>monitor::operator-&gt;</code>.
 							</para>
 						</description>
 					</overloaded-method>
@@ -280,17 +143,23 @@
 					<parameter name="rhs">
 						<paramtype>const monitor&lt;U, M&gt; &amp;</paramtype>
 					</parameter>
+					<requires>
+						<para>The template type <code>U</code> of <code>rhs</code>
+							must be implicitly convertible into the template type
+							<code>T</code> of <code>*this</code>.
+						</para>
+					</requires>
 					<description>
-						<para>Copies the value of type <code>T</code> from <code>rhs</code>
+						<para>Copies the contained value of type <code>U</code> from <code>rhs</code>
 							into <code>*this</code>.
 						</para>
 						<para>
-							The mutex of the <code>rhs</code> parameter is locked while its contained value
-							is copied out of it.  Similarly, the mutex of <code>*this</code> is locked
-							while its new value is copied into it.  However, care is taken
-							not to lock both <code>*this</code> and <code>rhs</code>
-							simultaneously, to avoid violating
-							or establishing a locking order between the two monitors (which might result in deadlock).
+							The mutexes of both <code>*this</code> and <code>rhs</code> are locked before
+							the assignment is performed.  The mutexes are locked by trying each of the
+							two possible locking orders until both mutexes are successfully locked.
+							This avoids any possibility of deadlock due to locking order violation,
+							but may produce false positives when using debugging tools such as
+							<classname>acyclic_mutex</classname>.
 						</para>
 						<para>
 							Copies of a <code>monitor</code> object are deep copies, which do not share
