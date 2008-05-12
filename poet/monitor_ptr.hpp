@@ -107,21 +107,6 @@ namespace poet
 			}
 		};
 
-		class call_proxy
-		{
-		public:
-			const scoped_lock& operator->() {return *_lock;}
-		private:
-			template<typename U, typename M>
-			friend class monitor_ptr;
-
-			call_proxy(const boost::shared_ptr<scoped_lock> &lock):
-				_lock(lock)
-			{}
-
-			boost::shared_ptr<scoped_lock> _lock;
-		};
-
 		monitor_ptr()
 		{}
 		monitor_ptr(const boost::shared_ptr<T> &smart_pointer): _pointer(smart_pointer),
@@ -148,9 +133,9 @@ namespace poet
 
 		virtual ~monitor_ptr() {}
 
-		call_proxy operator->() const
+		monitor_unique_lock<const monitor_ptr> operator->() const
 		{
-			return call_proxy(boost::shared_ptr<scoped_lock>(new scoped_lock(const_cast<monitor_ptr&>(*this))));
+			return monitor_unique_lock<const monitor_ptr>(*this);
 		}
 		// unlocked access
 		const boost::shared_ptr<T>& direct() const {return _pointer;}

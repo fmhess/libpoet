@@ -58,37 +58,23 @@
 				<typedef name="mutex_type">
 					<type>Mutex</type>
 				</typedef>
-				<class name="call_proxy">
-					<purpose>Helper class for <methodname>monitor_ptr::operator-&gt;</methodname>.</purpose>
-					<description>
-						<para>
-							Objects of this class exist as temporary objects resulting from
-							<methodname>monitor_ptr::operator-&gt;</methodname> member access calls.
-							They forward member access calls to the <classname>monitor_ptr</classname>'s
-							underlying pointer, and unlock the <classname>monitor_ptr</classname>'s
-							mutex in their destructor.
-						</para>
-					</description>
-					<access name="public">
-						<method name="operator->" cv="const">
-							<type>T *</type>
-						</method>
-					</access>
-				</class>
 				<method-group name="public member functions">
 					<method name="direct" cv="const">
 						<type>const boost::shared_ptr&lt;T&gt; &amp;</type>
 						<description><para>Gives direct unlocked access to the underlying pointer.</para></description>
 					</method>
 					<method name="operator->" cv="const">
-						<type><classname>call_proxy</classname></type>
+						<type><classname>monitor_unique_lock</classname>&lt;const monitor_ptr&gt;</type>
 						<description>
-							<para>Locks the <code>monitor_ptr</code>'s mutex and returns a <classname>call_proxy</classname> object.
-								The <code>operator-&gt;()</code> of the returned <classname>call_proxy</classname> object will be
+							<para>Returns a temporary <classname>monitor_unique_lock</classname> which owns
+								locks the <code>monitor_ptr</code>'s mutex.
+								The <code>operator-&gt;()</code> of the returned <classname>monitor_unique_lock</classname>
+								object will be
 								automatically called in turn (overloading <code>operator-&gt;()</code> is special in that way), which will
 								utimately result in a call of <code>operator-&gt;()</code> on the
 								<code>monitor_ptr</code>'s underlying pointer.
-								The mutex is automatically unlocked after the member access completes by the <classname>call_proxy</classname>
+								The mutex is automatically unlocked after the member access completes by the
+								<classname>monitor_unique_lock</classname>
 								destructor.
 							</para>
 							<para>
