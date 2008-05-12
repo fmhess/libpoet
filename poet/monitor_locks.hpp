@@ -80,7 +80,9 @@ namespace poet
 			template<typename OtherLock>
 			lock_wrapper(boost::detail::thread_move_t<OtherLock> other):
 				_mon(other->_mon), _mon_raw_ptr(other->_mon_raw_ptr), _lock(other->_lock.move())
-			{}
+			{
+				set_wait_function();
+			}
 
 			// unique/shared_lock interface
 			void swap(lock_wrapper &other)
