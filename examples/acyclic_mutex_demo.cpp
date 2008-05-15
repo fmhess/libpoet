@@ -6,6 +6,7 @@
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/thread/locks.hpp>
 #include <cstdlib>
 #include <poet/acyclic_mutex.hpp>
 #include <iostream>
@@ -16,7 +17,7 @@ typedef poet::acyclic_mutex<boost::mutex> mutex_type;
 a graphviz file to stdout. */
 void cycle_handler()
 {
-	poet::mutex_grapher::scoped_lock grapher;
+	poet::mutex_grapher::unique_lock grapher;
 	std::cerr << "Detected cycle in locking order graph.\n"
 		<< "Currently locked mutexes:";
 	poet::mutex_grapher::mutex_list_type::const_iterator it;
@@ -32,23 +33,25 @@ void cycle_handler()
 
 int main()
 {
+	// replace the default cycle handler (which aborts the program)
 	{
-		poet::mutex_grapher::scoped_lock grapher;
+		poet::mutex_grapher::unique_lock grapher;
 		grapher->set_cycle_handler(&cycle_handler);
 	}
+
 	mutex_type mutex_a("a");
 	mutex_type mutex_b("b");
 	mutex_type mutex_x;
 	{
-		mutex_type::scoped_lock lock_a(mutex_a);
-		mutex_type::scoped_lock lock_x(mutex_x);
+		boost::unique_lock<mutex_type> lock_a(mutex_a);
+		boost::unique_lock<mutex_type> lock_x(mutex_x);
 	}
 	{
-		mutex_type::scoped_lock lock_x(mutex_x);
-		mutex_type::scoped_lock lock_b(mutex_b);
+		boost::unique_lock<mutex_type> lock_x(mutex_x);
+		boost::unique_lock<mutex_type> lock_b(mutex_b);
 		/* this will violate the locking order we have established,
 			and will result in the cycle handler being called */
-		mutex_type::scoped_lock lock_a(mutex_a);
+		boost::unique_lock<mutex_type> lock_a(mutex_a);
 	}
 	return 0;
 }
