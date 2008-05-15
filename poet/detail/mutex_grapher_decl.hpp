@@ -23,7 +23,8 @@
 #include <list>
 #include <map>
 #include <poet/detail/template_static.hpp>
-#include <poet/monitor.hpp>
+#include <poet/monitor_ptr.hpp>
+#include <poet/monitor_locks.hpp>
 #include <string>
 
 namespace poet
@@ -56,12 +57,13 @@ namespace poet
 		typedef boost::adjacency_list<boost::setS, boost::vecS, boost::bidirectionalS, vertex_properties, edge_properties>
 			locking_order_graph;
 		typedef std::list<const acyclic_mutex_base *> mutex_list_type;
-		class scoped_lock: public monitor_type::scoped_lock
+		class unique_lock: public monitor_unique_lock<monitor_type>
 		{
 		public:
-			scoped_lock(): monitor_type::scoped_lock(mutex_grapher::instance())
+			unique_lock(): monitor_unique_lock<monitor_type>(mutex_grapher::instance())
 			{}
 		};
+		typedef unique_lock scoped_lock;
 
 		const locking_order_graph& graph() const {return _graph;}
 		inline void write_graphviz(std::ostream &out_stream) const;

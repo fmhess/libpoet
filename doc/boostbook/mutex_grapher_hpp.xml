@@ -110,15 +110,15 @@
 					</description>
 				</typedef>
 				<typedef name="mutex_list_type"><type>std::list&lt;const <classname>acyclic_mutex_base</classname> *&gt;</type></typedef>
-				<class name="scoped_lock">
+				<class name="unique_lock">
 					<inherit access="public">
-						<type><classname>monitor_ptr</classname>&lt;<classname>mutex_grapher</classname>, boost::mutex&gt;::scoped_lock</type>
+						<type><classname>monitor_unique_lock</classname>&lt;<classname>monitor_ptr</classname>&lt;<classname>mutex_grapher</classname>, boost::mutex&gt; &gt;</type>
 					</inherit>
 					<purpose>Provides locked access to the <classname>mutex_grapher</classname> singleton.</purpose>
 					<description>
 						<para>
-							This scoped_lock class is default constructible (since there is only one mutex_grapher object),
-							and inherits from <classname>monitor_ptr::scoped_lock</classname>.
+							This unique_lock class is default constructible (since there is only one mutex_grapher object),
+							and inherits from <classname>monitor_unique_lock</classname>.
 							Creating objects of this class is the only way to access the <classname>mutex_grapher</classname> singleton.
 						</para>
 					</description>
@@ -126,7 +126,7 @@
 						<constructor>
 							<description>
 								<para>
-									Creates a <classname>monitor_ptr</classname>::scoped_lock which provides access to the
+									Creates a <classname>monitor_unique_lock</classname> which provides access to the
 									mutex_grapher singleton.
 								</para>
 							</description>
@@ -189,7 +189,7 @@
 				<constructor>
 					<description>
 						<para>Private constructor.  The <code>mutex_grapher</code> singleton may only
-						be accessed by creating a <classname>mutex_grapher::scoped_lock</classname> object.</para>
+						be accessed by creating a <classname>mutex_grapher::unique_lock</classname> object.</para>
 					</description>
 				</constructor>
 			</access>
