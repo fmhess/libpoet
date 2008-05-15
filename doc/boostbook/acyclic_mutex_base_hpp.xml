@@ -12,7 +12,7 @@
 			<access name="public">
 				<method-group name="public member functions">
 					<method name="vertex" cv="const">
-						<type><classname>boost::optional</classname>&lt;<classname>mutex_grapher</classname>::<classname>locking_order_graph</classname>::vertex_descriptor&gt;</type>
+						<type><classname>boost::optional</classname>&lt;<classname>mutex_grapher</classname>::<classname alt="mutex_grapher::locking_order_graph">locking_order_graph</classname>::vertex_descriptor&gt;</type>
 						<description>
 							<para>Returns the mutex's vertex descriptor in the locking order graph.
 								If the mutex has never been locked, it will have no vertex descriptor and
