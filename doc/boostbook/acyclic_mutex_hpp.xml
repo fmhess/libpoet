@@ -28,6 +28,23 @@
 					order remains consistent as the program executes.
 				</para>
 				<para>
+					An <code>acyclic_mutex</code> will model the same mutex concepts (see Boost.Thread
+					version 1.35.0 or later)
+					modeled by its <code>Mutex</code> template type.  Thus, you may use any appropriate
+					lock type from Boost.Thread to lock an <code>acyclic_mutex</code> (for example,
+					a <code>boost::unique_lock</code>).
+				</para>
+				<para>
+					The <code>Mutex</code> template type may be any of the mutex classes provided by
+					Boost.Thread (version 1.35.0 or later) or libpoet itself.  It may also be
+					a foreign mutex classes, as long as it models one of the
+					mutex concepts defined in the Boost.Thread documentation, and you define
+					a specialization of <classname>mutex_properties</classname> for the
+					foreign mutex class.  However, recursive <code>SharedLockable</code>
+					and recursive <code>UpgradeLockable</code>
+					mutexes are not currently supported, due to there being no known implementations.
+				</para>
+				<para>
 					The <code>KeyCompare</code> template parameter must define a strict weak ordering
 					for the <code>Key</code> type.  Note, this is
 					only used to determine if two keys are equivalent or not, and is not taken
@@ -67,51 +84,6 @@
 				<typedef name="key_compare">
 					<type>KeyCompare</type>
 				</typedef>
-				<typedef name="scoped_lock">
-					<type><emphasis>unspecified</emphasis></type>
-					<purpose>Scoped lock with locking order debugging.</purpose>
-					<description>
-						<para>
-							<code>scoped_lock</code> models the ScopedLock concept described by the
-							Boost Thread library.
-							<code>scoped_lock</code> is a wrapper around the underlying
-							<code>Mutex::scoped_lock</code> class.  It updates the locking
-							order graph and tests for cycles before attempting to acquire a lock.
-						</para>
-					</description>
-				</typedef>
-				<typedef name="scoped_try_lock">
-					<type><emphasis>unspecified</emphasis></type>
-					<purpose>Scoped try lock with locking order debugging.</purpose>
-					<description>
-						<para>
-							This type will only exist if <code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>
-							equals <code>try_mutex_concept</code> or <code>timed_mutex_concept</code>.
-						</para>
-						<para>
-							<code>scoped_try_lock</code> models the ScopedTryLock concept described by the
-							Boost Thread library.  <code>scoped_try_lock</code> is a wrapper around the underlying
-							<code>Mutex::scoped_try_lock</code> class.  It updates the locking
-							order graph and tests for cycles before attempting to acquire a lock.
-						</para>
-					</description>
-				</typedef>
-				<typedef name="scoped_timed_lock">
-					<type><emphasis>unspecified</emphasis></type>
-					<purpose>Scoped timed lock with locking order debugging.</purpose>
-					<description>
-						<para>
-							This type will only exist if <code><classname>mutex_properties</classname>&lt;Mutex&gt;::model</code>
-							equals <code>timed_mutex_concept</code>.
-						</para>
-						<para>
-							<code>scoped_timed_lock</code> models the ScopedTimedLock concept described by the
-							Boost Thread library.  <code>scoped_timed_lock</code> is a wrapper around the underlying
-							<code>Mutex::scoped_timed_lock</code> class.  It updates the locking
-							order graph and tests for cycles before attempting to acquire a lock.
-						</para>
-					</description>
-				</typedef>
 				<method-group name="public member functions">
 					<method name="node_key" cv="const">
 						<type><classname>boost::optional</classname>&lt;Key&gt;</type>
@@ -126,11 +98,74 @@
 						</description>
 					</method>
 				</method-group>
+				<method-group name="Boost.Thread Lockable concept support">
+					<method name="lock">
+						<type>void</type>
+					</method>
+					<method name="try_lock">
+						<type>bool</type>
+					</method>
+					<method name="unlock">
+						<type>void</type>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread TimedLockable concept support">
+					<method name="timed_lock">
+						<template>
+							<template-type-parameter name="Timeout"/>
+						</template>
+						<type>bool</type>
+						<parameter name="t">
+							<paramtype>const Timeout &amp;</paramtype>
+						</parameter>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread SharedLockable concept support">
+					<method name="lock_shared">
+						<type>void</type>
+					</method>
+					<method name="try_lock_shared">
+						<type>bool</type>
+					</method>
+					<method name="timed_lock_shared">
+						<template>
+							<template-type-parameter name="Timeout"/>
+						</template>
+						<type>bool</type>
+						<parameter name="t">
+							<paramtype>const Timeout &amp;</paramtype>
+						</parameter>
+					</method>
+					<method name="unlock_shared">
+						<type>void</type>
+					</method>
+					<method name="unlock_and_lock_shared">
+						<type>void</type>
+					</method>
+				</method-group>
+				<method-group name="Boost.Thread UpgradeLockable concept support">
+					<method name="lock_upgrade">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade_and_lock">
+						<type>void</type>
+					</method>
+					<method name="unlock_upgrade_and_lock_shared">
+						<type>void</type>
+					</method>
+					<method name="unlock_and_lock_upgrade">
+						<type>void</type>
+					</method>
+				</method-group>
 				<constructor>
 					<description>
 						<para>The default constructor creates a mutex with no key.  This causes the mutex to be allocated
 							its own vertex in the locking order graph.  Default construction requires the least effort
-							from the user, and minimizes the possibility of false positives, but also incurs the most overhead.
+							from the user, and minimizes the possibility of false positives, but also incurs the most overhead
+							in the locking order graph of the <classname>mutex_grapher</classname>.
 							If your program allocates many mutex objects, it may be worth coming up with a scheme for
 							assigning keys to your mutexes.
 						</para>
