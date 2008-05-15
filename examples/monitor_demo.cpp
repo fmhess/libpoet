@@ -1,7 +1,8 @@
 // An example of using the monitor_ptr and monitor classes
-// for automatically locked access to an object.
+// for automatically locked access to an object and waiting
+// on the monitor's condition variable.
 
-// Copyright (C) Frank Mori Hess 2007
+// Copyright (C) Frank Mori Hess 2007-2008
 //  Distributed under the Boost Software License, Version 1.0. (See
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
@@ -14,35 +15,30 @@
 #include <poet/monitor.hpp>
 #include <poet/monitor_ptr.hpp>
 #include <poet/monitor_base.hpp>
-#include <unistd.h>
 
 
 class Monitored: public poet::monitor_base
 {
 public:
-	void waiting_function()
+	Monitored(): _state(0)
+	{}
+	void wait_for_state(int state)
 	{
-		std::cerr << __FUNCTION__ << ": enter (mutex acquired)" << std::endl;
-		usleep(1000000);
-		std::cerr << __FUNCTION__ << ": waiting... (mutex released)" << std::endl;
-		wait();
-		std::cerr << __FUNCTION__ << ": wait complete (mutex acquired)" << std::endl;
-		usleep(1000000);
-		std::cerr << __FUNCTION__ << ": exit (mutex released)" << std::endl;
+		std::cerr << "thread " << boost::this_thread::get_id() << ": " <<
+			__FUNCTION__ << ": waiting for state = " << state << std::endl;
+		while(_state != state) wait();
+		std::cerr << "thread " << boost::this_thread::get_id() << ": " <<
+			__FUNCTION__ << ": have state = " << state << std::endl;
 	}
-	void notifying_function()
+	void set_state(int state)
 	{
-		std::cerr << __FUNCTION__ << ": enter, notifying (mutex acquired)" << std::endl;
+		std::cerr << "thread " << boost::this_thread::get_id() << ": " <<
+			__FUNCTION__ << ": state = " << state << std::endl;
+		_state = state;
 		notify_all();
-		usleep(1000000);
-		std::cerr << __FUNCTION__ << ": exit (mutex released)" << std::endl;
 	}
-	void another_function()
-	{
-		std::cerr << __FUNCTION__ << ": enter (mutex acquired)" << std::endl;
-		usleep(1000000);
-		std::cerr << __FUNCTION__ << ": exit (mutex released)" << std::endl;
-	}
+private:
+	int _state;
 };
 
 //example of using poet::monitor_ptr
@@ -51,65 +47,32 @@ typedef poet::monitor_ptr<Monitored> monitor_ptr_type;
 
 void monitor_ptr_thread0_function(monitor_ptr_type mymonitor)
 {
-	mymonitor->waiting_function();
+	poet::monitor_unique_lock<monitor_ptr_type> mon_lock(mymonitor);
+	mon_lock->set_state(1);
+	mon_lock->wait_for_state(2);
+	mon_lock->set_state(3);
+	mon_lock->wait_for_state(4);
 }
 
 void monitor_ptr_thread1_function(monitor_ptr_type mymonitor)
 {
-	usleep(500000);
-	mymonitor->notifying_function();
-	usleep(500000);
-	mymonitor->another_function();
-}
-
-void monitor_ptr_example()
-{
-	std::cerr << "\n" << __PRETTY_FUNCTION__ << std::endl;
-	monitor_ptr_type mymonitor(new Monitored);
-	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor));
-	boost::thread thread1(boost::bind(&monitor_ptr_thread1_function, mymonitor));
-	thread0.join();
-	thread1.join();
-}
-
-
-// same thing done with poet::monitor
-
-typedef poet::monitor<Monitored> monitor_type;
-
-void monitor_thread0_function(monitor_type &mymonitor)
-{
-	monitor_type::scoped_lock mon_lock(mymonitor);
-	mon_lock->waiting_function();
-}
-
-void monitor_thread1_function(monitor_type &mymonitor)
-{
-	usleep(500000);
+	mymonitor->wait_for_state(1);
 	{
-		monitor_type::scoped_lock mon_lock(mymonitor);
-		mon_lock->notifying_function();
+		poet::monitor_unique_lock<monitor_ptr_type> mon_lock(mymonitor);
+		mon_lock->set_state(2);
+		mon_lock->wait_for_state(3);
 	}
-	usleep(500000);
-	{
-		monitor_type::scoped_lock mon_lock(mymonitor);
-		mon_lock->another_function();
-	}
-}
-
-void monitor_example()
-{
-	std::cerr << "\n" << __PRETTY_FUNCTION__ << std::endl;
-	monitor_type mymonitor;
-	boost::thread thread0(boost::bind(&monitor_thread0_function, boost::ref(mymonitor)));
-	boost::thread thread1(boost::bind(&monitor_thread1_function, boost::ref(mymonitor)));
-	thread0.join();
-	thread1.join();
+	mymonitor->set_state(4);
 }
 
 int main()
 {
-	monitor_ptr_example();
-	monitor_example();
+	typedef poet::monitor<Monitored> monitor_type;
+	monitor_type mymonitor;
+	boost::thread thread0(boost::bind(&monitor_ptr_thread0_function, mymonitor.get_monitor_ptr()));
+	boost::thread thread1(boost::bind(&monitor_ptr_thread1_function, mymonitor.get_monitor_ptr()));
+	thread0.join();
+	thread1.join();
+
 	return 0;
 }
