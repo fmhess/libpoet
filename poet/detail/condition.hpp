@@ -13,6 +13,7 @@
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 namespace poet
 {
@@ -28,13 +29,13 @@ namespace poet
 			}
 			template <typename Pred> void locking_wait(Pred predicate)
 			{
-				boost::mutex::scoped_lock lock(mutex);
+				boost::unique_lock<boost::mutex> lock(mutex);
 				wait(lock, predicate);
 			}
-			template <typename Pred> void locking_timed_wait(const boost::xtime &xt, Pred predicate)
+			template <typename Timeout, typename Pred> void locking_timed_wait(const Timeout &t, Pred predicate)
 			{
-				boost::mutex::scoped_lock lock(mutex);
-				timed_wait(lock, xt, predicate);
+				boost::unique_lock<boost::mutex> lock(mutex);
+				timed_wait(lock, t, predicate);
 			}
 			mutable boost::mutex mutex;
 		};

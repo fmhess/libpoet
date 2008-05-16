@@ -9,6 +9,7 @@
 #include <poet/active_object.hpp>
 
 #include <boost/bind.hpp>
+#include <boost/thread/thread_time.hpp>
 #include <cassert>
 
 void poet::in_order_activation_queue::push_back(const boost::shared_ptr<method_request_base> &request)
@@ -125,19 +126,9 @@ void poet::detail::scheduler_impl::dispatcherThreadFunction(const boost::shared_
 	{
 		if(shared_this->_millisecTimeout > 0)
 		{
-			static const unsigned milliPerUnit = 1000;
-			static const unsigned nanoPerMilli = 1000000;
-			static const unsigned nanoPerUnit = 1000000000;
-			unsigned seconds = shared_this->_millisecTimeout / milliPerUnit;
-			unsigned nanoseconds = (shared_this->_millisecTimeout - seconds * milliPerUnit) * nanoPerMilli;
-			seconds += nanoseconds / nanoPerUnit;
-			nanoseconds %= nanoPerUnit;
-			boost::xtime wakeTime;
-			boost::xtime_get(&wakeTime, boost::TIME_UTC);
-			wakeTime.sec += seconds;
-			wakeTime.nsec += nanoseconds;
-			wakeTime.sec += wakeTime.nsec / nanoPerUnit;
-			wakeTime.nsec %= nanoPerUnit;
+			boost::posix_time::time_duration timeout = boost::posix_time::millisec(shared_this->_millisecTimeout);
+			boost::system_time wakeTime = boost::get_system_time() +
+				boost::posix_time::millisec(shared_this->_millisecTimeout);
 			shared_this->_wakeCondition.locking_timed_wait(wakeTime, boost::bind(&poet::detail::scheduler_impl::wakePending, shared_this.get()));
 		}else if(shared_this->_millisecTimeout < 0)
 		{

@@ -39,7 +39,7 @@
 					</method>
 					<method name="timed_join" cv="const">
 						<type>bool</type>
-						<parameter name="absolute_time"><paramtype>const boost::xtime &amp;</paramtype></parameter>
+						<parameter name="absolute_time"><paramtype>const boost::system_time &amp;</paramtype></parameter>
 						<description><para>timed_join() blocks until <computeroutput>absolute_time</computeroutput> is reached, or either ready() or has_exception() becomes true.</para></description>
 						<returns><para><code>true</code> if either <methodname>ready</methodname> or <methodname>has_exception</methodname>
 								return <code>true</code>.</para></returns>
@@ -136,7 +136,7 @@
 					</method>
 					<method name="timed_join" cv="const">
 						<type>bool</type>
-						<parameter name="absolute_time"><paramtype>const boost::xtime &amp;</paramtype></parameter>
+						<parameter name="absolute_time"><paramtype>const boost::system_time &amp;</paramtype></parameter>
 						<description><para>Same as the corresponding function for an unspecialized <classname>future</classname>.</para></description>
 					</method>
 					<method name="ready" cv="const">

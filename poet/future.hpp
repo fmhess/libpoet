@@ -26,7 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/thread/xtime.hpp>
+#include <boost/thread/thread_time.hpp>
 #include <boost/thread_safe_signal.hpp>
 #include <poet/detail/condition.hpp>
 #include <poet/exception_ptr.hpp>
@@ -53,7 +53,7 @@ namespace poet
 			virtual ~future_body_base() {}
 			virtual bool ready() const = 0;
 			virtual const T& getValue() const = 0;
-			virtual bool timed_join(const boost::xtime &absolute_time) const = 0;
+			virtual bool timed_join(const boost::system_time &absolute_time) const = 0;
 			virtual void setValue(const T &value) = 0;
 			virtual void cancel(const poet::exception_ptr &) = 0;
 			virtual bool has_exception() const = 0;
@@ -106,7 +106,7 @@ namespace poet
 				BOOST_ASSERT(_value);
 				return _value.get();
 			}
-			virtual bool timed_join(const boost::xtime &absolute_time) const
+			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
 				_readyCondition.locking_timed_wait(absolute_time, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
 				return readyOrCancelled();
@@ -210,7 +210,7 @@ namespace poet
 				boost::mutex::scoped_lock lock(_mutex);
 				return _proxyValue.get();
 			}
-			virtual bool timed_join(const boost::xtime &absolute_time) const
+			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
 				return _actualFutureBody->timed_join(absolute_time);
 			}
@@ -389,7 +389,7 @@ namespace poet
 		{
 			return get();
 		}
-		bool timed_join(const boost::xtime &absolute_time) const
+		bool timed_join(const boost::system_time &absolute_time) const
 		{
 			return _future_body->timed_join(absolute_time);
 		}
