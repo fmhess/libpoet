@@ -1,16 +1,13 @@
-Parallel Object Execution Threads
+libpoet: Parallel Object Execution Threads
 
-libpoet is a C++ library intended to make creation of active objects easy 
-enough for routine use. Some of the more important classes in the library 
-are poet::future, poet::active_function, and poet::scheduler. 
-
-libpoet also provides support for creating monitor objects via the 
-poet::monitor_ptr and poet::monitor_base classes. 
+libpoet is a C++ parallel programing library. It provides support for easily 
+creating active objects, creating monitor objects, and automatically 
+validating mutex locking order.
 
 The release tarballs should have html documentation in the doc/boostbook/html 
 subdirectory.
 
-The libpoet home page is at:
+The libpoet documentation is also online:
 
 http://www.comedi.org/projects/libpoet/boostbook/doc/boostbook/html/index.html
 
