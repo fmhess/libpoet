@@ -1,3 +1,327 @@
+2008-05-16 11:42  fmhess
+
+	* README: Made some minor updates to README.
+
+2008-05-16 11:15  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Fixed version date of lib
+	  mentioned in docs.
+
+2008-05-15 16:22  fmhess
+
+	* examples/acyclic_mutex_demo.cpp: Updated acyclic_mutex example
+	  code to boost.thread 1.35 api.
+
+2008-05-15 15:44  fmhess
+
+	* examples/monitor_demo.cpp: Updated monitor example code.
+
+2008-05-15 13:40  fmhess
+
+	* doc/boostbook/acyclic_mutex_hpp.xml: Updated acyclic_mutex docs
+	  for boost.thread 1.35 api.
+
+2008-05-15 10:33  fmhess
+
+	* doc/boostbook/mutex_grapher_hpp.xml,
+	  poet/detail/mutex_grapher_decl.hpp: Changed
+	  mutex_grapher::scoped_lock to mutex_grapher::unique_lock, to
+	  follow new boost.thread api.
+
+2008-05-15 10:32  fmhess
+
+	* doc/boostbook/acyclic_mutex_base_hpp.xml: Fixed link to
+	  locking_order_graph typedef.
+
+2008-05-12 16:34  fmhess
+
+	* doc/boostbook/: monitor_hpp.xml, monitor_ptr_hpp.xml: Added
+	  wrappers for Boost.Thread mutex concepts to synopsis of monitor
+	  and monitor_ptr, and added some brief discussion of the concepts
+	  in the class descriptions.
+
+2008-05-12 14:35  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp: Made
+	  monitor::operator-> return a monitor_unique_lock instead of a
+	  monitor_ptr.	Updated monitor docs, including boost.thread 1.35
+	  api and other changes.
+
+2008-05-12 13:21  fmhess
+
+	* test/Makefile: Need extra $ for shell variable to escape
+	  makefile.
+
+2008-05-12 13:11  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml, poet/monitor_ptr.hpp: Got rid
+	  of unneeded monitor_ptr::call_proxy, and instead use
+	  monitor_unique_lock directly.
+
+2008-05-12 13:03  fmhess
+
+	* poet/monitor_locks.hpp: Need to call set_wait_function method
+	  after move-constructing a lock.
+
+2008-05-12 11:00  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Updated monitor_ptr docs wrt
+	  to changes to match boost.thread 1.35 api.
+
+2008-05-09 16:52  fmhess
+
+	* test/: Makefile, lock_move_test.cpp: Added lock_move_test.cpp
+
+2008-05-09 16:52  fmhess
+
+	* poet/monitor_locks.hpp: Fixed some subtle problems with
+	  moving/swapping locks and their associated monitors.
+
+2008-05-09 10:24  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added docs for free swap and
+	  move functions that take monitor locks as parameters.
+
+2008-05-09 09:11  fmhess
+
+	* poet/monitor_locks.hpp: Added monitor_type typedef to
+	  monitor_upgrade_to_unique_lock.
+
+2008-05-08 15:52  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Tweaked lock constructor
+	  descriptions.
+
+2008-05-08 15:39  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added documentation for
+	  monitor_upgrade_to_unique_lock.
+
+2008-05-08 13:38  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added docs for
+	  monitor_upgrade_lock.
+
+2008-05-08 11:26  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added default lock
+	  constructors to documentation.
+
+2008-05-08 11:12  fmhess
+
+	* poet/monitor_locks.hpp: Added default lock constructors.
+
+2008-05-08 11:04  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added missing assignment
+	  operator for monitor_unique_lock, and corrected a couple typos.
+	  Added documentation for monitor_shared_lock.
+
+2008-04-24 11:40  fmhess
+
+	* test/new_mutex_api_test.cpp: Added a little test for non-boost
+	  mutex with monitor_ptr and monitor_base
+
+2008-04-23 16:32  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Some updates to the front page of
+	  the documentation.
+
+2008-04-23 16:31  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Used "copy-assignment" element to
+	  document operator=, instead of "method" element.  Added
+	  documentation of additional assignment operator overload which
+	  suppresses default assignment operator.
+
+2008-04-23 16:30  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Used "copy-assignment" element
+	  to document assignment operator, instead of "method".
+
+2008-04-23 16:29  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added documentation for
+	  monitor_unique_lock.
+
+2008-04-23 11:18  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added monitor_ptr::swap
+	  documentation, and sorted public member functions.
+
+2008-04-23 11:06  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Updated monitor swap
+	  documentation.  Sorted some method documentation entries by
+	  method name.
+
+2008-04-23 09:56  fmhess
+
+	* poet/monitor_locks.hpp: Avoid potential conflicts with future
+	  boost.thread revisions.
+
+2008-04-23 09:45  fmhess
+
+	* test/new_mutex_api_test.cpp: Made test of lock release a little
+	  more complete.
+
+2008-04-23 08:57  fmhess
+
+	* poet/monitor_ptr.hpp, test/new_mutex_api_test.cpp: Throw
+	  boost::lock_error if user attempts to use an empty monitor_ptr as
+	  a mutex.
+
+2008-04-17 16:47  fmhess
+
+	* poet/monitor_locks.hpp: Reset monitor handle when releasing a
+	  lock.
+
+2008-04-17 16:43  fmhess
+
+	* poet/monitor_locks.hpp, test/new_mutex_api_test.cpp: Added test
+	  for lock release() method.  Fixed bug with mutex() method not
+	  returning NULL after release.
+
+2008-04-17 15:49  fmhess
+
+	* poet/monitor_locks.hpp, test/new_mutex_api_test.cpp: Added free
+	  move functions.
+
+2008-04-17 14:12  fmhess
+
+	* poet/monitor_locks.hpp, test/new_mutex_api_test.cpp: Added free
+	  swap functions for monitor locks.  Added move/swap support to
+	  monitor_upgrade_to_unique_lock.
+
+2008-04-17 11:36  fmhess
+
+	* test/new_mutex_api_test.cpp: Slightly expanded lock move tests to
+	  excercise assignment operator.
+
+2008-04-16 17:01  fmhess
+
+	* poet/acyclic_mutex.hpp, poet/monitor.hpp, poet/monitor_locks.hpp,
+	  poet/monitor_ptr.hpp, test/Makefile,
+	  test/acyclic_mutex_upgrade_lock_test.cpp,
+	  test/new_mutex_api_test.cpp: Added move support for monitor
+	  locks.  Fixed mutex() and release() methods for locks.  Fixed
+	  some problems with counts of a thread's upgrade/shared locks in
+	  acyclic_mutex.
+
+2008-04-14 17:16  fmhess
+
+	* poet/acyclic_mutex.hpp, test/Makefile,
+	  test/acyclic_mutex_upgrade_lock_test.cpp: Fixed some problems
+	  with acyclic_mutex and upgrade locks.
+
+2008-04-14 11:27  fmhess
+
+	* poet/exception_ptr.cpp: Fixed static initialization problem with
+	  s_bad_alloc.
+
+2008-04-13 19:19  fmhess
+
+	* poet/: monitor.hpp, monitor_locks.hpp, detail/utility.hpp: Made
+	  monitor swap and assigment lock both monitors simultaneously,
+	  which is possible safely without extra specializations now that
+	  the base Lockable concept requires try locking.
+
+2008-04-13 16:00  fmhess
+
+	* poet/acyclic_mutex.hpp, poet/mutex_properties.hpp, test/Makefile,
+	  test/acyclic_shared_mutex_test.cpp: Added support for wrapping
+	  boost::shared_mutex in poet::acyclic_mutex.
+
+2008-04-12 14:53  fmhess
+
+	* poet/monitor.hpp, poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  test/new_mutex_api_test.cpp: Added monitor_upgrade_lock and
+	  monitor_upgrade_to_unique_lock.  Restored fixed swap member
+	  functions to monitor and monitor_ptr after Peter Dimov told me
+	  why they were broken before.
+
+2008-04-11 16:50  fmhess
+
+	* poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  test/new_mutex_api_test.cpp: Added implementation of
+	  monitor_shared_lock.
+
+2008-04-10 15:56  fmhess
+
+	* poet/: acyclic_mutex.hpp, detail/mutex_grapher.ipp,
+	  detail/mutex_grapher_decl.hpp: Ported acyclic_mutex to
+	  boost.thread 1.35.0 api.
+
+2008-04-10 13:48  fmhess
+
+	* poet/monitor.hpp, test/new_mutex_api_test.cpp: Added support for
+	  using monitor as mutex with boost.thread locks.  Added some tests
+	  for using boost.thread locks with monitor and monitor_ptr.
+
+2008-04-09 15:33  fmhess
+
+	* poet/monitor.hpp, poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  test/Makefile, test/new_mutex_api_test.cpp: Made
+	  monitor_unique_lock<monitor> work correctly.	Added test for
+	  monitor_unique_lock.
+
+2008-04-08 17:21  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp,
+	  poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  poet/detail/monitor_locks.hpp, test/Makefile: Added
+	  poet::monitor_unique_lock to start moving towards new
+	  Boost.Thread api.  Converted monitor_ptr to use
+	  monitor_unique_lock.
+
+2008-04-08 13:41  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, doc/boostbook/monitor_ptr_hpp.xml,
+	  doc/boostbook/mutex_properties_hpp.xml, poet/acyclic_mutex.hpp,
+	  poet/monitor.hpp, poet/monitor_ptr.hpp,
+	  poet/mutex_properties.hpp, poet/detail/monitor_locks.hpp:
+	  Compiles against boost.thread 1.35.0 now.  Haven't updated API to
+	  conform to changes in new boost.thread api yet.
+
+2008-04-07 15:03  fmhess
+
+	* poet/: monitor.hpp, monitor_base.hpp, monitor_ptr.hpp: Cleaned up
+	  a lot of unnecessary specialized base classes of monitor and
+	  monitor_ptr.
+
+2008-04-04 14:29  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp,
+	  test/monitor_test.cpp: Added support for operator-> to
+	  poet::monitor for convenience.  Made
+	  poet::monitor::get_monitor_ptr more const-correct.
+
+2008-03-25 16:28  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, doc/boostbook/monitor_ptr_hpp.xml,
+	  poet/monitor.hpp, poet/monitor_ptr.hpp, test/monitor_test.cpp:
+	  Added aliasing constructor/reset to monitor_ptr.  Added
+	  no-argument monitor_ptr::reset.  Added
+	  monitor::get_monitor_ptr().  Added swap overload for monitor_ptr.
+	  Remove monitor::swap method from interface because it interfered
+	  with argument dependent lookup for swap inside of monitor class.
+	  Updated docs to reflect changes.  Added tests for aliasing
+	  constructor and swap.
+
+2008-01-28 11:49  fmhess
+
+	* README: Updated location of libpoet web site.
+
+2008-01-28 11:49  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: updated link to libpoet web site.
+
+2008-01-28 09:51  tag v2008_01_28
+
+2008-01-28 09:51  fmhess
+
+	* ChangeLog: Regenerated ChangeLog with "cvs2cl -T"
+
 2008-01-25 08:46  fmhess
 
 	* doc/boostbook/libpoet_doc.xml: Added a word.
