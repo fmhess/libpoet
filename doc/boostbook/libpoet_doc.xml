@@ -81,7 +81,7 @@
 				<ulink url="http://www.comedi.org/projects/thread_safe_signals/doxygen/index.html">thread_safe_signals</ulink>.
 			</para>
 			<para>
-				libpoet versions 2008-04-24 or later require Boost version 1.35.0
+				libpoet versions 2008-05-16 or later require Boost version 1.35.0
 				or later, due to changes in the Boost.Thread interface.
 			</para>
 			<para>
