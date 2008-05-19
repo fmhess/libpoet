@@ -46,6 +46,15 @@
 					See the "Mutex Concepts" documentation in the Boost.Thread library
 					for more information about the Lockable, etc. concepts.
 				</para>
+				<para>
+					Note that while <code>monitor_ptr</code> provides thread-safe access to the object
+					it is pointing at, it does not provide a strong thread-safety guarantee
+					for itself.
+					That is, a single
+					<code>monitor_ptr</code> object should not be accessed concurrently by multiple
+					threads.  Rather, each thread should be passed its own copy of the
+					<code>monitor_ptr</code> to use.
+				</para>
 				<itemizedlist>
 					<title>Example Code</title>
 					<listitem>
