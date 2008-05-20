@@ -43,6 +43,8 @@ namespace poet
 
 	namespace detail
 	{
+		typedef int bogus_future_void_type;
+
 		template <typename T> class future_body_base
 		{
 		public:
@@ -178,8 +180,7 @@ namespace poet
 			virtual void setValue(const ProxyType &value)
 			{
 				std::ostringstream message;
-				message << __FUNCTION__ << ": sorry, can't fulfill() a promise with a non-void template type "
-					"through a promise<void>.";
+				message << __FUNCTION__ << ": didn't ever expect this function to actually get called!";
 				throw std::invalid_argument(message.str());
 			}
 			virtual bool ready() const
@@ -297,10 +298,10 @@ namespace poet
 
 	// void specialization
 	template<>
-	class promise<void>: private promise<int>
+	class promise<void>: private promise<detail::bogus_future_void_type>
 	{
 	private:
-		typedef promise<int> base_type;
+		typedef promise<detail::bogus_future_void_type> base_type;
 	public:
 		template <typename U>
 		friend class future;
@@ -309,7 +310,7 @@ namespace poet
 
 		promise()
 		{}
-		promise(const promise<void> &other): promise<int>(other)
+		promise(const promise<void> &other): promise<detail::bogus_future_void_type>(other)
 		{}
 		// allow conversion from a promise with any template type to a promise<void>
 		template <typename OtherType>
@@ -317,7 +318,7 @@ namespace poet
 		{
 			boost::function<int (const OtherType&)> conversion_function =
 				boost::bind(&detail::null_conversion_function<OtherType>, _1);
-			_pimpl->_future_body.reset(new detail::future_body_proxy<int, OtherType>(
+			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::bogus_future_void_type, OtherType>(
 				other._pimpl->_future_body, conversion_function));
 		}
 		virtual ~promise() {}
@@ -418,10 +419,10 @@ namespace poet
 	};
 
 	template <>
-	class future<void>: private future<int>
+	class future<void>: private future<detail::bogus_future_void_type>
 	{
 	private:
-		typedef future<int> base_type;
+		typedef future<detail::bogus_future_void_type> base_type;
 	public:
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
@@ -429,7 +430,7 @@ namespace poet
 		typedef void value_type;
 		typedef base_type::update_slot_type update_slot_type;
 
-		future(const promise<void> &promise_in): base_type(reinterpret_cast<const promise<int> &>(promise_in))
+		future(const promise<void> &promise_in): base_type(reinterpret_cast<const promise<detail::bogus_future_void_type> &>(promise_in))
 		{}
 		template <typename OtherType>
 		future(const promise<OtherType> &promise)
@@ -447,7 +448,7 @@ namespace poet
 			}
 			boost::function<int (const OtherType&)> typedConversionFunction =
 				boost::bind(&detail::null_conversion_function<OtherType>, _1);
-			_future_body.reset(new detail::future_body_proxy<int, OtherType>(
+			_future_body.reset(new detail::future_body_proxy<detail::bogus_future_void_type, OtherType>(
 				other._future_body, typedConversionFunction));
 		}
 		future()
@@ -468,7 +469,7 @@ namespace poet
 		template <typename OtherType> const future<void>& operator=(const future<OtherType> &other)
 		{
 			BOOST_ASSERT(typeid(void) != typeid(OtherType));
-			_future_body.reset(new detail::future_body_proxy<void, OtherType>(other._future_body));
+			_future_body.reset(new detail::future_body_proxy<detail::bogus_future_void_type, OtherType>(other._future_body));
 			return *this;
 		}
 		using base_type::timed_join;
@@ -495,8 +496,8 @@ void poet::detail::promise_body<T>::handle_future_fulfillment(const future<T> &f
 void poet::promise<void>::fulfill(const future<void> &future_value)
 {
 	typedef future<void>::update_slot_type slot_type;
-	future_value.connect_update(slot_type(&detail::promise_body<int>::handle_future_fulfillment, _pimpl,
-		reinterpret_cast<const future<int> &>(future_value)));
+	future_value.connect_update(slot_type(&detail::promise_body<detail::bogus_future_void_type>::handle_future_fulfillment, _pimpl,
+		reinterpret_cast<const future<detail::bogus_future_void_type> &>(future_value)));
 }
 
 #endif // _POET_FUTURE_H
