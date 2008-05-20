@@ -79,7 +79,7 @@ namespace poet
 			{
 				bool emit_signal = false;
 				{
-					boost::mutex::scoped_lock lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(_mutex);
 					if(_exception == 0 && !_value)
 					{
 						_value = value;
@@ -94,13 +94,13 @@ namespace poet
 			}
 			virtual bool ready() const
 			{
-					boost::mutex::scoped_lock lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(_mutex);
 				return _value;
 			}
 			virtual const T& getValue() const
 			{
 				_readyCondition.locking_wait(boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
-				boost::mutex::scoped_lock lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(_mutex);
 				if(_exception)
 				{
 					rethrow_exception(_exception);
@@ -117,7 +117,7 @@ namespace poet
 			{
 				bool emitSignal = false;
 				{
-					boost::mutex::scoped_lock lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(_mutex);
 					if(_exception == 0 && !_value)
 					{
 						emitSignal = true;
@@ -132,13 +132,13 @@ namespace poet
 			}
 			virtual bool has_exception() const
 			{
-				boost::mutex::scoped_lock lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(_mutex);
 				return _exception;
 			}
 		private:
 			bool readyOrCancelled() const
 			{
-				boost::mutex::scoped_lock lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(_mutex);
 				return _value || _exception;
 			}
 
@@ -191,7 +191,7 @@ namespace poet
 			{
 				bool initialized = false;
 				{
-					boost::mutex::scoped_lock lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(_mutex);
 					if(_proxyValue)
 					{
 						initialized = true;
@@ -200,7 +200,7 @@ namespace poet
 				if(initialized == false)
 				{
 					{
-						boost::mutex::scoped_lock lock(_mutex);
+						boost::unique_lock<boost::mutex> lock(_mutex);
 						// make sure _proxyValue is still uninitialized after we have write lock
 						if(_proxyValue == false)
 						{
@@ -208,7 +208,7 @@ namespace poet
 						}
 					}// write_lock destructs here
 				}
-				boost::mutex::scoped_lock lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(_mutex);
 				return _proxyValue.get();
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
