@@ -95,9 +95,30 @@
 					</parameter>
 					<description><para>Overloaded constructor.</para></description>
 				</constructor>
+				<constructor>
+					<parameter name="other">
+						<paramtype>const active_function &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>
+							The copy constructor creates a shallow copy of <code>other</code>.
+							Both copies share the same scheduler, passive function, and guard.
+						</para>
+					</description>
+				</constructor>
 				<destructor specifiers="virtual">
 					<description><para>Virtual destructor. </para></description>
 				</destructor>
+				<copy-assignment>
+					<parameter name="rhs">
+						<paramtype>const active_function &amp;</paramtype>
+					</parameter>
+					<description>
+						<para>Assignment turns <code>*this</code> into a shallow copy of <code>rhs</code>.  Both copies share the
+							same scheduler, passive function, and guard.
+						</para>
+					</description>
+				</copy-assignment>
 			</access>
 		</class>
 	</namespace>
