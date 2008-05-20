@@ -51,9 +51,10 @@
 					it is pointing at, it does not provide a strong thread-safety guarantee
 					for itself.
 					That is, a single
-					<code>monitor_ptr</code> object should not be accessed concurrently by multiple
+					<code>monitor_ptr</code> object should not be modified concurrently by multiple
 					threads.  Rather, each thread should be passed its own copy of the
-					<code>monitor_ptr</code> to use.
+					<code>monitor_ptr</code> to use.  The thread-safety guarantees of
+					<code>monitor_ptr</code> are similar to those provided by <classname>boost::shared_ptr</classname>.
 				</para>
 				<itemizedlist>
 					<title>Example Code</title>
