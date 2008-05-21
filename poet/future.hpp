@@ -43,20 +43,21 @@ namespace poet
 
 	namespace detail
 	{
-		typedef int bogus_future_void_type;
+		template <typename T>
+			class future_body_base;
 
-		template <typename T> class future_body_base
+		typedef int bogus_promise_void_type;
+
+		template<>
+		class future_body_base<void>
 		{
 		public:
-			typedef typename boost::signal<void ()> update_signal_type;
+			typedef boost::signal<void ()> update_signal_type;
 
-			future_body_base()
-			{}
 			virtual ~future_body_base() {}
 			virtual bool ready() const = 0;
-			virtual const T& getValue() const = 0;
+			virtual void join() const = 0;
 			virtual bool timed_join(const boost::system_time &absolute_time) const = 0;
-			virtual void setValue(const T &value) = 0;
 			virtual void cancel(const poet::exception_ptr &) = 0;
 			virtual bool has_exception() const = 0;
 			boost::signalslib::connection connectUpdate(const update_signal_type::slot_type &slot)
@@ -65,6 +66,13 @@ namespace poet
 			}
 		protected:
 			update_signal_type _updateSignal;
+		};
+
+		template <typename T> class future_body_base: public future_body_base<void>
+		{
+		public:
+			virtual const T& getValue() const = 0;
+			virtual void setValue(const T &value) = 0;
 		};
 
 		template <typename T> class future_body: public future_body_base<T>
@@ -88,7 +96,7 @@ namespace poet
 				}
 				if(emit_signal)
 				{
-					_readyCondition.locking_notify_all();
+					_readyCondition.notify_all();
 					this->_updateSignal();
 				}
 			}
@@ -99,8 +107,8 @@ namespace poet
 			}
 			virtual const T& getValue() const
 			{
-				_readyCondition.locking_wait(boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
 				boost::unique_lock<boost::mutex> lock(_mutex);
+				_readyCondition.wait(lock, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
 				if(_exception)
 				{
 					rethrow_exception(_exception);
@@ -108,9 +116,20 @@ namespace poet
 				BOOST_ASSERT(_value);
 				return _value.get();
 			}
+			virtual void join() const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				_readyCondition.wait(lock, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
+				if(_exception)
+				{
+					rethrow_exception(_exception);
+				}
+				BOOST_ASSERT(_value);
+			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
-				_readyCondition.locking_timed_wait(absolute_time, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				_readyCondition.timed_wait(lock, absolute_time, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
 				return readyOrCancelled();
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
@@ -121,12 +140,12 @@ namespace poet
 					if(_exception == 0 && !_value)
 					{
 						emitSignal = true;
+						_readyCondition.notify_all();
 						_exception = exp;
 					}
 				}
 				if(emitSignal)
 				{
-					_readyCondition.locking_notify_all();
 					this->_updateSignal();
 				}
 			}
@@ -138,13 +157,12 @@ namespace poet
 		private:
 			bool readyOrCancelled() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
 				return _value || _exception;
 			}
 
 			boost::optional<T> _value;
 			mutable boost::mutex _mutex;
-			mutable typename detail::condition _readyCondition;
+			mutable boost::condition _readyCondition;
 			poet::exception_ptr _exception;
 		};
 
@@ -189,27 +207,16 @@ namespace poet
 			}
 			virtual const ProxyType& getValue() const
 			{
-				bool initialized = false;
-				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
-					if(_proxyValue)
-					{
-						initialized = true;
-					}
-				}// read_lock destructs here
-				if(initialized == false)
-				{
-					{
-						boost::unique_lock<boost::mutex> lock(_mutex);
-						// make sure _proxyValue is still uninitialized after we have write lock
-						if(_proxyValue == false)
-						{
-							_proxyValue = _conversionFunction(_actualFutureBody->getValue());
-						}
-					}// write_lock destructs here
-				}
 				boost::unique_lock<boost::mutex> lock(_mutex);
+				if(!_proxyValue)
+				{
+					_proxyValue = _conversionFunction(_actualFutureBody->getValue());
+				}
 				return _proxyValue.get();
+			}
+			virtual void join() const
+			{
+				_actualFutureBody->join();
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
@@ -255,6 +262,7 @@ namespace poet
 				_future_body->cancel(exp);
 			}
 			inline void handle_future_fulfillment(const future<T> &future_value);
+			inline void handle_future_void_fulfillment(const future<void> &future_value);
 
 			boost::shared_ptr<future_body_base<T> > _future_body;
 		};
@@ -298,10 +306,10 @@ namespace poet
 
 	// void specialization
 	template<>
-	class promise<void>: private promise<detail::bogus_future_void_type>
+	class promise<void>: private promise<detail::bogus_promise_void_type>
 	{
 	private:
-		typedef promise<detail::bogus_future_void_type> base_type;
+		typedef promise<detail::bogus_promise_void_type> base_type;
 	public:
 		template <typename U>
 		friend class future;
@@ -310,7 +318,7 @@ namespace poet
 
 		promise()
 		{}
-		promise(const promise<void> &other): promise<detail::bogus_future_void_type>(other)
+		promise(const promise<void> &other): base_type(other)
 		{}
 		// allow conversion from a promise with any template type to a promise<void>
 		template <typename OtherType>
@@ -318,7 +326,7 @@ namespace poet
 		{
 			boost::function<int (const OtherType&)> conversion_function =
 				boost::bind(&detail::null_conversion_function<OtherType>, _1);
-			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::bogus_future_void_type, OtherType>(
+			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::bogus_promise_void_type, OtherType>(
 				other._pimpl->_future_body, conversion_function));
 		}
 		virtual ~promise() {}
@@ -419,18 +427,21 @@ namespace poet
 	};
 
 	template <>
-	class future<void>: private future<detail::bogus_future_void_type>
+	class future<void>
 	{
-	private:
-		typedef future<detail::bogus_future_void_type> base_type;
+		template<typename InputIterator>
+		friend future<void> future_barrier(InputIterator future_begin, InputIterator future_end);
+		template<typename InputIterator>
+		friend future<void> future_select(InputIterator future_begin, InputIterator future_end);
+
 	public:
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
 
+		typedef detail::future_body_base<void>::update_signal_type::slot_type update_slot_type;
 		typedef void value_type;
-		typedef base_type::update_slot_type update_slot_type;
 
-		future(const promise<void> &promise_in): base_type(reinterpret_cast<const promise<detail::bogus_future_void_type> &>(promise_in))
+		future(const promise<void> &promise): _future_body(promise._pimpl->_future_body)
 		{}
 		template <typename OtherType>
 		future(const promise<OtherType> &promise)
@@ -446,10 +457,7 @@ namespace poet
 				_future_body.reset();
 				return;
 			}
-			boost::function<int (const OtherType&)> typedConversionFunction =
-				boost::bind(&detail::null_conversion_function<OtherType>, _1);
-			_future_body.reset(new detail::future_body_proxy<detail::bogus_future_void_type, OtherType>(
-				other._future_body, typedConversionFunction));
+			_future_body = other._future_body;
 		}
 		future()
 		{}
@@ -460,7 +468,7 @@ namespace poet
 			{
 				throw uncertain_future();
 			}
-			_future_body->getValue();
+			_future_body->join();
 		}
 		operator void () const
 		{
@@ -469,35 +477,73 @@ namespace poet
 		template <typename OtherType> const future<void>& operator=(const future<OtherType> &other)
 		{
 			BOOST_ASSERT(typeid(void) != typeid(OtherType));
-			_future_body.reset(new detail::future_body_proxy<detail::bogus_future_void_type, OtherType>(other._future_body));
+			_future_body = other._future_body;
 			return *this;
 		}
-		using base_type::timed_join;
-		using base_type::ready;
-		using base_type::connect_update;
-		using base_type::cancel;
-		using base_type::has_exception;
+		bool timed_join(const boost::system_time &absolute_time) const
+		{
+			return _future_body->timed_join(absolute_time);
+		}
+		bool ready() const
+		{
+			if(_future_body == 0) return false;
+			return _future_body->ready();
+		}
+		boost::signalslib::connection connect_update(const update_slot_type &slot) const
+		{
+			if(_future_body == 0) throw std::invalid_argument("Future doesn't refer to any value yet. Cannot connect slot.");
+			return _future_body->connectUpdate(slot);
+		}
+		void cancel()
+		{
+			_future_body->cancel(poet::copy_exception(cancelled_future()));
+		}
+		bool has_exception() const
+		{
+			if(_future_body == 0) return true;
+			return _future_body->has_exception();
+		}
+	private:
+		boost::shared_ptr<detail::future_body_base<void> > _future_body;
 	};
+
+	namespace detail
+	{
+		template <typename T>
+		void promise_body<T>::handle_future_fulfillment(const future<T> &future_value)
+		{
+			try
+			{
+				fulfill(future_value.get());
+			}
+			catch(...)
+			{
+				renege(current_exception());
+			}
+		}
+
+		template<typename T>
+		void promise_body<T>::handle_future_void_fulfillment(const future<void> &future_value)
+		{
+			try
+			{
+				future_value.get();
+				fulfill(0);
+			}
+			catch(...)
+			{
+				renege(current_exception());
+			}
+		}
+	} // namespace detail
+
+	void promise<void>::fulfill(const future<void> &future_value)
+	{
+		typedef future<void>::update_slot_type slot_type;
+		future_value.connect_update(slot_type(&detail::promise_body<detail::bogus_promise_void_type>::handle_future_void_fulfillment,
+			_pimpl, future_value));
+	}
 }
 
-template <typename T>
-void poet::detail::promise_body<T>::handle_future_fulfillment(const future<T> &future_value)
-{
-	try
-	{
-		fulfill(future_value);
-	}
-	catch(...)
-	{
-		renege(current_exception());
-	}
-}
-
-void poet::promise<void>::fulfill(const future<void> &future_value)
-{
-	typedef future<void>::update_slot_type slot_type;
-	future_value.connect_update(slot_type(&detail::promise_body<detail::bogus_future_void_type>::handle_future_fulfillment, _pimpl,
-		reinterpret_cast<const future<detail::bogus_future_void_type> &>(future_value)));
-}
 
 #endif // _POET_FUTURE_H
