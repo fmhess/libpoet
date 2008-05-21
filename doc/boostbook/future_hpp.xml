@@ -4,9 +4,25 @@
 			<template><template-type-parameter name="T"/></template>
 			<purpose>A handle to a future value. </purpose>
 			<description>
-				<para>Futures are wrappers around values which may not exist yet. They are used to support asyncronous function calls. Since a future can be returned before any result is actually ready, an asyncronous call can return a future immediately without blocking the calling thread. The calling thread can then poll the future to determine when a result is ready, or block on the future waiting for a result.</para>
-				<para>Futures are handles with shallow copy semantics. Two copies of a future will both refer to the same
-					<classname>promise</classname>.</para>
+				<para>Futures are placeholders for values which may not exist yet. They may be used to conveniently
+					support asyncronous function calls with built-in thread safety.
+					Since a future can be returned before any result is actually ready, an asyncronous call can return a future immediately
+					without blocking the calling thread. The calling thread can then poll the future to determine when a result is ready, or
+					block on the future waiting for a result.
+				</para>
+				<itemizedlist>
+						<title>See also</title>
+						<listitem>
+							<para>
+								<functionname>future_barrier</functionname>: construct a future which becomes ready when all of a group of futures are ready or have an exception.
+							</para>
+						</listitem>
+						<listitem>
+							<para>
+								<functionname>future_select</functionname>: construct a future which becomes ready when any of a group of futures is ready or has an exception.
+							</para>
+						</listitem>
+					</itemizedlist>
 			</description>
 			<access name="public">
 				<typedef name="value_type">

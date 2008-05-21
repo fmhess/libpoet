@@ -11,6 +11,8 @@
 			xmlns:xi="http://www.w3.org/2001/XInclude"/>
 		<xi:include href="future_hpp.xml"
 			xmlns:xi="http://www.w3.org/2001/XInclude"/>
+		<xi:include href="future_waits_hpp.xml"
+			xmlns:xi="http://www.w3.org/2001/XInclude"/>
 	</section>
 	<section id="libpoet_reference.section.monitor_objects">
 		<title>Monitor Objects</title>
