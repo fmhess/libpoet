@@ -1,15 +1,12 @@
 /*
-	poet::future defines a templated future class which can be used,
-	for example, to implement "active objects" and asynchronous function
-	calls.  See the paper "Active Object, An Object Behavioral Pattern for
-	Concurrent Programming." by R. Greg Lavender and Douglas C. Schmidt
-	for more information about active objects and futures.
+	Provides future_barrier and future_select free functions, which allow
+	creation of a future which becomes ready based on the states of
+	a group of input futures.  A future returned by future_barrier becomes
+	ready when all of the input futures become ready or have exceptions.
+	A future returned by future_select becomes ready when any one
+	of the input futures becomes ready or has an exception.
 
-	Active objects that use futures for both input parameters and
-	return values can be chained together in pipelines or do
-	dataflow-like processing, thereby achieving good concurrency.
-
-	begin: Frank Hess <frank.hess@nist.gov>  2007-01-22
+	begin: Frank Hess <frank.hess@nist.gov>  2008-05-20
 */
 
 //  Distributed under the Boost Software License, Version 1.0. (See
@@ -19,7 +16,6 @@
 #ifndef _POET_FUTURE_WAITS_HPP
 #define _POET_FUTURE_WAITS_HPP
 
-#include <poet/detail/template_static.hpp>
 #include <poet/future.hpp>
 #include <vector>
 

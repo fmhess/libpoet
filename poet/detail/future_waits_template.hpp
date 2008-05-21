@@ -1,15 +1,8 @@
 /*
-	poet::future defines a templated future class which can be used,
-	for example, to implement "active objects" and asynchronous function
-	calls.  See the paper "Active Object, An Object Behavioral Pattern for
-	Concurrent Programming." by R. Greg Lavender and Douglas C. Schmidt
-	for more information about active objects and futures.
+	Template for future_barrier and future_select overloads with
+	variable numbers of "const future<T> &" arguments.
 
-	Active objects that use futures for both input parameters and
-	return values can be chained together in pipelines or do
-	dataflow-like processing, thereby achieving good concurrency.
-
-	begin: Frank Hess <frank.hess@nist.gov>  2007-01-22
+	begin: Frank Hess <frank.hess@nist.gov>  2008-05-21
 */
 
 //  Distributed under the Boost Software License, Version 1.0. (See
