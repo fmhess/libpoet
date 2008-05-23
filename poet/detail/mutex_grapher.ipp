@@ -53,7 +53,7 @@ namespace poet
 			{
 				check_for_cycles();
 			}
-			catch(const boost::not_a_dag &error)
+			catch(const boost::not_a_dag &)
 			{
 				_cycle_detected = true;
 				_graph[new_edge].locking_order_violation = true;
@@ -88,7 +88,7 @@ namespace poet
 
 	void mutex_grapher::default_cycle_handler()
 	{
-		std::cerr << __PRETTY_FUNCTION__ << ": cycle detected in mutex locking order." << std::endl;
+		std::cerr << "mutex_grapher::default_cycle_handler(): cycle detected in mutex locking order." << std::endl;
 		std::abort();
 	}
 
