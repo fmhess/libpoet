@@ -25,7 +25,6 @@
 #include <poet/acyclic_mutex_base.hpp>
 #include <poet/mutex_properties.hpp>
 #include <sstream>
-#include <stdint.h>
 #include <string>
 #include <vector>
 
