@@ -151,7 +151,7 @@ namespace poet
 	class out_of_order_activation_queue: public in_order_activation_queue
 	{
 	public:
-		out_of_order_activation_queue(): _next(this->_pendingRequests.end())
+		out_of_order_activation_queue(): _next(in_order_activation_queue::_pendingRequests.end())
 		{}
 		virtual ~out_of_order_activation_queue() {}
 		inline virtual void push_back(const boost::shared_ptr<method_request_base> &request);
