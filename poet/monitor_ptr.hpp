@@ -179,78 +179,64 @@ namespace poet
 		// Lockable
 		void lock() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.lock();
+			get_syncer()->_mutex.lock();
 		}
 		bool try_lock() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			return _syncer->_mutex.try_lock();
+			return get_syncer()->_mutex.try_lock();
 		}
 		void unlock() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.unlock();
+			get_syncer()->_mutex.unlock();
 		}
 		// TimedLockable
 		template<typename Timeout>
 		bool timed_lock(const Timeout &timeout) const
 		{
-			if(!_syncer) throw boost::lock_error();
-			return _syncer->_mutex.timed_lock(timeout);
+			return get_syncer()->_mutex.timed_lock(timeout);
 		}
 		// SharedLockable
 		void lock_shared() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.lock_shared();
+			get_syncer()->_mutex.lock_shared();
 		}
 		bool try_lock_shared() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			return _syncer->_mutex.try_lock_shared();
+			return get_syncer()->_mutex.try_lock_shared();
 		}
 		template<typename Timeout>
 		bool timed_lock_shared(const Timeout &timeout) const
 		{
-			if(!_syncer) throw boost::lock_error();
-			return _syncer->_mutex.timed_lock_shared(timeout);
+			return get_syncer()->_mutex.timed_lock_shared(timeout);
 		}
 		void unlock_shared() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.unlock_shared();
+			get_syncer()->_mutex.unlock_shared();
 		}
 		void unlock_and_lock_shared() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.unlock_and_lock_shared();
+			get_syncer()->_mutex.unlock_and_lock_shared();
 		}
 		// UpgradeLockable
 		void lock_upgrade() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.lock_upgrade();
+			get_syncer()->_mutex.lock_upgrade();
 		}
 		void unlock_upgrade() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.unlock_upgrade();
+			get_syncer()->_mutex.unlock_upgrade();
 		}
 		void unlock_upgrade_and_lock() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.unlock_upgrade_and_lock();
+			get_syncer()->_mutex.unlock_upgrade_and_lock();
 		}
 		void unlock_upgrade_and_lock_shared() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.unlock_upgrade_and_lock_shared();
+			get_syncer()->_mutex.unlock_upgrade_and_lock_shared();
 		}
 		void unlock_and_lock_upgrade() const
 		{
-			if(!_syncer) throw boost::lock_error();
-			_syncer->_mutex.unlock_and_lock_upgrade();
+			get_syncer()->_mutex.unlock_and_lock_upgrade();
 		}
 	private:
 		template<typename U, typename M>
@@ -264,6 +250,12 @@ namespace poet
 		}
 		void set_monitor_ptr(...)
 		{}
+
+		const boost::shared_ptr<detail::monitor_synchronizer<Mutex> > & get_syncer() const
+		{
+			if(!_syncer) throw boost::lock_error();
+			return _syncer;
+		}
 
 		boost::shared_ptr<T> _pointer;
 		boost::shared_ptr<detail::monitor_synchronizer<Mutex> > _syncer;
