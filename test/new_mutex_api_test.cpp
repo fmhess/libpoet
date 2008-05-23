@@ -105,7 +105,7 @@ void monitor_unique_lock_test()
 			poet::monitor_unique_lock<monitor_type> lock(mon);
 			assert(false);
 		}
-		catch(boost::lock_error &err)
+		catch(const boost::lock_error &)
 		{}
 	}
 }
