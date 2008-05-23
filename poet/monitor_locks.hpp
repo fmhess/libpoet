@@ -66,14 +66,14 @@ namespace poet
 			{}
 			explicit lock_wrapper(Monitor &mon):
 				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon),
-				_lock(_mon._syncer ? boost::ref(_mon._syncer->_mutex) : throw boost::lock_error())
+				_lock(_mon.get_syncer()->_mutex)
 			{
 				set_wait_function();
 			}
 			template<typename U>
 			lock_wrapper(Monitor &mon, const U &arg):
 				_mon(get_monitor_ptr(mon)), _mon_raw_ptr(&mon),
-				_lock(_mon._syncer ? boost::ref(_mon._syncer->_mutex) : throw boost::lock_error(), arg)
+				_lock(_mon.get_syncer()->_mutex, arg)
 			{
 				set_wait_function();
 			}
@@ -180,7 +180,7 @@ namespace poet
 				{
 					typename detail::monitor_synchronizer<typename Monitor::mutex_type>::wait_function_type wait_func = boost::bind(
 						&lock_wrapper::wait_function, this, _1, _2);
-					_mon._syncer->set_wait_function(wait_func);
+					_mon.get_syncer()->set_wait_function(wait_func);
 				}
 			}
 			void wait_function(boost::condition &condition, const boost::function<bool ()> &pred)
