@@ -62,7 +62,7 @@ namespace poet
 				const boost::shared_ptr<passive_slot_type> &passive_function,
 				const boost::shared_ptr<guard_slot_type> &guard = boost::shared_ptr<guard_slot_type>())
 			{
-				return deconstruct_ptr(new POET_AF_METHOD_REQUEST_CLASS_NAME<Signature>(
+				return boost::deconstruct_ptr(new POET_AF_METHOD_REQUEST_CLASS_NAME<Signature>(
 					returnValue, POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, arg)
 					BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS) passive_function, guard));
 			}
