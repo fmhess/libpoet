@@ -8,11 +8,11 @@
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/thread.hpp>
 #include <poet/active_object.hpp>
 #include <poet/future.hpp>
 #include <iostream>
 #include <vector>
-#include <unistd.h>
 
 class ActiveIncrementer
 {
@@ -29,7 +29,7 @@ private:
 	class Servant
 	{
 	public:
-		int increment(int value) {sleep(1); return ++value;}
+		int increment(int value) {boost::this_thread::sleep(boost::posix_time::seconds(1)); return ++value;}
 	};
 	class IncrementRequest: public poet::method_request_base
 	{
