@@ -206,7 +206,7 @@ void monitor_ptr_aliasing_constructor_test()
 
 void monitor_ptr_test()
 {
-	std::cerr << __PRETTY_FUNCTION__;
+	std::cerr << __FUNCTION__;
 	monitor_ptr_comparison_test();
 	monitor_ptr_const_test();
 	monitor_ptr_cast_test();
@@ -340,7 +340,7 @@ void monitor_to_monitor_ptr_test()
 
 void monitor_test()
 {
-	std::cerr << __PRETTY_FUNCTION__;
+	std::cerr << __FUNCTION__;
 	monitor_const_test();
 	monitor_construction_test();
 	monitor_assignment_test();
