@@ -164,6 +164,9 @@ namespace poet
 				}
 				return *_mon.direct().get();
 			}
+		protected:
+			monitor_ptr_type _mon;
+
 		private:
 			template<typename Lockable>
 			friend class monitor_shared_lock;
@@ -194,7 +197,6 @@ namespace poet
 			lock_wrapper(lock_wrapper &);
 			lock_wrapper& operator=(lock_wrapper&);
 
-			monitor_ptr_type _mon;
 			Monitor *_mon_raw_ptr;
 			Lock _lock;
 		};
