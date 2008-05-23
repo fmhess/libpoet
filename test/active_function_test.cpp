@@ -9,16 +9,16 @@
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 #include <poet/active_function.hpp>
 #include <iostream>
 #include <vector>
-#include <unistd.h>
 
 int increment(int value)
 {
 // 	std::cerr << __FUNCTION__ << std::endl;
 	// sleep for a bit to simulate doing something nontrivial
-	sleep(1);
+	boost::this_thread::sleep(boost::posix_time::seconds(1));
 	return ++value;
 }
 
@@ -42,7 +42,7 @@ void cancellation_test()
 	BOOST_ASSERT(result.has_exception() == false);
 	result.cancel();
 	BOOST_ASSERT(result.has_exception() == true);
-	sleep(1);
+	boost::this_thread::sleep(boost::posix_time::seconds(1));
 	BOOST_ASSERT(queue->empty() == true);
 }
 
