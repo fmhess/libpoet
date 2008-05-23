@@ -61,7 +61,7 @@ class active_chunkifier
 {
 private:
 	boost::shared_ptr<passive_chunkifier<T> > _servant;
-	boost::shared_ptr<typename poet::scheduler> _scheduler;
+	boost::shared_ptr<poet::scheduler> _scheduler;
 public:
 	typedef typename poet::active_function<void (T)> add_element_type;
 	typedef typename poet::active_function<std::vector<T> ()> get_chunk_type;
