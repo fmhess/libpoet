@@ -8,7 +8,6 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/shared_mutex.hpp>
-#include <unistd.h>
 #include <poet/acyclic_mutex.hpp>
 #include <poet/monitor.hpp>
 #include <poet/monitor_ptr.hpp>
@@ -364,7 +363,7 @@ void acyclic_monitor_test()
 	be used with conditions .*/
 	acyclic_monitor_type mon(new waiting_class);
 	boost::thread mythread(boost::bind(&acyclic_monitor_thread_func, mon));
-	while(mon->waiting() == false) usleep(10000);
+	while(mon->waiting() == false) boost::this_thread::sleep(boost::posix_time::millisec(10));
 	mon->do_notify();
 	mythread.join();
 }

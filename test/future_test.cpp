@@ -8,11 +8,10 @@
 #include <poet/future.hpp>
 #include <iostream>
 #include <vector>
-#include <unistd.h>
 
 static void delayed_increment(poet::promise<int> mypromise, poet::future<int> value)
 {
-	sleep(1);
+	boost::this_thread::sleep(boost::posix_time::seconds(1));
 	int intValue = value;
 	++intValue;
 	std::cerr << "Setting future value to " << intValue << std::endl;

@@ -18,18 +18,12 @@ static int delayed_value()
 
 int main()
 {
-	static const unsigned nanosec_per_sec = 1000000000;
-
 	poet::active_function<int ()> async_call(&delayed_value);
 	poet::future<int> fut = async_call();
-	boost::xtime now;
-	boost::xtime_get(&now, boost::TIME_UTC);
-	boost::xtime timeout = now;
-	timeout.sec = timeout.sec + (timeout.nsec + 500000000) / nanosec_per_sec;
-	timeout.nsec = (timeout.nsec + 500000000) % nanosec_per_sec;
+	boost::system_time timeout = boost::get_system_time() + boost::posix_time::millisec(500);
 	bool result = fut.timed_join(timeout);
 	BOOST_ASSERT(result == false);
-	timeout.sec = timeout.sec + 1;
+	timeout = timeout + boost::posix_time::seconds(1);
 	result = fut.timed_join(timeout);
 	BOOST_ASSERT(result == true);
 	std::cout << "Test passed." << std::endl;

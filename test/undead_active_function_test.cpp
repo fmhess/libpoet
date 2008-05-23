@@ -4,15 +4,15 @@
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/assert.hpp>
+#include <boost/thread.hpp>
 #include <iostream>
 #include <poet/active_function.hpp>
-#include <unistd.h>
 #include <vector>
 
 int passive_function()
 {
 	std::cerr << __FUNCTION__ << ": going to sleep." << std::endl;
-	sleep(1);
+	boost::this_thread::sleep(boost::posix_time::seconds(1));
 	std::cerr << __FUNCTION__ << ": returning result." << std::endl;
 	return 1;
 }

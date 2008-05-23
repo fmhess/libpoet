@@ -15,7 +15,6 @@
 #include <poet/monitor.hpp>
 #include <poet/monitor_ptr.hpp>
 #include <poet/monitor_base.hpp>
-#include <unistd.h>
 #include <utility>
 
 int step_counter;
@@ -34,24 +33,24 @@ public:
 	void waiting_function()
 	{
 		check_step(0);
-		usleep(1000000);
+		boost::this_thread::sleep(boost::posix_time::seconds(1));
 		check_step(1);
 		wait();
 		check_step(4);
-		usleep(1000000);
+		boost::this_thread::sleep(boost::posix_time::seconds(1));
 		check_step(5);
 	}
 	void notifying_function()
 	{
 		check_step(2);
 		notify_all();
-		usleep(1000000);
+		boost::this_thread::sleep(boost::posix_time::seconds(1));
 		check_step(3);
 	}
 	void another_function()
 	{
 		check_step(6);
-		usleep(1000000);
+		boost::this_thread::sleep(boost::posix_time::seconds(1));
 		check_step(7);
 	}
 	int value;
@@ -68,9 +67,9 @@ void monitor_ptr_thread0_function(monitor_ptr_type mymonitor)
 
 void monitor_ptr_thread1_function(monitor_ptr_type mymonitor)
 {
-	usleep(500000);
+	boost::this_thread::sleep(boost::posix_time::millisec(500));
 	mymonitor->notifying_function();
-	usleep(500000);
+	boost::this_thread::sleep(boost::posix_time::millisec(500));
 	mymonitor->another_function();
 }
 
@@ -237,12 +236,12 @@ void monitor_thread0_function(monitor_type &mymonitor)
 
 void monitor_thread1_function(monitor_type &mymonitor)
 {
-	usleep(500000);
+	boost::this_thread::sleep(boost::posix_time::millisec(500));
 	{
 		monitor_type::scoped_lock mon_lock(mymonitor);
 		mon_lock->notifying_function();
 	}
-	usleep(500000);
+	boost::this_thread::sleep(boost::posix_time::millisec(500));
 	{
 		monitor_type::scoped_lock mon_lock(mymonitor);
 		mon_lock->another_function();
