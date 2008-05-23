@@ -33,7 +33,7 @@ int main()
 			void_promise.fulfill();
 			BOOST_ASSERT(false);
 		}
-		catch(const std::invalid_argument &err)
+		catch(const std::invalid_argument &)
 		{}
 		void_promise_too.renege(std::runtime_error("reneged on promise"));
 		BOOST_ASSERT(fut.ready() == false);
