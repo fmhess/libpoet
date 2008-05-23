@@ -8,11 +8,10 @@
 #include <poet/active_function.hpp>
 #include <iostream>
 #include <vector>
-#include <unistd.h>
 
 static int delayed_value()
 {
-	sleep(1);
+	boost::this_thread::sleep(boost::posix_time::seconds(1));
 	return 1;
 };
 
