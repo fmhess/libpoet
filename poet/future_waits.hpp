@@ -16,6 +16,7 @@
 #ifndef _POET_FUTURE_WAITS_HPP
 #define _POET_FUTURE_WAITS_HPP
 
+#include <iterator>
 #include <poet/future.hpp>
 #include <vector>
 
@@ -106,80 +107,127 @@ namespace poet
 		/* future_body for void futures returned by future_select.  Becomes ready
 			when any of the futures on its list have become ready or has an exception.
 		*/
-		class future_select_body:
-			public future_body_base<void>
+		template<typename T>
+			class future_select_body;
+			
+		template<>
+		class future_select_body<void>:
+			public virtual future_body_base<void>
 		{
-			typedef boost::shared_ptr<future_body_base<void> > future_dependency_type;
+			typedef boost::shared_ptr<future_body_base<void> > future_body_dependency_type;
 		public:
+			typedef future_body_base<void>::update_signal_type update_signal_type;
+
 			template<typename InputIterator>
-			future_select_body(InputIterator future_begin, InputIterator future_end):
-				_ready(false)
+			future_select_body(InputIterator future_begin, InputIterator future_end)
 			{
 				InputIterator it;
 				for(it = future_begin; it != future_end; ++it)
 				{
-					update_signal_type::slot_type update_slot(&future_select_body::check_dependency, this, *it);
-					_connections.push_back((*it)->connectUpdate(update_slot));
-					if(check_dependency(*it)) break;
+					typedef update_signal_type::slot_type update_slot_type;
+					update_signal_type::slot_type update_slot(&future_select_body::check_dependency, this, it->_future_body);
+					_connections.push_back(it->_future_body->connectUpdate(update_slot));
+					if(check_dependency(it->_future_body)) break;
 				}
 			}
 			virtual ~future_select_body()
+			{
+				nolock_disconnect_all();
+			}
+			virtual bool ready() const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				return nolock_ready();
+			}
+			virtual void join() const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				_condition.wait(lock, boost::bind(&future_select_body::nolock_ready_or_has_exception, this));
+			}
+			virtual bool timed_join(const boost::system_time &absolute_time) const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				return _condition.timed_wait(lock, absolute_time, boost::bind(&future_select_body::nolock_ready_or_has_exception, this));
+			}
+			virtual void cancel(const poet::exception_ptr &exp)
+			{}
+			virtual bool has_exception() const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				if(!_first_complete_dependency) return false;
+				return _first_complete_dependency->has_exception();
+			}
+		protected:
+			bool nolock_ready_or_has_exception() const
+			{
+				return _first_complete_dependency;
+			}
+
+			mutable boost::mutex _mutex;
+			mutable boost::condition _condition;
+			mutable future_body_dependency_type _first_complete_dependency;
+		private:
+			bool check_dependency(const future_body_dependency_type &dependency) const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				if(!_first_complete_dependency)
+				{
+					if(dependency->ready() || dependency->has_exception())
+					{
+						_first_complete_dependency = dependency;
+						nolock_disconnect_all();
+						_condition.notify_all();
+					}
+				}
+				return _first_complete_dependency;
+			}
+			bool nolock_ready() const
+			{
+				if(!_first_complete_dependency) return false;
+				return _first_complete_dependency->ready();
+			}
+			void nolock_disconnect_all() const
 			{
 				std::vector<boost::signalslib::connection>::iterator it;
 				for(it = _connections.begin(); it != _connections.end(); ++it)
 				{
 					it->disconnect();
 				}
-			}
-			virtual bool ready() const
-			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				return _ready;
-			}
-			virtual void join() const
-			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				_condition.wait(lock, boost::bind(&future_select_body::nolock_ready, this));
-			}
-			virtual bool timed_join(const boost::system_time &absolute_time) const
-			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				return _condition.timed_wait(lock, absolute_time, boost::bind(&future_select_body::nolock_ready, this));
-			}
-			virtual void cancel(const poet::exception_ptr &exp)
-			{}
-			virtual bool has_exception() const
-			{
-				return false;
-			}
-		private:
-			bool check_dependency(const future_dependency_type &dependency) const
-			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				if(_ready == false)
-				{
-					if(dependency->ready() || dependency->has_exception())
-					{
-						_ready = true;
-						_condition.notify_all();
-					}
-				}
-				return _ready;
-			}
-			bool nolock_ready() const
-			{
-				return _ready;
+				_connections.clear();
 			}
 
-			std::vector<boost::signalslib::connection> _connections;
-			mutable boost::mutex _mutex;
-			mutable boost::condition _condition;
-			mutable bool _ready;
+			mutable std::vector<boost::signalslib::connection> _connections;
+		};
+		
+		template<typename T>
+		class future_select_body: public future_select_body<void>,
+			public future_body_base<T>
+		{
+			typedef boost::shared_ptr<future_body_base<T> > future_body_dependency_type;
+		public:
+			typedef future_body_base<void>::update_signal_type update_signal_type;
+
+			template<typename InputIterator>
+			future_select_body(InputIterator future_begin, InputIterator future_end):
+				future_select_body<void>(future_begin, future_end)
+			{}
+			virtual const T& getValue() const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				_condition.wait(lock, boost::bind(&future_select_body<void>::nolock_ready_or_has_exception, this));
+				boost::shared_ptr<future_body_base<T> > typed_dependency =
+					boost::dynamic_pointer_cast<future_body_base<T> >(_first_complete_dependency);
+				return typed_dependency->getValue();
+			}
+			virtual void setValue(const T &value)
+			{
+				BOOST_ASSERT(false);
+			}
 		};
 	} // namespace detail
 
 	template<typename InputIterator>
-	future<void> future_barrier(InputIterator future_begin, InputIterator future_end)
+	future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end)
 	{
 		std::vector<boost::shared_ptr<detail::future_body_base<void> > > arg_bodies;
 		InputIterator it;
@@ -193,16 +241,11 @@ namespace poet
 	}
 
 	template<typename InputIterator>
-	future<void> future_select(InputIterator future_begin, InputIterator future_end)
+	typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end)
 	{
-		std::vector<boost::shared_ptr<detail::future_body_base<void> > > arg_bodies;
-		InputIterator it;
-		for(it = future_begin; it != future_end; ++it)
-		{
-			arg_bodies.push_back(it->_future_body);
-		}
-		future<void>result;
-		result._future_body.reset(new detail::future_select_body(arg_bodies.begin(), arg_bodies.end()));
+		typedef typename std::iterator_traits<InputIterator>::value_type future_type;
+		future_type result;
+		result._future_body.reset(new detail::future_select_body<typename future_type::value_type>(future_begin, future_end));
 		return result;
 	}
 }

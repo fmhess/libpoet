@@ -23,6 +23,12 @@
 // const future<T1> &f1, const future<T2> &f2, ..., const future<Tn> &fn
 #define POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(arity) \
 	BOOST_PP_ENUM(arity, POET_FUTURE_WAITS_ARG_DECL, ~)
+// const poet::future<T> &fn
+#define POET_FUTURE_SELECT_ARG_DECL(z, n, data) \
+	const poet::future<T> & POET_ARG_NAME(~, n, f)
+// const future<T> &f1, const future<T> &f2, ..., const future<T> &fn
+#define POET_FUTURE_SELECT_REPEATED_ARG_DECLARATIONS(arity) \
+	BOOST_PP_ENUM(arity, POET_FUTURE_SELECT_ARG_DECL, ~)
 
 namespace poet
 {
@@ -35,19 +41,19 @@ namespace poet
 	inputs.push_back(POET_ARG_NAME(~, n, f));
 		BOOST_PP_REPEAT(POET_FUTURE_WAITS_NUM_ARGS, POET_MISC_STATEMENT, ~)
 #undef POET_MISC_STATEMENT
-		return future_barrier(inputs.begin(), inputs.end());
+		return future_barrier_range(inputs.begin(), inputs.end());
 	}
 
-	template<POET_REPEATED_TYPENAMES(POET_FUTURE_WAITS_NUM_ARGS, T)>
-	future<void> future_select(POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS))
+	template<typename T>
+	future<T> future_select(POET_FUTURE_SELECT_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS))
 	{
-		std::vector<future<void> > inputs;
+		std::vector<future<T> > inputs;
 // inputs.push_back(fn);
 #define POET_MISC_STATEMENT(z, n, data) \
 	inputs.push_back(POET_ARG_NAME(~, n, f));
 		BOOST_PP_REPEAT(POET_FUTURE_WAITS_NUM_ARGS, POET_MISC_STATEMENT, ~)
 #undef POET_MISC_STATEMENT
-		return future_select(inputs.begin(), inputs.end());
+		return future_select_range(inputs.begin(), inputs.end());
 	}
 }
 
@@ -55,3 +61,5 @@ namespace poet
 #undef POET_FUTURE_WAITS_ARG_TYPE
 #undef POET_FUTURE_WAITS_ARG_DECL
 #undef POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS
+#undef POET_FUTURE_SELECT_ARG_DECL
+#undef POET_FUTURE_SELECT_REPEATED_ARG_DECLARATIONS

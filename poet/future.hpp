@@ -32,6 +32,7 @@
 #include <poet/exception_ptr.hpp>
 #include <poet/exceptions.hpp>
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <typeinfo>
@@ -45,6 +46,8 @@ namespace poet
 	{
 		template <typename T>
 			class future_body_base;
+		template <typename T>
+			class future_select_body;
 
 		typedef int bogus_promise_void_type;
 
@@ -68,7 +71,7 @@ namespace poet
 			update_signal_type _updateSignal;
 		};
 
-		template <typename T> class future_body_base: public future_body_base<void>
+		template <typename T> class future_body_base: public virtual future_body_base<void>
 		{
 		public:
 			virtual const T& getValue() const = 0;
@@ -348,12 +351,16 @@ namespace poet
 
 	template <typename T> class future
 	{
+		template<typename InputIterator>
+		friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
+		friend class detail::future_select_body<void>;
+		friend class detail::future_select_body<T>;
 	public:
 		template <typename OtherType> friend class future;
 		friend class future<void>;
 
 		typedef T value_type;
-		typedef typename detail::future_body_base<T>::update_signal_type::slot_type update_slot_type;
+		typedef typename detail::future_body_base<void>::update_signal_type::slot_type update_slot_type;
 
 		future(const promise<T> &promise): _future_body(promise._pimpl->_future_body)
 		{}
@@ -430,10 +437,12 @@ namespace poet
 	class future<void>
 	{
 		template<typename InputIterator>
-		friend future<void> future_barrier(InputIterator future_begin, InputIterator future_end);
+			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
 		template<typename InputIterator>
-		friend future<void> future_select(InputIterator future_begin, InputIterator future_end);
-
+			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
+		template<typename T>
+			friend class detail::future_select_body;
+		friend class detail::future_select_body<void>;
 	public:
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
