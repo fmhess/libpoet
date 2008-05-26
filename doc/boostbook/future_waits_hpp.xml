@@ -82,35 +82,32 @@
 			</signature>
 			<signature>
 				<template>
-					<template-type-parameter name="T1"/>
-					<template-type-parameter name="T2"/>
+					<template-type-parameter name="T"/>
 				</template>
 				<type><classname>future</classname>&lt;void&gt;</type>
 				<parameter name="f1">
-					<paramtype>const <classname>future</classname>&lt;T1&gt; &amp;</paramtype>
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
 				<parameter name="f2">
-					<paramtype>const <classname>future</classname>&lt;T1&gt; &amp;</paramtype>
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
 			</signature>
 			<signature>
 				<template>
-					<template-type-parameter name="T1"/>
-					<template-type-parameter name="T2, ..."/>
-					<template-type-parameter name="TN"/>
+					<template-type-parameter name="T"/>
 				</template>
 				<type><classname>future</classname>&lt;void&gt;</type>
 				<parameter name="f1">
-					<paramtype>const <classname>future</classname>&lt;T1&gt; &amp;</paramtype>
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
 				<parameter name="f2">
-					<paramtype>const <classname>future</classname>&lt;T2&gt; &amp;</paramtype>
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
 				<parameter name="...">
 					<paramtype></paramtype>
 				</parameter>
 				<parameter name="fN">
-					<paramtype>const <classname>future</classname>&lt;TN&gt; &amp;</paramtype>
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
 			</signature>
 			<description>
@@ -130,7 +127,8 @@
 			<returns>
 				<para>
 					A future which becomes ready when any one of the input futures either become
-					ready or has an exception.
+					ready or has an exception.  The returned future will receive the value/exception
+					of the input future which became ready.
 				</para>
 			</returns>
 		</overloaded-function>
