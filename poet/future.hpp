@@ -48,6 +48,8 @@ namespace poet
 			class future_body_base;
 		template <typename T>
 			class future_select_body;
+		template<typename R, typename Combiner, typename T>
+			class future_barrier_body;
 
 		typedef int bogus_promise_void_type;
 
@@ -352,7 +354,11 @@ namespace poet
 	template <typename T> class future
 	{
 		template<typename InputIterator>
-		friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
+			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
+		template<typename R, typename Combiner, typename U>
+			friend class detail::future_barrier_body;
+		template<typename InputIterator>
+			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
 		friend class detail::future_select_body<void>;
 		friend class detail::future_select_body<T>;
 	public:
@@ -438,6 +444,8 @@ namespace poet
 	{
 		template<typename InputIterator>
 			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
+		template<typename R, typename Combiner, typename U>
+			friend class detail::future_barrier_body;
 		template<typename InputIterator>
 			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
 		template<typename T>

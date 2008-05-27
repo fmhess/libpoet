@@ -10,6 +10,8 @@ XML_SRCS=\
 	exception_ptr_hpp.xml \
 	exceptions_hpp.xml \
 	future_hpp.xml \
+	future_barrier_hpp.xml \
+	future_select_hpp.xml \
 	libpoet_doc.xml \
 	libpoet_reference.xml \
 	monitor_base_hpp.xml \

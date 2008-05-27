@@ -1,0 +1,69 @@
+<header name="poet/future_select.hpp">
+	<namespace name="poet">
+		<overloaded-function name="future_select">
+			<signature>
+				<template>
+					<template-type-parameter name="InputFutureIterator"/>
+				</template>
+				<type><classname>future</classname>&lt;std::iterator_traits&lt;InputFutureIterator&gt;::value_type&gt;</type>
+				<parameter name="first">
+					<paramtype>InputFutureIterator</paramtype>
+				</parameter>
+				<parameter name="last">
+					<paramtype>InputFutureIterator</paramtype>
+				</parameter>
+			</signature>
+			<signature>
+				<template>
+					<template-type-parameter name="T"/>
+				</template>
+				<type><classname>future</classname>&lt;T&gt;</type>
+				<parameter name="f1">
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
+				</parameter>
+				<parameter name="f2">
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
+				</parameter>
+			</signature>
+			<signature>
+				<template>
+					<template-type-parameter name="T"/>
+				</template>
+				<type><classname>future</classname>&lt;T&gt;</type>
+				<parameter name="f1">
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
+				</parameter>
+				<parameter name="f2">
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
+				</parameter>
+				<parameter name="...">
+					<paramtype></paramtype>
+				</parameter>
+				<parameter name="fN">
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
+				</parameter>
+			</signature>
+			<description>
+				<para>
+					The <code>future_select</code> function constructs a future which can be used to
+					wait on a group of futures until any one is ready (or has an exception).
+				</para>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem>
+						<para>
+							<functionname>future_barrier</functionname>: construct a future which becomes ready when all of a group of futures are ready or have an exception.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</description>
+			<returns>
+				<para>
+					A future which becomes ready when any one of the input futures either become
+					ready or has an exception.  The returned future will receive the value/exception
+					of the input future which became ready (or has an exception).
+				</para>
+			</returns>
+		</overloaded-function>
+	</namespace>
+</header>
