@@ -72,7 +72,7 @@
 				<template>
 					<template-type-parameter name="FutureInputIterator"/>
 				</template>
-				<type><classname>future</classname>&lt;void&gt;</type>
+				<type><classname>future</classname>&lt;std::iterator_traits&lt;FutureInputIterator&gt;::value_type&gt;</type>
 				<parameter name="first">
 					<paramtype>FutureInputIterator</paramtype>
 				</parameter>
@@ -84,7 +84,7 @@
 				<template>
 					<template-type-parameter name="T"/>
 				</template>
-				<type><classname>future</classname>&lt;void&gt;</type>
+				<type><classname>future</classname>&lt;T&gt;</type>
 				<parameter name="f1">
 					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
@@ -96,7 +96,7 @@
 				<template>
 					<template-type-parameter name="T"/>
 				</template>
-				<type><classname>future</classname>&lt;void&gt;</type>
+				<type><classname>future</classname>&lt;T&gt;</type>
 				<parameter name="f1">
 					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
@@ -128,7 +128,7 @@
 				<para>
 					A future which becomes ready when any one of the input futures either become
 					ready or has an exception.  The returned future will receive the value/exception
-					of the input future which became ready.
+					of the input future which became ready (or has an exception).
 				</para>
 			</returns>
 		</overloaded-function>
