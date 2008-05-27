@@ -94,12 +94,12 @@ namespace poet
 					if(_exception == 0 && !_value)
 					{
 						_value = value;
+						_readyCondition.notify_all();
 						emit_signal = true;
 					}
 				}
 				if(emit_signal)
 				{
-					_readyCondition.notify_all();
 					this->_updateSignal();
 				}
 			}
