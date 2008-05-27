@@ -77,19 +77,27 @@ namespace poet
 		private:
 			void check_dependencies() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				future_dependencies_type::const_iterator it;
-				if(_ready == false)
+				bool emit_signal = false;
 				{
-					for(it = _future_dependencies.begin(); it != _future_dependencies.end(); ++it)
+					boost::unique_lock<boost::mutex> lock(_mutex);
+					future_dependencies_type::const_iterator it;
+					if(_ready == false)
 					{
-						if((*it)->ready() == false && (*it)->has_exception() == false) break;
+						for(it = _future_dependencies.begin(); it != _future_dependencies.end(); ++it)
+						{
+							if((*it)->ready() == false && (*it)->has_exception() == false) break;
+						}
+						if(it == _future_dependencies.end())
+						{
+							_ready = true;
+							_condition.notify_all();
+							emit_signal = true;
+						}
 					}
-					if(it == _future_dependencies.end())
-					{
-						 _ready = true;
-						_condition.notify_all();
-					}
+				}
+				if(emit_signal)
+				{
+					this->_updateSignal();
 				}
 			}
 			bool nolock_ready() const
@@ -109,7 +117,7 @@ namespace poet
 		*/
 		template<typename T>
 			class future_select_body;
-			
+
 		template<>
 		class future_select_body<void>:
 			public virtual future_body_base<void>
@@ -169,15 +177,23 @@ namespace poet
 		private:
 			bool check_dependency(const future_body_dependency_type &dependency) const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				if(!_first_complete_dependency)
+				bool emit_signal = false;
 				{
-					if(dependency->ready() || dependency->has_exception())
+					boost::unique_lock<boost::mutex> lock(_mutex);
+					if(!_first_complete_dependency)
 					{
-						_first_complete_dependency = dependency;
-						nolock_disconnect_all();
-						_condition.notify_all();
+						if(dependency->ready() || dependency->has_exception())
+						{
+							_first_complete_dependency = dependency;
+							emit_signal = true;
+							nolock_disconnect_all();
+							_condition.notify_all();
+						}
 					}
+				}
+				if(emit_signal)
+				{
+					this->_updateSignal();
 				}
 				return _first_complete_dependency;
 			}
@@ -198,7 +214,7 @@ namespace poet
 
 			mutable std::vector<boost::signalslib::connection> _connections;
 		};
-		
+
 		template<typename T>
 		class future_select_body: public future_select_body<void>,
 			public future_body_base<T>

@@ -14,6 +14,11 @@ void get_future(poet::future<void> f)
 	f.get();
 }
 
+void myslot(bool *ran)
+{
+	*ran = true;
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -23,17 +28,21 @@ int main()
 		poet::promise<short> y_promise;
 		poet::future<short> y(y_promise);
 		poet::future<void> all_ready = poet::future_barrier(x, y);
+		bool slot_run_flag = false;
+		all_ready.connect_update(boost::bind(&myslot, &slot_run_flag));
 		assert(all_ready.ready() == false);
 		assert(all_ready.has_exception() == false);
 		boost::thread blocking_thread(boost::bind(&get_future, all_ready));
 		boost::this_thread::sleep(boost::posix_time::millisec(200));
 		x_promise.fulfill(1.0);
 		assert(all_ready.ready() == false);
+		assert(slot_run_flag == false);
 		assert(all_ready.has_exception() == false);
 		bool thread_done = blocking_thread.timed_join(boost::get_system_time());
 		assert(thread_done == false);
 		y_promise.fulfill(2);
 		assert(all_ready.ready() == true);
+		assert(slot_run_flag == true);
 		assert(all_ready.has_exception() == false);
 		blocking_thread.join();
 	}
@@ -46,13 +55,19 @@ int main()
 		poet::future<short> any_ready = poet::future_select(x, y);
 		assert(any_ready.ready() == false);
 		assert(any_ready.has_exception() == false);
+		bool slot_run_flag = false;
+		any_ready.connect_update(boost::bind(&myslot, &slot_run_flag));
 		boost::thread blocking_thread(boost::bind(&get_future, any_ready));
 		boost::this_thread::sleep(boost::posix_time::millisec(200));
 		bool thread_done = blocking_thread.timed_join(boost::get_system_time());
 		assert(thread_done == false);
+		assert(any_ready.ready() == false);
+		assert(slot_run_flag == false);
+		assert(any_ready.has_exception() == false);
 		static const short x_value = 1;
 		x_promise.fulfill(x_value);
 		assert(any_ready.ready() == true);
+		assert(slot_run_flag == true);
 		assert(any_ready.has_exception() == false);
 		blocking_thread.join();
 		y_promise.fulfill(2);
@@ -60,7 +75,7 @@ int main()
 		assert(any_ready.has_exception() == false);
 		assert(any_ready.get() == x_value);
 	}
-	
+
 	{
 		poet::promise<short> x_promise;
 		poet::future<short> x(x_promise);
