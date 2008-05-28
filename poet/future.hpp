@@ -51,13 +51,12 @@ namespace poet
 			class future_select_body;
 		class future_barrier_body_impl;
 
-		template<>
-		class future_body_base<void>
+		class future_body_untyped_base
 		{
 		public:
 			typedef boost::signal<void ()> update_signal_type;
 
-			virtual ~future_body_base() {}
+			virtual ~future_body_untyped_base() {}
 			virtual bool ready() const = 0;
 			virtual void join() const = 0;
 			virtual bool timed_join(const boost::system_time &absolute_time) const = 0;
@@ -71,11 +70,11 @@ namespace poet
 			update_signal_type _updateSignal;
 		};
 
-		template <typename T> class future_body_base: public virtual future_body_base<void>
+		template <typename T> class future_body_base: public virtual future_body_untyped_base
 		{
 		public:
-			virtual const T& getValue() const = 0;
-			virtual void setValue(const T &value) = 0;
+			virtual const typename nonvoid<T>::type& getValue() const = 0;
+			virtual void setValue(const typename nonvoid<T>::type &value) = 0;
 		};
 
 		template <typename T> class future_body: public future_body_base<T>
@@ -175,9 +174,9 @@ namespace poet
 			return ProxyType(actualValue);
 		}
 		template<typename ActualType>
-		static int null_conversion_function(const ActualType& actualValue)
+		static bogus_void null_conversion_function(const ActualType& actualValue)
 		{
-			return 0;
+			return bogus_void();
 		}
 
 		/* class which monitors another future_body_base<ActualType>, while returning values of type ProxyType.
@@ -231,7 +230,7 @@ namespace poet
 			}
 			virtual exception_ptr get_exception_ptr() const
 			{
-				return _actualFutureBody->has_exception();
+				return _actualFutureBody->get_exception_ptr();
 			}
 		private:
 			boost::shared_ptr<future_body_base<ActualType> > _actualFutureBody;
@@ -327,7 +326,7 @@ namespace poet
 		template <typename OtherType>
 		promise(const promise<OtherType> &other)
 		{
-			boost::function<int (const OtherType&)> conversion_function =
+			boost::function<bogus_void (const OtherType&)> conversion_function =
 				boost::bind(&detail::null_conversion_function<OtherType>, _1);
 			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::nonvoid<void>::type, OtherType>(
 				other._pimpl->_future_body, conversion_function));
@@ -335,7 +334,7 @@ namespace poet
 		virtual ~promise() {}
 		void fulfill()
 		{
-			base_type::fulfill(0);
+			base_type::fulfill(bogus_void());
 		}
 		inline void fulfill(const future<void> &future_value);
 		template <typename E>
@@ -365,7 +364,7 @@ namespace poet
 		friend class future<void>;
 
 		typedef T value_type;
-		typedef typename detail::future_body_base<void>::update_signal_type::slot_type update_slot_type;
+		typedef typename detail::future_body_untyped_base::update_signal_type::slot_type update_slot_type;
 
 		future(const promise<T> &promise): _future_body(promise._pimpl->_future_body)
 		{}
@@ -458,7 +457,7 @@ namespace poet
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
 
-		typedef detail::future_body_base<void>::update_signal_type::slot_type update_slot_type;
+		typedef detail::future_body_untyped_base::update_signal_type::slot_type update_slot_type;
 		typedef void value_type;
 
 		future(const promise<void> &promise): _future_body(promise._pimpl->_future_body)
@@ -524,10 +523,10 @@ namespace poet
 			return _future_body->get_exception_ptr();
 		}
 	private:
-		future(const boost::shared_ptr<detail::future_body_base<void> > &future_body):_future_body(future_body)
+		future(const boost::shared_ptr<detail::future_body_untyped_base > &future_body):_future_body(future_body)
 		{}
 
-		boost::shared_ptr<detail::future_body_base<void> > _future_body;
+		boost::shared_ptr<detail::future_body_untyped_base > _future_body;
 	};
 
 	namespace detail
@@ -551,7 +550,7 @@ namespace poet
 			try
 			{
 				future_value.get();
-				fulfill(0);
+				fulfill(bogus_void());
 			}
 			catch(...)
 			{

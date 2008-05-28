@@ -17,15 +17,18 @@
 
 namespace poet
 {
+	struct bogus_void
+	{
+	};
+
 	namespace detail
 	{
-		typedef int bogus_void_type;
 
 		template<typename T>
 			class nonvoid
 		{
 		public:
-			typedef typename boost::mpl::if_<boost::is_void<T>, bogus_void_type, T>::type type;
+			typedef typename boost::mpl::if_<boost::is_void<T>, bogus_void, T>::type type;
 		};
 	}
 }

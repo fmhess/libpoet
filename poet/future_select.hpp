@@ -31,11 +31,11 @@ namespace poet
 
 		template<>
 		class future_select_body<void>:
-			public virtual future_body_base<void>
+			public virtual future_body_untyped_base
 		{
-			typedef boost::shared_ptr<future_body_base<void> > future_body_dependency_type;
+			typedef boost::shared_ptr<future_body_untyped_base > future_body_dependency_type;
 		public:
-			typedef future_body_base<void>::update_signal_type update_signal_type;
+			typedef future_body_untyped_base::update_signal_type update_signal_type;
 
 			template<typename InputIterator>
 			future_select_body(InputIterator future_begin, InputIterator future_end)
@@ -132,7 +132,7 @@ namespace poet
 		{
 			typedef boost::shared_ptr<future_body_base<T> > future_body_dependency_type;
 		public:
-			typedef future_body_base<void>::update_signal_type update_signal_type;
+			typedef future_body_untyped_base::update_signal_type update_signal_type;
 
 			template<typename InputIterator>
 			future_select_body(InputIterator future_begin, InputIterator future_end):

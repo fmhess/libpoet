@@ -127,7 +127,7 @@ namespace poet
 			}
 			boost::signal<void ()> completion_signal;
 		private:
-			void check_dependency(const boost::shared_ptr<future_body_base<void> > &dependency, unsigned dependency_index) const
+			void check_dependency(const boost::shared_ptr<future_body_untyped_base > &dependency, unsigned dependency_index) const
 			{
 				bool complete = false;
 				{
@@ -196,6 +196,17 @@ namespace poet
 			mutable poet::exception_ptr _exception;
 		};
 
+		template<typename T>
+		typename nonvoid<T>::type nonvoid_future_get(const future<T> &f)
+		{
+			return f.get();
+		}
+		template<>
+		nonvoid<void>::type nonvoid_future_get<void>(const future<void> &f)
+		{
+			return nonvoid<void>::type();
+		}
+
 		template<typename R, typename Combiner, typename T>
 		class combiner_invoker
 		{
@@ -206,25 +217,10 @@ namespace poet
 			template<typename InputFutureIterator>
 			void operator()(boost::optional<R> &result, InputFutureIterator begin, InputFutureIterator end)
 			{
-				std::vector<T> input_values;
+				std::vector<typename nonvoid<T>::type> input_values;
 				std::transform(begin, end, std::back_inserter(input_values),
-					boost::bind(&future<T>::get, _1));
+					boost::bind(&nonvoid_future_get<T>, _1));
 				result = _combiner(input_values.begin(), input_values.end());
-			}
-		private:
-			Combiner _combiner;
-		};
-		template<typename R, typename Combiner>
-		class combiner_invoker<R, Combiner, void>
-		{
-		public:
-			combiner_invoker(const Combiner &combiner):
-				_combiner(combiner)
-			{}
-			template<typename InputFutureIterator>
-			void operator()(boost::optional<R> &result, InputFutureIterator, InputFutureIterator)
-			{
-				result = _combiner();
 			}
 		private:
 			Combiner _combiner;
@@ -239,25 +235,11 @@ namespace poet
 			template<typename InputFutureIterator>
 			void operator()(boost::optional<nonvoid<void>::type> &result, InputFutureIterator begin, InputFutureIterator end)
 			{
-				std::vector<T> input_values;
+				std::vector<typename nonvoid<T>::type> input_values;
 				std::transform(begin, end, std::back_inserter(input_values),
-					boost::bind(&future<T>::get, _1));
+					boost::bind(&nonvoid_future_get<T>, _1));
 				_combiner(input_values.begin(), input_values.end());
-			}
-		private:
-			Combiner _combiner;
-		};
-		template<typename Combiner>
-		class combiner_invoker<void, Combiner, void>
-		{
-		public:
-			combiner_invoker(const Combiner &combiner):
-				_combiner(combiner)
-			{}
-			template<typename InputFutureIterator>
-			void operator()(boost::optional<nonvoid<void>::type> &result, InputFutureIterator, InputFutureIterator)
-			{
-				_combiner();
+				result = bogus_void();
 			}
 		private:
 			Combiner _combiner;
@@ -324,33 +306,23 @@ namespace poet
 			future_barrier_body(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
 				base_class(combiner, future_begin, future_end)
 			{}
-			virtual const R& getValue() const
+			virtual const typename nonvoid<R>::type& getValue() const
 			{
 				this->join();
 				return *this->_combiner_result;
 			}
-			virtual void setValue(const R &value)
+			virtual void setValue(const typename nonvoid<R>::type &value)
 			{
 				BOOST_ASSERT(false);
 			}
-		};
-		template<typename Combiner, typename T>
-		class future_barrier_body<void, Combiner, T>:
-			public future_barrier_body_base<void, Combiner, T>
-		{
-			typedef future_barrier_body_base<void, Combiner, T> base_class;
-		public:
-			template<typename InputFutureIterator>
-			future_barrier_body(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
-				base_class(combiner, future_begin, future_end)
-			{}
 		};
 
 		class null_void_combiner
 		{
 		public:
 			typedef void result_type;
-			result_type operator()(...)
+			template<typename Iterator>
+			result_type operator()(Iterator, Iterator)
 			{}
 		};
 	} // namespace detail
