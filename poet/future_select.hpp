@@ -70,11 +70,11 @@ namespace poet
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{}
-			virtual bool has_exception() const
+			virtual exception_ptr get_exception_ptr() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
-				if(!_first_complete_dependency) return false;
-				return _first_complete_dependency->has_exception();
+				if(!_first_complete_dependency) return exception_ptr();
+				return _first_complete_dependency->get_exception_ptr();
 			}
 		protected:
 			bool nolock_ready_or_has_exception() const
@@ -93,7 +93,7 @@ namespace poet
 					boost::unique_lock<boost::mutex> lock(_mutex);
 					if(!_first_complete_dependency)
 					{
-						if(dependency->ready() || dependency->has_exception())
+						if(dependency->ready() || dependency->get_exception_ptr())
 						{
 							_first_complete_dependency = dependency;
 							emit_signal = true;

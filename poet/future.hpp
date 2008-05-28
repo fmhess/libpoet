@@ -29,6 +29,7 @@
 #include <boost/thread/thread_time.hpp>
 #include <boost/thread_safe_signal.hpp>
 #include <poet/detail/condition.hpp>
+#include <poet/detail/nonvoid.hpp>
 #include <poet/exception_ptr.hpp>
 #include <poet/exceptions.hpp>
 #include <iostream>
@@ -48,10 +49,7 @@ namespace poet
 			class future_body_base;
 		template <typename T>
 			class future_select_body;
-		template<typename R, typename Combiner, typename T>
-			class future_barrier_body;
-
-		typedef int bogus_promise_void_type;
+		class future_barrier_body_impl;
 
 		template<>
 		class future_body_base<void>
@@ -64,7 +62,7 @@ namespace poet
 			virtual void join() const = 0;
 			virtual bool timed_join(const boost::system_time &absolute_time) const = 0;
 			virtual void cancel(const poet::exception_ptr &) = 0;
-			virtual bool has_exception() const = 0;
+			virtual exception_ptr get_exception_ptr() const = 0;
 			boost::signalslib::connection connectUpdate(const update_signal_type::slot_type &slot)
 			{
 				return _updateSignal.connect(slot);
@@ -93,7 +91,7 @@ namespace poet
 				bool emit_signal = false;
 				{
 					boost::unique_lock<boost::mutex> lock(_mutex);
-					if(_exception == 0 && !_value)
+					if(_exception == false && !_value)
 					{
 						_value = value;
 						_readyCondition.notify_all();
@@ -142,7 +140,7 @@ namespace poet
 				bool emitSignal = false;
 				{
 					boost::unique_lock<boost::mutex> lock(_mutex);
-					if(_exception == 0 && !_value)
+					if(_exception == false && !_value)
 					{
 						emitSignal = true;
 						_readyCondition.notify_all();
@@ -154,7 +152,7 @@ namespace poet
 					this->_updateSignal();
 				}
 			}
-			virtual bool has_exception() const
+			virtual exception_ptr get_exception_ptr() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
 				return _exception;
@@ -231,7 +229,7 @@ namespace poet
 			{
 				_actualFutureBody->cancel(exp);
 			}
-			virtual bool has_exception() const
+			virtual exception_ptr get_exception_ptr() const
 			{
 				return _actualFutureBody->has_exception();
 			}
@@ -311,10 +309,10 @@ namespace poet
 
 	// void specialization
 	template<>
-	class promise<void>: private promise<detail::bogus_promise_void_type>
+	class promise<void>: private promise<detail::nonvoid<void>::type>
 	{
 	private:
-		typedef promise<detail::bogus_promise_void_type> base_type;
+		typedef promise<detail::nonvoid<void>::type> base_type;
 	public:
 		template <typename U>
 		friend class future;
@@ -331,7 +329,7 @@ namespace poet
 		{
 			boost::function<int (const OtherType&)> conversion_function =
 				boost::bind(&detail::null_conversion_function<OtherType>, _1);
-			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::bogus_promise_void_type, OtherType>(
+			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::nonvoid<void>::type, OtherType>(
 				other._pimpl->_future_body, conversion_function));
 		}
 		virtual ~promise() {}
@@ -355,8 +353,9 @@ namespace poet
 	{
 		template<typename InputIterator>
 			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
-		template<typename R, typename Combiner, typename U>
-			friend class detail::future_barrier_body;
+		template<typename R, typename Combiner, typename InputIterator>
+			friend future<R> future_combining_barrier_range(Combiner combiner, InputIterator future_begin, InputIterator future_end);
+		friend class detail::future_barrier_body_impl;
 		template<typename InputIterator>
 			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
 		friend class detail::future_select_body<void>;
@@ -433,9 +432,12 @@ namespace poet
 		bool has_exception() const
 		{
 			if(_future_body == 0) return true;
-			return _future_body->has_exception();
+			return _future_body->get_exception_ptr();
 		}
 	private:
+		future(const boost::shared_ptr<detail::future_body_base<T> > &future_body):_future_body(future_body)
+		{}
+
 		boost::shared_ptr<detail::future_body_base<T> > _future_body;
 	};
 
@@ -444,8 +446,9 @@ namespace poet
 	{
 		template<typename InputIterator>
 			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
-		template<typename R, typename Combiner, typename U>
-			friend class detail::future_barrier_body;
+		template<typename R, typename Combiner, typename InputIterator>
+			friend future<R> future_combining_barrier_range(Combiner combiner, InputIterator future_begin, InputIterator future_end);
+		friend class detail::future_barrier_body_impl;
 		template<typename InputIterator>
 			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
 		template<typename T>
@@ -518,9 +521,12 @@ namespace poet
 		bool has_exception() const
 		{
 			if(_future_body == 0) return true;
-			return _future_body->has_exception();
+			return _future_body->get_exception_ptr();
 		}
 	private:
+		future(const boost::shared_ptr<detail::future_body_base<void> > &future_body):_future_body(future_body)
+		{}
+
 		boost::shared_ptr<detail::future_body_base<void> > _future_body;
 	};
 
@@ -557,7 +563,7 @@ namespace poet
 	void promise<void>::fulfill(const future<void> &future_value)
 	{
 		typedef future<void>::update_slot_type slot_type;
-		future_value.connect_update(slot_type(&detail::promise_body<detail::bogus_promise_void_type>::handle_future_void_fulfillment,
+		future_value.connect_update(slot_type(&detail::promise_body<detail::nonvoid<void>::type>::handle_future_void_fulfillment,
 			_pimpl, future_value));
 	}
 }

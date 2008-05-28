@@ -5,9 +5,13 @@
 
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/function.hpp>
 #include <boost/thread.hpp>
-#include <poet/future_waits.hpp>
 #include <iostream>
+#include <poet/future_barrier.hpp>
+#include <poet/future_select.hpp>
+#include <utility>
+#include <vector>
 
 void get_future(poet::future<void> f)
 {
@@ -17,6 +21,97 @@ void get_future(poet::future<void> f)
 void myslot(bool *ran)
 {
 	*ran = true;
+}
+
+
+class my_iterating_combiner
+{
+public:
+	my_iterating_combiner(unsigned *sum): _sum(sum)
+	{}
+	template<typename Iterator>
+	unsigned operator()(Iterator begin, Iterator end)
+	{
+		Iterator it;
+		for(it = begin; it != end; ++it)
+		{
+			*_sum += *it;
+		}
+		return *_sum;
+	}
+private:
+	unsigned *_sum;
+};
+
+void combining_barrier_test()
+{
+	{
+		std::vector<poet::promise<double> > promises;
+		promises.push_back(poet::promise<double>());
+		promises.push_back(poet::promise<double>());
+		std::vector<poet::future<void> > futures;
+		std::copy(promises.begin(), promises.end(), std::back_inserter(futures));
+		bool combiner_run_flag = false;
+		poet::future<void> all_ready = poet::future_combining_barrier_range<void>(
+			boost::bind(&myslot, &combiner_run_flag), futures.begin(), futures.end());
+		assert(all_ready.ready() == false);
+		assert(combiner_run_flag == false);
+		assert(all_ready.has_exception() == false);
+		promises.at(0).fulfill(1.0);
+		assert(all_ready.ready() == false);
+		assert(combiner_run_flag == false);
+		assert(all_ready.has_exception() == false);
+		promises.at(1).fulfill(2);
+		assert(all_ready.ready() == true);
+		assert(combiner_run_flag == true);
+		assert(all_ready.has_exception() == false);
+	}
+	// similar, but input futures not converted to void before passing to future_combining_barrier
+	{
+		std::vector<poet::promise<unsigned> > promises;
+		promises.push_back(poet::promise<unsigned>());
+		promises.push_back(poet::promise<unsigned>());
+		std::vector<poet::future<unsigned> > futures;
+		std::copy(promises.begin(), promises.end(), std::back_inserter(futures));
+		unsigned combiner_sum = 0;
+		poet::future<void> all_ready = poet::future_combining_barrier_range<void>(
+			my_iterating_combiner(&combiner_sum), futures.begin(), futures.end());
+		assert(all_ready.ready() == false);
+		assert(combiner_sum == 0);
+		assert(all_ready.has_exception() == false);
+		promises.at(0).fulfill(1);
+		assert(all_ready.ready() == false);
+		assert(combiner_sum == 0);
+		assert(all_ready.has_exception() == false);
+		promises.at(1).fulfill(2);
+		assert(all_ready.ready() == true);
+		assert(all_ready.has_exception() == false);
+		assert(combiner_sum == futures.at(0).get() + futures.at(1).get());
+	}
+	// similar, but now with non-void result type
+	{
+		std::vector<poet::promise<unsigned> > promises;
+		promises.push_back(poet::promise<unsigned>());
+		promises.push_back(poet::promise<unsigned>());
+		std::vector<poet::future<unsigned> > futures;
+		std::copy(promises.begin(), promises.end(), std::back_inserter(futures));
+		unsigned combiner_sum = 0;
+		poet::future<unsigned> all_ready = poet::future_combining_barrier_range<unsigned>(
+			my_iterating_combiner(&combiner_sum), futures.begin(), futures.end());
+		assert(all_ready.ready() == false);
+		assert(combiner_sum == 0);
+		assert(all_ready.has_exception() == false);
+		promises.at(0).fulfill(1);
+		assert(all_ready.ready() == false);
+		assert(combiner_sum == 0);
+		assert(all_ready.has_exception() == false);
+		promises.at(1).fulfill(2);
+		assert(all_ready.ready() == true);
+		assert(all_ready.has_exception() == false);
+		assert(combiner_sum == futures.at(0).get() + futures.at(1).get());
+		assert(all_ready.get() == combiner_sum);
+	}
+
 }
 
 int main()
@@ -97,6 +192,9 @@ int main()
 		assert(any_ready.ready() == true);
 		assert(any_ready.has_exception() == false);
 	}
+
+	combining_barrier_test();
+
 	std::cerr << "OK\n";
 	return 0;
 }

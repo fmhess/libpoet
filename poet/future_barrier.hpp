@@ -17,7 +17,12 @@
 #ifndef _POET_FUTURE_BARRIER_HPP
 #define _POET_FUTURE_BARRIER_HPP
 
+#include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/optional.hpp>
+#include <boost/type_traits.hpp>
 #include <iterator>
+#include <poet/detail/nonvoid.hpp>
 #include <poet/future.hpp>
 #include <vector>
 
@@ -25,33 +30,74 @@ namespace poet
 {
 	namespace detail
 	{
-		/* future_body for void futures returned by future_barrier.  Becomes ready
-			only when all the futures on its list have become ready (or have exceptions)
-		*/
-		template<typename R, typename Combiner, typename T>
-		class future_barrier_body;
-
-		template<typename Combiner>
-		class future_barrier_body<void, Combiner, void>:
-			public future_body_base<void>
+		template<typename Lock>
+		class scoped_unlocker
 		{
-			typedef std::vector<boost::shared_ptr<future_body_base<void> > > future_dependencies_type;
+		public:
+			scoped_unlocker(Lock &lock): _lock(lock), _owns_lock(lock.owns_lock())
+			{
+				if(_owns_lock)
+					_lock.unlock();
+			}
+			~scoped_unlocker()
+			{
+				if(_owns_lock && _lock.owns_lock() == false)
+					_lock.lock();
+			}
+			void lock() {_lock.lock();}
+			void unlock() {_lock.unlock();}
+		private:
+			Lock &_lock;
+			bool _owns_lock;
+		};
+		template<typename Mutex>
+		class unscoped_lock
+		{
+		public:
+			unscoped_lock(Mutex &mutex): _lock(mutex, boost::adopt_lock_t())
+			{}
+			~unscoped_lock()
+			{
+				_lock.release();
+			}
+			void lock()
+			{
+				_lock.lock();
+			}
+			void unlock()
+			{
+				_lock.unlock();
+			}
+			bool owns_lock() const
+			{
+				return _lock.owns_lock();
+			}
+		private:
+			boost::unique_lock<Mutex> _lock;
+		};
+
+		class future_barrier_body_impl: public boost::noncopyable
+		{
+			typedef boost::signal<void ()> update_signal_type;
 		public:
 			template<typename InputFutureIterator>
-			future_barrier_body(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
-				_ready_count(0)
+			future_barrier_body_impl(boost::function<void ()> completion_callback,
+			boost::function<void ()> combiner_invoker,
+				InputFutureIterator future_begin, InputFutureIterator future_end):
+				_ready_count(0), _completion_callback(completion_callback), _combiner_invoker(combiner_invoker),
+				_ready(false)
 			{
 				InputFutureIterator it;
 				unsigned i = 0;
 				for(it = future_begin; it != future_end; ++it, ++i)
 				{
-					_dependency_readies.push_back(false);
-					update_signal_type::slot_type update_slot(&future_barrier_body::check_dependency, this, it->_future_body, i);
+					_dependency_completes.push_back(false);
+					update_signal_type::slot_type update_slot(&future_barrier_body_impl::check_dependency, this, it->_future_body, i);
 					_connections.push_back(it->_future_body->connectUpdate(update_slot));
 					check_dependency(it->_future_body, i);
 				}
 			}
-			virtual ~future_barrier_body()
+			~future_barrier_body_impl()
 			{
 				std::vector<boost::signalslib::connection>::iterator it;
 				for(it = _connections.begin(); it != _connections.end(); ++it)
@@ -59,62 +105,245 @@ namespace poet
 					it->disconnect();
 				}
 			}
-			virtual bool ready() const
+			bool ready() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
-				return nolock_ready();
+				return _ready;
 			}
-			virtual void join() const
+			void join() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
-				_condition.wait(lock, boost::bind(&future_barrier_body::nolock_ready, this));
+				_condition.wait(lock, boost::bind(&future_barrier_body_impl::nolock_complete, this));
 			}
-			virtual bool timed_join(const boost::system_time &absolute_time) const
+			bool timed_join(const boost::system_time &absolute_time) const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
-				return _condition.timed_wait(lock, absolute_time, boost::bind(&future_barrier_body::nolock_ready, this));
+				return _condition.timed_wait(lock, absolute_time, boost::bind(&future_barrier_body_impl::nolock_complete, this));
 			}
-			virtual void cancel(const poet::exception_ptr &exp)
-			{}
-			virtual bool has_exception() const
+			exception_ptr get_exception_ptr() const
 			{
-				return false;
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				return _exception;
 			}
+			boost::signal<void ()> completion_signal;
 		private:
-			void check_dependency(const boost::shared_ptr<future_body_base<void> > &dependency, unsigned ready_index) const
+			void check_dependency(const boost::shared_ptr<future_body_base<void> > &dependency, unsigned dependency_index) const
 			{
-				bool emit_signal = false;
+				bool complete = false;
 				{
 					boost::unique_lock<boost::mutex> lock(_mutex);
-					if(_dependency_readies.at(ready_index) == false)
+					if(_dependency_completes.at(dependency_index) == false)
 					{
-						if(dependency->ready() || dependency->has_exception())
+						const bool dep_ready = dependency->ready();
+						const bool dep_has_exception = dependency->get_exception_ptr();
+						if(dep_has_exception && _exception == false)
 						{
-							_dependency_readies.at(ready_index) = true;
-							++_ready_count;
-							if(nolock_ready())
+							_dependency_completes.at(dependency_index) = true;
+							_exception = dependency->get_exception_ptr();
+							_condition.notify_all();
+							complete = true;
+						}
+						if(dep_ready)
+						{
+							_dependency_completes.at(dependency_index) = true;
+							_ready_count += dep_ready;
+							if(_ready_count == _dependency_completes.size())
 							{
+								relocking_run_combiner(lock);
 								_condition.notify_all();
-								emit_signal = true;
+								complete = true;
 							}
 						}
 					}
 				}
-				if(emit_signal)
+				if(complete)
 				{
-					this->_updateSignal();
+					_completion_callback();
 				}
 			}
-			bool nolock_ready() const
+			template<typename Lock>
+			void relocking_run_combiner(Lock &lock) const
 			{
-				return _ready_count == _dependency_readies.size();
+				BOOST_ASSERT(lock.owns_lock());
+				BOOST_ASSERT(!_ready && !_exception);
+				exception_ptr ep;
+				{
+					scoped_unlocker<Lock> unlocker(lock);
+					try
+					{
+						_combiner_invoker();
+					}catch(...)
+					{
+						ep = current_exception();
+					}
+				}
+				_exception = ep;
+				_ready = !_exception;
+			}
+			bool nolock_complete() const
+			{
+				return _ready || _exception;
 			}
 
 			std::vector<boost::signalslib::connection> _connections;
 			mutable boost::mutex _mutex;
 			mutable boost::condition _condition;
-			mutable std::vector<bool> _dependency_readies;
+			mutable std::vector<bool> _dependency_completes;
 			mutable unsigned _ready_count;
+			mutable boost::function<void ()> _completion_callback;
+			mutable boost::function<void ()> _combiner_invoker;
+			mutable bool _ready;
+			mutable poet::exception_ptr _exception;
+		};
+
+		template<typename R, typename Combiner, typename T>
+		class combiner_invoker
+		{
+		public:
+			combiner_invoker(const Combiner &combiner):
+				_combiner(combiner)
+			{}
+			template<typename InputFutureIterator>
+			void operator()(boost::optional<R> &result, InputFutureIterator begin, InputFutureIterator end)
+			{
+				std::vector<T> input_values;
+				std::transform(begin, end, std::back_inserter(input_values),
+					boost::bind(&future<T>::get, _1));
+				result = _combiner(input_values.begin(), input_values.end());
+			}
+		private:
+			Combiner _combiner;
+		};
+		template<typename R, typename Combiner>
+		class combiner_invoker<R, Combiner, void>
+		{
+		public:
+			combiner_invoker(const Combiner &combiner):
+				_combiner(combiner)
+			{}
+			template<typename InputFutureIterator>
+			void operator()(boost::optional<R> &result, InputFutureIterator, InputFutureIterator)
+			{
+				result = _combiner();
+			}
+		private:
+			Combiner _combiner;
+		};
+		template<typename Combiner, typename T>
+		class combiner_invoker<void, Combiner, T>
+		{
+		public:
+			combiner_invoker(const Combiner &combiner):
+				_combiner(combiner)
+			{}
+			template<typename InputFutureIterator>
+			void operator()(boost::optional<nonvoid<void>::type> &result, InputFutureIterator begin, InputFutureIterator end)
+			{
+				std::vector<T> input_values;
+				std::transform(begin, end, std::back_inserter(input_values),
+					boost::bind(&future<T>::get, _1));
+				_combiner(input_values.begin(), input_values.end());
+			}
+		private:
+			Combiner _combiner;
+		};
+		template<typename Combiner>
+		class combiner_invoker<void, Combiner, void>
+		{
+		public:
+			combiner_invoker(const Combiner &combiner):
+				_combiner(combiner)
+			{}
+			template<typename InputFutureIterator>
+			void operator()(boost::optional<nonvoid<void>::type> &result, InputFutureIterator, InputFutureIterator)
+			{
+				_combiner();
+			}
+		private:
+			Combiner _combiner;
+		};
+
+		template<typename R, typename Combiner, typename T>
+		class future_barrier_body_base:
+			public future_body_base<R>
+		{
+		public:
+			template<typename InputFutureIterator>
+			future_barrier_body_base(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
+				_input_futures(future_begin, future_end), _combiner_invoker(combiner),
+				_impl(boost::bind(&future_barrier_body_base::completion_handler, this),
+					boost::bind(&future_barrier_body_base::invoke_combiner, this),
+					_input_futures.begin(), _input_futures.end())
+			{
+			}
+			virtual bool ready() const
+			{
+				return _impl.ready();
+			}
+			virtual void join() const
+			{
+				return _impl.join();
+			}
+			virtual bool timed_join(const boost::system_time &absolute_time) const
+			{
+				return _impl.timed_join(absolute_time);
+			}
+			virtual void cancel(const poet::exception_ptr &exp)
+			{}
+			virtual exception_ptr get_exception_ptr() const
+			{
+				return _impl.get_exception_ptr();
+			}
+		protected:
+			boost::optional<typename nonvoid<R>::type> _combiner_result;
+		private:
+			void invoke_combiner()
+			{
+				_combiner_invoker(_combiner_result, _input_futures.begin(), _input_futures.end());
+			}
+			void completion_handler()
+			{
+				this->_updateSignal();
+			}
+
+			std::vector<future<T> > _input_futures;
+			combiner_invoker<R, Combiner, T> _combiner_invoker;
+			future_barrier_body_impl _impl;
+		};
+
+		/* future_body for futures returned by future_barrier.  Becomes ready
+			only when all the futures on its list have become ready (or have exceptions)
+		*/
+		template<typename R, typename Combiner, typename T>
+		class future_barrier_body:
+			public future_barrier_body_base<R, Combiner, T>
+		{
+			typedef future_barrier_body_base<R, Combiner, T> base_class;
+		public:
+			template<typename InputFutureIterator>
+			future_barrier_body(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
+				base_class(combiner, future_begin, future_end)
+			{}
+			virtual const R& getValue() const
+			{
+				this->join();
+				return *this->_combiner_result;
+			}
+			virtual void setValue(const R &value)
+			{
+				BOOST_ASSERT(false);
+			}
+		};
+		template<typename Combiner, typename T>
+		class future_barrier_body<void, Combiner, T>:
+			public future_barrier_body_base<void, Combiner, T>
+		{
+			typedef future_barrier_body_base<void, Combiner, T> base_class;
+		public:
+			template<typename InputFutureIterator>
+			future_barrier_body(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
+				base_class(combiner, future_begin, future_end)
+			{}
 		};
 
 		class null_void_combiner
@@ -129,8 +358,9 @@ namespace poet
 	template<typename InputIterator>
 	future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end)
 	{
-		future<void> result;
-		result._future_body.reset(new detail::future_barrier_body<void, detail::null_void_combiner, void>(detail::null_void_combiner(), future_begin, future_end));
+		typedef detail::future_barrier_body<void, detail::null_void_combiner, void> body_type;
+		future<void> result(boost::shared_ptr<body_type>(
+			new body_type(detail::null_void_combiner(), future_begin, future_end)));
 		return result;
 	}
 
@@ -139,8 +369,9 @@ namespace poet
 	{
 		typedef typename std::iterator_traits<InputIterator>::value_type input_future_type;
 		typedef typename input_future_type::value_type input_value_type;
-		future<R>result;
-		result._future_body.reset(new detail::future_barrier_body<R, Combiner, input_value_type>(combiner, future_begin, future_end));
+		typedef detail::future_barrier_body<R, Combiner, input_value_type> body_type;
+		future<R> result(boost::shared_ptr<body_type>(
+			new body_type(combiner, future_begin, future_end)));
 		return result;
 	}
 }
