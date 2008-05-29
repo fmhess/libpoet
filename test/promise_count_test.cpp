@@ -4,11 +4,32 @@
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/assert.hpp>
+#include <boost/optional.hpp>
 #include <iostream>
 #include <poet/future.hpp>
 
+void future_count_test()
+{
+	poet::promise<double> mypromise;
+	BOOST_ASSERT(mypromise.has_future() == false);
+
+	boost::optional<poet::future<double> > fut0(mypromise);
+	BOOST_ASSERT(mypromise.has_future());
+
+	{
+		poet::future<int> fut1 = fut0.get();
+		BOOST_ASSERT(mypromise.has_future());
+
+		fut0.reset();
+		BOOST_ASSERT(mypromise.has_future());
+	}
+
+	BOOST_ASSERT(mypromise.has_future() == false);
+}
+
 int main()
 {
+	std::cerr << __FILE__ << "... ";
 	poet::future<double> myfuture;
 	{
 		poet::promise<double> mypromise_copy;
@@ -27,12 +48,14 @@ int main()
 		BOOST_ASSERT(false);
 	}
 	catch(const poet::uncertain_future &err)
-	{
-		std::cerr << "caught exception: " << err.what() << std::endl;
-	}
+	{}
 	catch(...)
 	{
 		BOOST_ASSERT(false);
 	}
+
+	future_count_test();
+
+	std::cerr << "OK\n";
 	return 0;
 }

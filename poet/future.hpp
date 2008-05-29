@@ -259,6 +259,10 @@ namespace poet
 			}
 			inline void handle_future_fulfillment(const future<T> &future_value);
 			inline void handle_future_void_fulfillment(const future<void> &future_value);
+			bool has_future() const
+			{
+				return !_future_body.unique();
+			}
 
 			boost::shared_ptr<future_body_base<T> > _future_body;
 		};
@@ -303,6 +307,10 @@ namespace poet
 		void renege(const poet::exception_ptr &exp)
 		{
 			_pimpl->renege(exp);
+		}
+		bool has_future() const
+		{
+			return _pimpl->has_future();
 		}
 	private:
 		boost::shared_ptr<detail::promise_body<T> > _pimpl;
