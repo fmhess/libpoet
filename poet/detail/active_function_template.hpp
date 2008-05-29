@@ -104,7 +104,7 @@ namespace poet
 				POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 				const boost::shared_ptr<boost::slot<Signature> > &passive_function,
 				const boost::shared_ptr<boost::slot<bool ()> > &guard): base_type(returnValue),
-				POET_REPEATED_ARG_CONSTRUCTOR(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ARG_CONSTRUCTOR, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
+				POET_REPEATED_ARG_CONSTRUCTOR(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 				_passive_function(passive_function), _guard(guard)
 			{
 				_lastReadyChanged = ready();
