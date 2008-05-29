@@ -180,16 +180,15 @@ namespace poet
 			public future_body_base<ProxyType>
 		{
 		public:
-			future_body_proxy(boost::shared_ptr<future_body_base<ActualType> > actualFutureBody,
-				const boost::function<ProxyType (const ActualType&)> &conversionFunction):
-				_actualFutureBody(actualFutureBody),
-				_conversionFunction(conversionFunction)
+			// static factory function
+			static boost::shared_ptr<future_body_proxy> create(
+				const boost::shared_ptr<future_body_base<ActualType> > &actualFutureBody,
+				const boost::function<ProxyType (const ActualType&)> &conversionFunction)
 			{
-				_readyConnection = _actualFutureBody->connectUpdate(this->_updateSignal);
-			}
-			virtual ~future_body_proxy()
-			{
-				_readyConnection.disconnect();
+				boost::shared_ptr<future_body_proxy> new_object(new future_body_proxy(actualFutureBody, conversionFunction));
+				typedef typename future<ActualType>::update_slot_type slot_type;
+				new_object->_actualFutureBody->connectUpdate(slot_type(new_object->_updateSignal).track(new_object));
+				return new_object;
 			}
 			virtual void setValue(const ProxyType &value)
 			{
@@ -227,9 +226,14 @@ namespace poet
 				return _actualFutureBody->get_exception_ptr();
 			}
 		private:
+			future_body_proxy(boost::shared_ptr<future_body_base<ActualType> > actualFutureBody,
+				const boost::function<ProxyType (const ActualType&)> &conversionFunction):
+				_actualFutureBody(actualFutureBody),
+				_conversionFunction(conversionFunction)
+			{}
+
 			boost::shared_ptr<future_body_base<ActualType> > _actualFutureBody;
 			boost::function<ProxyType (const ActualType&)> _conversionFunction;
-			boost::signalslib::connection _readyConnection;
 			mutable boost::optional<ProxyType> _proxyValue;
 			mutable boost::mutex _mutex;
 		};
@@ -338,8 +342,8 @@ namespace poet
 		{
 			boost::function<null_type (const OtherType&)> conversion_function =
 				boost::bind(&detail::null_conversion_function<OtherType>, _1);
-			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::nonvoid<void>::type, OtherType>(
-				other._pimpl->_future_body, conversion_function));
+			_pimpl->_future_body = detail::future_body_proxy<detail::nonvoid<void>::type, OtherType>::create(
+				other._pimpl->_future_body, conversion_function);
 		}
 		virtual ~promise() {}
 		void fulfill()
@@ -389,8 +393,8 @@ namespace poet
 			}
 			boost::function<T (const OtherType&)> typedConversionFunction =
 				boost::bind(&detail::default_conversion_function<T, OtherType>, _1);
-			_future_body.reset(new detail::future_body_proxy<T, OtherType>(
-				other._future_body, typedConversionFunction));
+			_future_body = detail::future_body_proxy<T, OtherType>::create(
+				other._future_body, typedConversionFunction);
 		}
 		future()
 		{}
@@ -419,7 +423,7 @@ namespace poet
 		template <typename OtherType> const future<T>& operator=(const future<OtherType> &other)
 		{
 			BOOST_ASSERT(typeid(T) != typeid(OtherType));
-			_future_body.reset(new detail::future_body_proxy<T, OtherType>(other._future_body));
+			_future_body = detail::future_body_proxy<T, OtherType>::create(other._future_body);
 			return *this;
 		}
 		boost::signalslib::connection connect_update(const update_slot_type &slot) const

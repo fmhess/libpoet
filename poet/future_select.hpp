@@ -27,7 +27,7 @@ namespace poet
 			when any of the futures on its list have become ready or has an exception.
 		*/
 		template<typename T>
-			class future_select_body;
+		class future_select_body;
 
 		template<>
 		class future_select_body<void>:
@@ -38,21 +38,13 @@ namespace poet
 			typedef future_body_untyped_base::update_signal_type update_signal_type;
 
 			template<typename InputIterator>
-			future_select_body(InputIterator future_begin, InputIterator future_end)
+			static boost::shared_ptr<future_select_body> create(InputIterator future_begin, InputIterator future_end)
 			{
-				InputIterator it;
-				for(it = future_begin; it != future_end; ++it)
-				{
-					typedef update_signal_type::slot_type update_slot_type;
-					update_signal_type::slot_type update_slot(&future_select_body::check_dependency, this, get_future_body(*it));
-					_connections.push_back(get_future_body(*it)->connectUpdate(update_slot));
-					if(check_dependency(get_future_body(*it))) break;
-				}
+				boost::shared_ptr<future_select_body> new_object(new future_select_body);
+				init(new_object, future_begin, future_end);
+				return new_object;
 			}
-			virtual ~future_select_body()
-			{
-				nolock_disconnect_all();
-			}
+
 			virtual bool ready() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
@@ -77,6 +69,19 @@ namespace poet
 				return _first_complete_dependency->get_exception_ptr();
 			}
 		protected:
+			template<typename InputIterator>
+			static void init(const boost::shared_ptr<future_select_body> &new_object, InputIterator future_begin, InputIterator future_end)
+			{
+				InputIterator it;
+				for(it = future_begin; it != future_end; ++it)
+				{
+					typedef update_signal_type::slot_type update_slot_type;
+					update_slot_type update_slot(&future_select_body::check_dependency, new_object.get(), get_future_body(*it));
+					update_slot.track(new_object);
+					get_future_body(*it)->connectUpdate(update_slot);
+					if(new_object->check_dependency(get_future_body(*it))) break;
+				}
+			}
 			bool nolock_ready_or_has_exception() const
 			{
 				return _first_complete_dependency;
@@ -85,6 +90,9 @@ namespace poet
 			mutable boost::mutex _mutex;
 			mutable boost::condition _condition;
 			mutable future_body_dependency_type _first_complete_dependency;
+		protected:
+			future_select_body()
+			{}
 		private:
 			bool check_dependency(const future_body_dependency_type &dependency) const
 			{
@@ -97,7 +105,6 @@ namespace poet
 						{
 							_first_complete_dependency = dependency;
 							emit_signal = true;
-							nolock_disconnect_all();
 							_condition.notify_all();
 						}
 					}
@@ -113,17 +120,6 @@ namespace poet
 				if(!_first_complete_dependency) return false;
 				return _first_complete_dependency->ready();
 			}
-			void nolock_disconnect_all() const
-			{
-				std::vector<boost::signalslib::connection>::iterator it;
-				for(it = _connections.begin(); it != _connections.end(); ++it)
-				{
-					it->disconnect();
-				}
-				_connections.clear();
-			}
-
-			mutable std::vector<boost::signalslib::connection> _connections;
 		};
 
 		template<typename T>
@@ -135,9 +131,13 @@ namespace poet
 			typedef future_body_untyped_base::update_signal_type update_signal_type;
 
 			template<typename InputIterator>
-			future_select_body(InputIterator future_begin, InputIterator future_end):
-				future_select_body<void>(future_begin, future_end)
-			{}
+			static boost::shared_ptr<future_select_body> create(InputIterator future_begin, InputIterator future_end)
+			{
+				boost::shared_ptr<future_select_body> new_object(new future_select_body);
+				new_object->init(new_object, future_begin, future_end);
+				return new_object;
+			}
+
 			virtual const T& getValue() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
@@ -150,6 +150,9 @@ namespace poet
 			{
 				BOOST_ASSERT(false);
 			}
+  private:
+			future_select_body()
+			{}
 		};
 	} // namespace detail
 
@@ -159,7 +162,7 @@ namespace poet
 		typedef typename std::iterator_traits<InputIterator>::value_type future_type;
 		typedef detail::future_select_body<typename future_type::value_type> body_type;
 		future_type result = detail::create_future<typename future_type::value_type>(
-			boost::shared_ptr<body_type>(new body_type(future_begin, future_end)));
+			body_type::create(future_begin, future_end));
 		return result;
 	}
 }

@@ -86,7 +86,7 @@ namespace poet
 				_ready(false)
 			{}
 			template<typename InputFutureIterator>
-			void set_input_futures(InputFutureIterator future_begin, InputFutureIterator future_end)
+			void set_input_futures(InputFutureIterator future_begin, InputFutureIterator future_end, const boost::shared_ptr<void> &owner)
 			{
 				InputFutureIterator it;
 				unsigned i = 0;
@@ -94,16 +94,9 @@ namespace poet
 				{
 					_dependency_completes.push_back(false);
 					update_signal_type::slot_type update_slot(&future_barrier_body_impl::check_dependency, this, get_future_body(*it), i);
-					_connections.push_back(get_future_body(*it)->connectUpdate(update_slot));
+					update_slot.track(owner);
+					get_future_body(*it)->connectUpdate(update_slot);
 					check_dependency(get_future_body(*it), i);
-				}
-			}
-			~future_barrier_body_impl()
-			{
-				std::vector<boost::signalslib::connection>::iterator it;
-				for(it = _connections.begin(); it != _connections.end(); ++it)
-				{
-					it->disconnect();
 				}
 			}
 			bool ready() const
@@ -255,12 +248,13 @@ namespace poet
 		{
 		public:
 			template<typename InputFutureIterator>
-			future_barrier_body(const Combiner &combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
-				_input_futures(future_begin, future_end), _combiner_invoker(combiner),
-				_impl(boost::bind(&future_barrier_body::completion_handler, this),
-					boost::bind(&future_barrier_body::invoke_combiner, this))
+			static boost::shared_ptr<future_barrier_body> create(const Combiner &combiner,
+				InputFutureIterator future_begin, InputFutureIterator future_end)
 			{
-				_impl.set_input_futures(_input_futures.begin(), _input_futures.end());
+				boost::shared_ptr<future_barrier_body> new_object(
+					new future_barrier_body(combiner, future_begin, future_end));
+				new_object->_impl.set_input_futures(new_object->_input_futures.begin(), new_object->_input_futures.end(), new_object);
+				return new_object;
 			}
 			virtual bool ready() const
 			{
@@ -290,6 +284,13 @@ namespace poet
 				BOOST_ASSERT(false);
 			}
 		private:
+			template<typename InputFutureIterator>
+			future_barrier_body(const Combiner &combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
+				_input_futures(future_begin, future_end), _combiner_invoker(combiner),
+				_impl(boost::bind(&future_barrier_body::completion_handler, this),
+					boost::bind(&future_barrier_body::invoke_combiner, this))
+			{}
+
 			void invoke_combiner()
 			{
 				_combiner_invoker(_combiner_result, _input_futures.begin(), _input_futures.end());
@@ -319,8 +320,7 @@ namespace poet
 	future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end)
 	{
 		typedef detail::future_barrier_body<void, detail::null_void_combiner, void> body_type;
-		future<void> result = detail::create_future<void>(boost::shared_ptr<body_type>(
-			new body_type(detail::null_void_combiner(), future_begin, future_end)));
+		future<void> result = detail::create_future<void>(body_type::create(detail::null_void_combiner(), future_begin, future_end));
 		return result;
 	}
 
@@ -330,8 +330,7 @@ namespace poet
 		typedef typename std::iterator_traits<InputIterator>::value_type input_future_type;
 		typedef typename input_future_type::value_type input_value_type;
 		typedef detail::future_barrier_body<R, Combiner, input_value_type> body_type;
-		future<R> result = detail::create_future<R>(boost::shared_ptr<body_type>(
-			new body_type(combiner, future_begin, future_end)));
+		future<R> result = detail::create_future<R>(body_type::create(combiner, future_begin, future_end));
 		return result;
 	}
 }

@@ -92,25 +92,27 @@ nonvoid_future_get<TN>(fN)
 			public future_body_base<R>
 		{
 		public:
-			FUTURE_HETRO_COMBINING_BARRIER_BODY_N(const Combiner &combiner,
-				POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, input_future)):
-				POET_REPEATED_ARG_CONSTRUCTOR(POET_FUTURE_WAITS_NUM_ARGS, input_future),
-				_combiner_invoker(combiner),
-				_impl(boost::bind(&FUTURE_HETRO_COMBINING_BARRIER_BODY_N::completion_handler, this),
-					boost::bind(&FUTURE_HETRO_COMBINING_BARRIER_BODY_N::invoke_combiner, this))
+			static boost::shared_ptr<FUTURE_HETRO_COMBINING_BARRIER_BODY_N> create(
+				const Combiner &combiner,
+				POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, input_future))
 			{
+				boost::shared_ptr<FUTURE_HETRO_COMBINING_BARRIER_BODY_N> new_object(
+					new FUTURE_HETRO_COMBINING_BARRIER_BODY_N(combiner,
+						POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, input_future)));
+
 				std::vector<future<void> > input_futures;
 /*
-input_futures.push_back(_input_future1);
-input_futures.push_back(_input_future2);
+input_futures.push_back(input_future1);
+input_futures.push_back(input_future2);
 ...
-input_futures.push_back(_input_futureN);
+input_futures.push_back(input_futureN);
 */
 #define POET_MISC_STATEMENT(z, n, data) \
-	input_futures.push_back(POET_ARG_NAME(~, n, _input_future));
+	input_futures.push_back(POET_ARG_NAME(~, n, input_future));
 				BOOST_PP_REPEAT(POET_FUTURE_WAITS_NUM_ARGS, POET_MISC_STATEMENT, ~)
 #undef POET_MISC_STATEMENT
-				_impl.set_input_futures(input_futures.begin(), input_futures.end());
+				new_object->_impl.set_input_futures(input_futures.begin(), input_futures.end(), new_object);
+				return new_object;
 			}
 			virtual bool ready() const
 			{
@@ -140,6 +142,15 @@ input_futures.push_back(_input_futureN);
 				BOOST_ASSERT(false);
 			}
 		private:
+			FUTURE_HETRO_COMBINING_BARRIER_BODY_N(const Combiner &combiner,
+				POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, input_future)):
+				POET_REPEATED_ARG_CONSTRUCTOR(POET_FUTURE_WAITS_NUM_ARGS, input_future),
+				_combiner_invoker(combiner),
+				_impl(boost::bind(&FUTURE_HETRO_COMBINING_BARRIER_BODY_N::completion_handler, this),
+					boost::bind(&FUTURE_HETRO_COMBINING_BARRIER_BODY_N::invoke_combiner, this))
+			{
+			}
+
 			void invoke_combiner()
 			{
 				_combiner_invoker(_combiner_result,
@@ -187,8 +198,8 @@ inputs.push_back(fn);
 		POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, f))
 	{
 		typedef detail::FUTURE_HETRO_COMBINING_BARRIER_BODY_N<R, Combiner, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, T)> body_type;
-		future<R> result = detail::create_future<R>(boost::shared_ptr<body_type>(
-			new body_type(combiner, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, f))));
+		future<R> result = detail::create_future<R>(body_type::create(
+			combiner, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, f)));
 		return result;
 	}
 }
