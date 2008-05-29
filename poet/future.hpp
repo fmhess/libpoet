@@ -45,12 +45,6 @@ namespace poet
 
 	namespace detail
 	{
-		template <typename T>
-			class future_body_base;
-		template <typename T>
-			class future_select_body;
-		class future_barrier_body_impl;
-
 		class future_body_untyped_base
 		{
 		public:
@@ -174,9 +168,9 @@ namespace poet
 			return ProxyType(actualValue);
 		}
 		template<typename ActualType>
-		static bogus_void null_conversion_function(const ActualType& actualValue)
+		static null_type null_conversion_function(const ActualType& actualValue)
 		{
-			return bogus_void();
+			return null_type();
 		}
 
 		/* class which monitors another future_body_base<ActualType>, while returning values of type ProxyType.
@@ -268,7 +262,15 @@ namespace poet
 
 			boost::shared_ptr<future_body_base<T> > _future_body;
 		};
-	}
+
+		template<typename T>
+			future<T> create_future(const boost::shared_ptr<future_body_untyped_base> &body);
+		template<>
+			future<void> create_future<void>(const boost::shared_ptr<future_body_untyped_base> &body);
+		template<typename T>
+			const boost::shared_ptr<future_body_base<T> >& get_future_body(const poet::future<T> &f);
+		const boost::shared_ptr<future_body_untyped_base>& get_future_body(const poet::future<void> &f);
+	} // namespace detail
 
 	template <typename T>
 	class promise
@@ -326,7 +328,7 @@ namespace poet
 		template <typename OtherType>
 		promise(const promise<OtherType> &other)
 		{
-			boost::function<bogus_void (const OtherType&)> conversion_function =
+			boost::function<null_type (const OtherType&)> conversion_function =
 				boost::bind(&detail::null_conversion_function<OtherType>, _1);
 			_pimpl->_future_body.reset(new detail::future_body_proxy<detail::nonvoid<void>::type, OtherType>(
 				other._pimpl->_future_body, conversion_function));
@@ -334,7 +336,7 @@ namespace poet
 		virtual ~promise() {}
 		void fulfill()
 		{
-			base_type::fulfill(bogus_void());
+			base_type::fulfill(null_type());
 		}
 		inline void fulfill(const future<void> &future_value);
 		template <typename E>
@@ -350,15 +352,8 @@ namespace poet
 
 	template <typename T> class future
 	{
-		template<typename InputIterator>
-			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
-		template<typename R, typename Combiner, typename InputIterator>
-			friend future<R> future_combining_barrier_range(const Combiner &combiner, InputIterator future_begin, InputIterator future_end);
-		friend class detail::future_barrier_body_impl;
-		template<typename InputIterator>
-			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
-		friend class detail::future_select_body<void>;
-		friend class detail::future_select_body<T>;
+		friend future<T> detail::create_future<T>(const boost::shared_ptr<detail::future_body_untyped_base> &body);
+		friend const boost::shared_ptr<detail::future_body_base<T> >& detail::get_future_body<T>(const poet::future<T> &f);
 	public:
 		template <typename OtherType> friend class future;
 		friend class future<void>;
@@ -443,16 +438,8 @@ namespace poet
 	template <>
 	class future<void>
 	{
-		template<typename InputIterator>
-			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
-		template<typename R, typename Combiner, typename InputIterator>
-			friend future<R> future_combining_barrier_range(const Combiner &combiner, InputIterator future_begin, InputIterator future_end);
-		friend class detail::future_barrier_body_impl;
-		template<typename InputIterator>
-			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
-		template<typename T>
-			friend class detail::future_select_body;
-		friend class detail::future_select_body<void>;
+		friend future<void> detail::create_future<void>(const boost::shared_ptr<detail::future_body_untyped_base> &body);
+		friend const boost::shared_ptr<detail::future_body_untyped_base>& detail::get_future_body(const poet::future<void> &f);
 	public:
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
@@ -550,12 +537,33 @@ namespace poet
 			try
 			{
 				future_value.get();
-				fulfill(bogus_void());
+				fulfill(null_type());
 			}
 			catch(...)
 			{
 				renege(current_exception());
 			}
+		}
+
+		template<typename T>
+			future<T> create_future(const boost::shared_ptr<future_body_untyped_base> &body)
+		{
+			using boost::dynamic_pointer_cast;
+			return future<T>(dynamic_pointer_cast<future_body_base<T> >(body));
+		}
+		template<>
+			future<void> create_future<void>(const boost::shared_ptr<future_body_untyped_base> &body)
+		{
+			return future<void>(body);
+		}
+		template<typename T>
+			const boost::shared_ptr<future_body_base<T> >& get_future_body(const poet::future<T> &f)
+		{
+			return f._future_body;
+		}
+			const boost::shared_ptr<future_body_untyped_base>& get_future_body(const poet::future<void> &f)
+		{
+			return f._future_body;
 		}
 	} // namespace detail
 

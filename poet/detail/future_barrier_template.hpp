@@ -23,8 +23,8 @@
 // const future<T1> &namestem1, const future<T2> &namestem2, ..., const future<Tn> &namestemN
 #define POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(arity, namestem) \
 	BOOST_PP_ENUM(arity, POET_FUTURE_WAITS_ARG_DECL, namestem)
-// future_hetro_combining_barrier_N
-#define FUTURE_HETRO_COMBINING_BARRIER_BODY_N BOOST_PP_CAT(future_hetro_combining_barrier_, POET_FUTURE_WAITS_NUM_ARGS)
+// future_hetero_combining_barrier_body_N
+#define FUTURE_HETRO_COMBINING_BARRIER_BODY_N BOOST_PP_CAT(future_hetero_combining_barrier_body_, POET_FUTURE_WAITS_NUM_ARGS)
 // combiner_invoker_N
 #define POET_COMBINER_INVOKER_N BOOST_PP_CAT(combiner_invoker_, POET_FUTURE_WAITS_NUM_ARGS)
 
@@ -81,7 +81,7 @@ nonvoid_future_get<TN>(fN)
 					BOOST_PP_ENUM(POET_FUTURE_WAITS_NUM_ARGS, POET_MISC_STATEMENT, ~)
 #undef POET_MISC_STATEMENT
 					);
-				result = bogus_void();
+				result = null_type();
 			}
 		private:
 			Combiner _combiner;
@@ -92,7 +92,6 @@ nonvoid_future_get<TN>(fN)
 			public future_body_base<R>
 		{
 		public:
-			template<typename InputFutureIterator>
 			FUTURE_HETRO_COMBINING_BARRIER_BODY_N(const Combiner &combiner,
 				POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, input_future)):
 				POET_REPEATED_ARG_CONSTRUCTOR(POET_FUTURE_WAITS_NUM_ARGS, input_future),
@@ -188,7 +187,7 @@ inputs.push_back(fn);
 		POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, f))
 	{
 		typedef detail::FUTURE_HETRO_COMBINING_BARRIER_BODY_N<R, Combiner, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, T)> body_type;
-		future<R> result(boost::shared_ptr<body_type>(
+		future<R> result = detail::create_future<R>(boost::shared_ptr<body_type>(
 			new body_type(combiner, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, f))));
 		return result;
 	}

@@ -44,9 +44,9 @@ namespace poet
 				for(it = future_begin; it != future_end; ++it)
 				{
 					typedef update_signal_type::slot_type update_slot_type;
-					update_signal_type::slot_type update_slot(&future_select_body::check_dependency, this, it->_future_body);
-					_connections.push_back(it->_future_body->connectUpdate(update_slot));
-					if(check_dependency(it->_future_body)) break;
+					update_signal_type::slot_type update_slot(&future_select_body::check_dependency, this, get_future_body(*it));
+					_connections.push_back(get_future_body(*it)->connectUpdate(update_slot));
+					if(check_dependency(get_future_body(*it))) break;
 				}
 			}
 			virtual ~future_select_body()
@@ -157,8 +157,9 @@ namespace poet
 	typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end)
 	{
 		typedef typename std::iterator_traits<InputIterator>::value_type future_type;
-		future_type result;
-		result._future_body.reset(new detail::future_select_body<typename future_type::value_type>(future_begin, future_end));
+		typedef detail::future_select_body<typename future_type::value_type> body_type;
+		future_type result = detail::create_future<typename future_type::value_type>(
+			boost::shared_ptr<body_type>(new body_type(future_begin, future_end)));
 		return result;
 	}
 }

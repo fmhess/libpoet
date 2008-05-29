@@ -93,9 +93,9 @@ namespace poet
 				for(it = future_begin; it != future_end; ++it, ++i)
 				{
 					_dependency_completes.push_back(false);
-					update_signal_type::slot_type update_slot(&future_barrier_body_impl::check_dependency, this, it->_future_body, i);
-					_connections.push_back(it->_future_body->connectUpdate(update_slot));
-					check_dependency(it->_future_body, i);
+					update_signal_type::slot_type update_slot(&future_barrier_body_impl::check_dependency, this, get_future_body(*it), i);
+					_connections.push_back(get_future_body(*it)->connectUpdate(update_slot));
+					check_dependency(get_future_body(*it), i);
 				}
 			}
 			~future_barrier_body_impl()
@@ -240,7 +240,7 @@ namespace poet
 				std::transform(begin, end, std::back_inserter(input_values),
 					boost::bind(&nonvoid_future_get<T>, _1));
 				_combiner(input_values.begin(), input_values.end());
-				result = bogus_void();
+				result = null_type();
 			}
 		private:
 			Combiner _combiner;
@@ -319,7 +319,7 @@ namespace poet
 	future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end)
 	{
 		typedef detail::future_barrier_body<void, detail::null_void_combiner, void> body_type;
-		future<void> result(boost::shared_ptr<body_type>(
+		future<void> result = detail::create_future<void>(boost::shared_ptr<body_type>(
 			new body_type(detail::null_void_combiner(), future_begin, future_end)));
 		return result;
 	}
@@ -330,7 +330,7 @@ namespace poet
 		typedef typename std::iterator_traits<InputIterator>::value_type input_future_type;
 		typedef typename input_future_type::value_type input_value_type;
 		typedef detail::future_barrier_body<R, Combiner, input_value_type> body_type;
-		future<R> result(boost::shared_ptr<body_type>(
+		future<R> result = detail::create_future<R>(boost::shared_ptr<body_type>(
 			new body_type(combiner, future_begin, future_end)));
 		return result;
 	}

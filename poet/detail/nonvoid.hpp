@@ -17,7 +17,7 @@
 
 namespace poet
 {
-	struct bogus_void
+	struct null_type
 	{
 	};
 
@@ -28,7 +28,7 @@ namespace poet
 			class nonvoid
 		{
 		public:
-			typedef typename boost::mpl::if_<boost::is_void<T>, bogus_void, T>::type type;
+			typedef typename boost::mpl::if_<boost::is_void<T>, null_type, T>::type type;
 		};
 	}
 }

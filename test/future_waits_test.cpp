@@ -7,6 +7,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <iostream>
 #include <poet/future_barrier.hpp>
 #include <poet/future_select.hpp>
@@ -42,6 +43,14 @@ public:
 private:
 	unsigned *_sum;
 };
+
+boost::tuple<unsigned, double> my_hetero_combiner(unsigned arg1, poet::null_type, double arg3)
+{
+	boost::tuple<unsigned, double> result;
+	result.get<0>() = arg1;
+	result.get<1>() = arg3;
+	return result;
+}
 
 void combining_barrier_test()
 {
@@ -111,7 +120,35 @@ void combining_barrier_test()
 		assert(combiner_sum == futures.at(0).get() + futures.at(1).get());
 		assert(all_ready.get() == combiner_sum);
 	}
+	// now with heterogeneous inputs
+	{
+		static const unsigned unsigned_test_value = 1;
+		static const double double_test_value = 1.5;
+		static const double epsilon = 1e-6;
 
+		poet::promise<unsigned> promise0;
+		poet::promise<void> promise1;
+		poet::promise<double> promise2;
+		poet::future<unsigned> future0 = promise0;
+		poet::future<void> future1 = promise1;
+		poet::future<double> future2 = promise2;
+		poet::future<boost::tuple<unsigned, double> > all_ready =
+			poet::future_combining_barrier<boost::tuple<unsigned, double> >(
+				&my_hetero_combiner, future0, future1, future2);
+		assert(all_ready.ready() == false);
+		assert(all_ready.has_exception() == false);
+		promise0.fulfill(unsigned_test_value);
+		assert(all_ready.ready() == false);
+		assert(all_ready.has_exception() == false);
+		promise2.fulfill(double_test_value);
+		assert(all_ready.ready() == false);
+		assert(all_ready.has_exception() == false);
+		promise1.fulfill();
+		assert(all_ready.ready() == true);
+		assert(all_ready.has_exception() == false);
+		assert(all_ready.get().get<0>() == unsigned_test_value);
+		assert(std::abs(all_ready.get().get<1>() / double_test_value - 1.0) < epsilon);
+	}
 }
 
 int main()
