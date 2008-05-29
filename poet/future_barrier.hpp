@@ -80,12 +80,13 @@ namespace poet
 		{
 			typedef boost::signal<void ()> update_signal_type;
 		public:
-			template<typename InputFutureIterator>
 			future_barrier_body_impl(boost::function<void ()> completion_callback,
-			boost::function<void ()> combiner_invoker,
-				InputFutureIterator future_begin, InputFutureIterator future_end):
+			boost::function<void ()> combiner_invoker):
 				_ready_count(0), _completion_callback(completion_callback), _combiner_invoker(combiner_invoker),
 				_ready(false)
+			{}
+			template<typename InputFutureIterator>
+			void set_input_futures(InputFutureIterator future_begin, InputFutureIterator future_end)
 			{
 				InputFutureIterator it;
 				unsigned i = 0;
@@ -245,18 +246,21 @@ namespace poet
 			Combiner _combiner;
 		};
 
+		/* future_body for futures returned by future_barrier.  Becomes ready
+			only when all the futures on its list have become ready (or have exceptions)
+		*/
 		template<typename R, typename Combiner, typename T>
-		class future_barrier_body_base:
+		class future_barrier_body:
 			public future_body_base<R>
 		{
 		public:
 			template<typename InputFutureIterator>
-			future_barrier_body_base(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
+			future_barrier_body(const Combiner &combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
 				_input_futures(future_begin, future_end), _combiner_invoker(combiner),
-				_impl(boost::bind(&future_barrier_body_base::completion_handler, this),
-					boost::bind(&future_barrier_body_base::invoke_combiner, this),
-					_input_futures.begin(), _input_futures.end())
+				_impl(boost::bind(&future_barrier_body::completion_handler, this),
+					boost::bind(&future_barrier_body::invoke_combiner, this))
 			{
+				_impl.set_input_futures(_input_futures.begin(), _input_futures.end());
 			}
 			virtual bool ready() const
 			{
@@ -276,8 +280,15 @@ namespace poet
 			{
 				return _impl.get_exception_ptr();
 			}
-		protected:
-			boost::optional<typename nonvoid<R>::type> _combiner_result;
+			virtual const typename nonvoid<R>::type& getValue() const
+			{
+				this->join();
+				return *this->_combiner_result;
+			}
+			virtual void setValue(const typename nonvoid<R>::type &value)
+			{
+				BOOST_ASSERT(false);
+			}
 		private:
 			void invoke_combiner()
 			{
@@ -290,31 +301,8 @@ namespace poet
 
 			std::vector<future<T> > _input_futures;
 			combiner_invoker<R, Combiner, T> _combiner_invoker;
+			boost::optional<typename nonvoid<R>::type> _combiner_result;
 			future_barrier_body_impl _impl;
-		};
-
-		/* future_body for futures returned by future_barrier.  Becomes ready
-			only when all the futures on its list have become ready (or have exceptions)
-		*/
-		template<typename R, typename Combiner, typename T>
-		class future_barrier_body:
-			public future_barrier_body_base<R, Combiner, T>
-		{
-			typedef future_barrier_body_base<R, Combiner, T> base_class;
-		public:
-			template<typename InputFutureIterator>
-			future_barrier_body(Combiner combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
-				base_class(combiner, future_begin, future_end)
-			{}
-			virtual const typename nonvoid<R>::type& getValue() const
-			{
-				this->join();
-				return *this->_combiner_result;
-			}
-			virtual void setValue(const typename nonvoid<R>::type &value)
-			{
-				BOOST_ASSERT(false);
-			}
 		};
 
 		class null_void_combiner
@@ -337,7 +325,7 @@ namespace poet
 	}
 
 	template<typename R, typename Combiner, typename InputIterator>
-	future<R> future_combining_barrier_range(Combiner combiner, InputIterator future_begin, InputIterator future_end)
+	future<R> future_combining_barrier_range(const Combiner &combiner, InputIterator future_begin, InputIterator future_end)
 	{
 		typedef typename std::iterator_traits<InputIterator>::value_type input_future_type;
 		typedef typename input_future_type::value_type input_value_type;
@@ -352,7 +340,7 @@ namespace poet
 #define POET_FUTURE_BARRIER_MAX_ARGS 10
 #endif
 
-#define BOOST_PP_ITERATION_LIMITS (2, POET_FUTURE_BARRIER_MAX_ARGS)
+#define BOOST_PP_ITERATION_LIMITS (1, POET_FUTURE_BARRIER_MAX_ARGS)
 #define BOOST_PP_FILENAME_1 <poet/detail/future_barrier_template.hpp>
 #include BOOST_PP_ITERATE()
 

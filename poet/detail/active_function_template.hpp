@@ -34,9 +34,6 @@
 // typename poet::future<boost::function_traits<Signature>::argn_type> _argn ;
 #define POET_ACTIVE_FUNCTION_ARG_DECLARATION(z, n, Signature) POET_ACTIVE_FUNCTION_ARG_TYPE(~, n, Signature) \
 	POET_ARG_NAME(~, n, _arg) ;
-// _argn ( argn )
-#define POET_ACTIVE_FUNCTION_ARG_CONSTRUCTOR(z, n, data) \
-	POET_ARG_NAME(~, n, _arg) ( POET_ARG_NAME(~, n, arg) )
 // tupleName.get < n >()
 #define POET_ACTIVE_FUNCTION_GET_TUPLE_ELEMENT(z, n, tupleName) \
 	tupleName.get< n >()
@@ -107,7 +104,7 @@ namespace poet
 				POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 				const boost::shared_ptr<boost::slot<Signature> > &passive_function,
 				const boost::shared_ptr<boost::slot<bool ()> > &guard): base_type(returnValue),
-				BOOST_PP_ENUM(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_ARG_CONSTRUCTOR, ~) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
+				POET_REPEATED_ARG_CONSTRUCTOR(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ARG_CONSTRUCTOR, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 				_passive_function(passive_function), _guard(guard)
 			{
 				_lastReadyChanged = ready();
@@ -251,5 +248,4 @@ namespace poet
 #undef POET_ACTIVE_FUNCTION_FULL_ARG
 #undef POET_ACTIVE_FUNCTION_FULL_ARGS
 #undef POET_ACTIVE_FUNCTION_ARG_DECLARATION
-#undef POET_ACTIVE_FUNCTION_ARG_CONSTRUCTOR
 #undef POET_ACTIVE_FUNCTION_GET_TUPLE_ELEMENT

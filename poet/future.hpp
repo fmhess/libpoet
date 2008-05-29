@@ -353,7 +353,7 @@ namespace poet
 		template<typename InputIterator>
 			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
 		template<typename R, typename Combiner, typename InputIterator>
-			friend future<R> future_combining_barrier_range(Combiner combiner, InputIterator future_begin, InputIterator future_end);
+			friend future<R> future_combining_barrier_range(const Combiner &combiner, InputIterator future_begin, InputIterator future_end);
 		friend class detail::future_barrier_body_impl;
 		template<typename InputIterator>
 			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);
@@ -446,7 +446,7 @@ namespace poet
 		template<typename InputIterator>
 			friend future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end);
 		template<typename R, typename Combiner, typename InputIterator>
-			friend future<R> future_combining_barrier_range(Combiner combiner, InputIterator future_begin, InputIterator future_end);
+			friend future<R> future_combining_barrier_range(const Combiner &combiner, InputIterator future_begin, InputIterator future_end);
 		friend class detail::future_barrier_body_impl;
 		template<typename InputIterator>
 			friend typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end);

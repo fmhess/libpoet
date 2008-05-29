@@ -27,5 +27,11 @@
 // type_prefix1 arg1, type_prefix2 arg2, ..., type_prefixn argn
 #define POET_REPEATED_ARG_DECLARATIONS(arity, type_prefix) \
 	BOOST_PP_ENUM(arity, POET_ARG_DECLARATION, type_prefix)
+// _nameN ( nameN )
+#define POET_ARG_CONSTRUCTOR(z, n, name) \
+	POET_ARG_NAME(~, n, BOOST_PP_CAT(_, name)) ( POET_ARG_NAME(~, n, name) )
+// _name1 ( name1 ), _name2 ( name2), ..., _nameN ( nameN )
+#define POET_REPEATED_ARG_CONSTRUCTOR(arity, name) \
+	BOOST_PP_ENUM(arity, POET_ARG_CONSTRUCTOR, name)
 
 #endif	// _POET_PREPROCESSOR_MACROS_HPP
