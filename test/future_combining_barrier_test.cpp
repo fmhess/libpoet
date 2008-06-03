@@ -15,18 +15,21 @@ poet::future<boost::tuple<T1, T2> > operator&&(const poet::future<T1> &f1, const
 	return poet::future_combining_barrier<boost::tuple<T1, T2> >(&create_tuple<T1, T2>, f1, f2);
 }
 
-template<typename R, typename T>
-R convert(const T &t)
+struct identity
 {
-	return t;
-}
+	template<typename T>
+	const T& operator()(const T &t)
+	{
+		return t;
+	}
+};
 
 template<typename T1, typename T2>
 poet::future<boost::variant<T1, T2> > operator||(const poet::future<T1> &f1, const poet::future<T2> &f2)
 {
 	typedef boost::variant<T1, T2> result_type;
-	poet::future<result_type> variant_f1 = poet::future_combining_barrier<result_type>(&convert<result_type, T1>, f1);
-	poet::future<result_type> variant_f2 = poet::future_combining_barrier<result_type>(&convert<result_type, T2>, f2);
+	poet::future<result_type> variant_f1 = poet::future_combining_barrier<result_type>(identity(), f1);
+	poet::future<result_type> variant_f2 = poet::future_combining_barrier<result_type>(identity(), f2);
 	return poet::future_select(variant_f1, variant_f2);
 }
 
