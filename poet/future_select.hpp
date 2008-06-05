@@ -47,13 +47,9 @@ namespace poet
 			class future_selector_body: public boost::enable_shared_from_this<future_selector_body<T> >
 		{
 			typedef std::list<boost::shared_ptr<typename nonvoid_future_body_base<T>::type> > dependencies_type;
-			typedef promise_body<typename nonvoid<T>::type> promise_type;
-			/*FIXME: we should only hold weak_ptr to futures handed out by selected(),
-			and they should hold shared_ptr to this.  When future_selector is destroyed,
-			it should renege on any futures handed out by selected which have no chance
-			of completing. */
-			typedef std::deque<boost::shared_ptr<promise_type> > selected_promises_type;
-			typedef boost::shared_ptr<typename dependencies_type::iterator> dependency_eraser_type;
+			typedef future_body<typename nonvoid<T>::type> dependent_type;
+			typedef std::deque<boost::weak_ptr<dependent_type> > selected_container_type;
+			typedef std::deque<boost::shared_ptr<dependent_type> > fulfilled_container_type;
 			struct dependency_eraser_info
 			{
 				dependency_eraser_info(): iterator_valid(false)
@@ -102,35 +98,58 @@ namespace poet
 			future<T> selected() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
-				return create_future<T>(_selected->_future_body);
+				return create_future<T>(_selected);
 			}
 			void pop_selected()
 			{
-				boost::shared_ptr<promise_type> prom_body;
+				boost::shared_ptr<dependent_type> dependent;
 
 				boost::unique_lock<boost::mutex> lock(_mutex);
 				if(_fulfilled_promises.empty())
 				{
 					lock.unlock();
 
-					prom_body.reset(new promise_type);
+					dependent.reset(new dependent_type);
 
 					typedef waiter_event_queue::slot_type event_slot_type;
 					event_slot_type event_slot(&waiter_event_queue::post<event_queue::event_type>,
-						&prom_body->_future_body->waiter_callbacks(), _1);
-					event_slot.track(prom_body->_future_body);
+						&dependent->waiter_callbacks(), _1);
+					event_slot.track(dependent);
 					_waiter_callbacks.connect_slot(event_slot);
 					// deal with any events already in our event queue
-					prom_body->_future_body->waiter_callbacks().post(_waiter_callbacks.create_poll_event());
+					dependent->waiter_callbacks().post(_waiter_callbacks.create_poll_event());
 
 					lock.lock();
 				}else
 				{
-					prom_body = _fulfilled_promises.front();
+					dependent = _fulfilled_promises.front();
 					_fulfilled_promises.pop_front();
 				}
-				_selected = prom_body;
-				_selected_promises.push_back(prom_body);
+				_selected = dependent;
+				_selected_promises.push_back(dependent);
+
+				/* stick a shared_ptr that owns this onto the dependent so it will keep us alive
+				as long as it needs us. */
+				dependent->connectUpdate(boost::bind(&future_selector_body::do_nothing, this->shared_from_this()));
+			}
+			/* detach means the user isn't going to call push or pop_selected any more,
+			since future_selector object has destructed.  So cancel futures that
+			cannot possibly complete otherwise. */
+			void detach()
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				const int extra_selected = _selected_promises.size() - _dependencies.size();
+				int i;
+				boost::shared_ptr<dependent_type> dependent;
+				for(i = 0; i < extra_selected; ++i)
+				{
+					dependent = _selected_promises.back().lock();
+					if(dependent) dependent->cancel(copy_exception(uncertain_future()));
+					_selected_promises.pop_back();
+				}
+
+				_selected.reset();
+				_fulfilled_promises.clear();
 			}
 		private:
 			future_selector_body():
@@ -138,13 +157,13 @@ namespace poet
 			{
 				pop_selected();
 			}
-			void wait_event(boost::shared_ptr<promise_type> fulfilled_promise,
+			void wait_event(boost::shared_ptr<dependent_type> fulfilled_promise,
 				const boost::shared_ptr<typename nonvoid_future_body_base<T>::type> &dependency)
 			{
 				bool store_promise = false;
 				if(fulfilled_promise == false)
 				{
-					fulfilled_promise.reset(new promise_type);
+					fulfilled_promise.reset(new dependent_type);
 					store_promise = true;
 				}
 
@@ -152,11 +171,11 @@ namespace poet
 
 				if(dep_ready)
 				{
-					fulfilled_promise->fulfill(nonvoid_future_body_get(*dependency));
+					fulfilled_promise->setValue(nonvoid_future_body_get(*dependency));
 				}else
 				{
 					exception_ptr ep = dependency->get_exception_ptr();
-					fulfilled_promise->renege(ep);
+					fulfilled_promise->cancel(ep);
 				}
 				if(store_promise)
 				{
@@ -180,7 +199,7 @@ namespace poet
 
 				if(dep_ready || ep)
 				{
-					boost::shared_ptr<promise_type> fulfilled_promise;
+					boost::shared_ptr<dependent_type> fulfilled_promise;
 					{
 						boost::unique_lock<boost::mutex> lock(_mutex);
 						if(dependency_eraser_info->iterator_valid == false)
@@ -189,11 +208,15 @@ namespace poet
 						}
 						if(_selected_promises.empty() == false)
 						{
-							fulfilled_promise = _selected_promises.front();
+							fulfilled_promise = _selected_promises.front().lock();
 							_selected_promises.pop_front();
 						}
 						_dependencies.erase(dependency_eraser_info->iterator);
 						dependency_eraser_info->iterator_valid = false;
+						if(fulfilled_promise == false)
+						{
+							throw boost::expired_slot();
+						}
 					}
 					_waiter_callbacks.post(boost::bind(&future_selector_body::wait_event, this, fulfilled_promise, dependency));
 					throw boost::expired_slot();
@@ -205,9 +228,9 @@ namespace poet
 			waiter_event_queue _waiter_callbacks;
 			mutable boost::mutex _mutex;
 			mutable boost::condition _condition;
-			selected_promises_type _selected_promises;
-			selected_promises_type _fulfilled_promises;
-			boost::shared_ptr<promise_type> _selected;
+			selected_container_type _selected_promises;
+			fulfilled_container_type _fulfilled_promises;
+			boost::shared_ptr<dependent_type> _selected;
 			dependencies_type _dependencies;
 		};
 
@@ -377,6 +400,11 @@ namespace poet
 	public:
 		future_selector(): _selector_body(detail::future_selector_body<T>::create())
 		{}
+		~future_selector()
+		{
+			_selector_body->detach();
+		}
+
 		future<T> selected() const
 		{
 			return _selector_body->selected();

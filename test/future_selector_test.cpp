@@ -15,6 +15,30 @@ void preready_push_test()
 	assert(selected_future.ready());
 }
 
+void future_selector_scope_test()
+{
+	static const int test_value = 5;
+
+	poet::promise<int> prom;
+	poet::future<int> selected_future;
+	poet::future<int> hopeless_selected_future;
+	{
+		poet::future_selector<int> selector;
+		selected_future = selector.selected();
+		selector.pop_selected();
+		hopeless_selected_future = selector.selected();
+		selector.push(prom);
+		assert(hopeless_selected_future.has_exception() == false);
+	}
+	assert(hopeless_selected_future.has_exception() == true);
+	assert(selected_future.has_exception() == false);
+
+	assert(selected_future.ready() == false);
+	prom.fulfill(test_value);
+	assert(selected_future.ready() == true);
+	assert(selected_future.get() == test_value);
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -66,6 +90,7 @@ int main()
 	}
 
 	preready_push_test();
+	future_selector_scope_test();
 
 	std::cerr << "OK" << std::endl;
 	return 0;
