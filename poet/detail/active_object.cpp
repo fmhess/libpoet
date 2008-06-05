@@ -15,6 +15,7 @@
 void poet::in_order_activation_queue::push_back(const boost::shared_ptr<method_request_base> &request)
 {
 	boost::mutex::scoped_lock lock(_mutex);
+	if(_pendingRequests.empty()) _selector.push(request->dependencies());
 	_pendingRequests.push_back(request);
 }
 
@@ -47,6 +48,7 @@ void poet::out_of_order_activation_queue::push_back(const boost::shared_ptr<meth
 {
 	boost::mutex::scoped_lock lock(_mutex);
 	_pendingRequests.insert(_next, request);
+	_selector.push(request->dependencies());
 }
 
 boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue::get_request()
@@ -85,6 +87,10 @@ boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue
 			++_next;
 		}
 	}
+	if(_next != _pendingRequests.end())
+	{
+		_selector.push((*_next)->dependencies());
+	}
 	return methodRequest;
 }
 
@@ -92,7 +98,7 @@ boost::shared_ptr<poet::method_request_base> poet::out_of_order_activation_queue
 
 poet::detail::scheduler_impl::scheduler_impl(int millisecTimeout,
 	const boost::shared_ptr<activation_queue_base> &activationQueue):
-	_activationQueue(activationQueue), _wakePending(false), _mortallyWounded(false), _millisecTimeout(millisecTimeout),
+	_activationQueue(activationQueue), _mortallyWounded(false), _millisecTimeout(millisecTimeout),
 	_detached(false)
 {
 }
@@ -106,8 +112,7 @@ void poet::detail::scheduler_impl::post_method_request(const boost::shared_ptr<m
 
 void poet::detail::scheduler_impl::wake()
 {
-	setWakePending(true);
-	_wakeCondition.locking_notify_all();
+	_activationQueue->wake();
 }
 
 bool poet::detail::scheduler_impl::dispatch()
@@ -124,17 +129,18 @@ void poet::detail::scheduler_impl::dispatcherThreadFunction(const boost::shared_
 	boost::shared_ptr<scheduler_impl> shared_this = shared_this_in;
 	while(shared_this->mortallyWounded() == false)
 	{
+		future<void> queue_ready = shared_this->_activationQueue->queue_is_ready();
 		if(shared_this->_millisecTimeout > 0)
 		{
 			boost::posix_time::time_duration timeout = boost::posix_time::millisec(shared_this->_millisecTimeout);
 			boost::system_time wakeTime = boost::get_system_time() +
 				boost::posix_time::millisec(shared_this->_millisecTimeout);
-			shared_this->_wakeCondition.locking_timed_wait(wakeTime, boost::bind(&poet::detail::scheduler_impl::wakePending, shared_this.get()));
+			queue_ready.timed_join(wakeTime);
 		}else if(shared_this->_millisecTimeout < 0)
 		{
-			shared_this->_wakeCondition.locking_wait(boost::bind(&poet::detail::scheduler_impl::wakePending, shared_this.get()));
+			queue_ready.get();
 		}
-		shared_this->setWakePending(false);
+		shared_this->_activationQueue->pop_queue_is_ready();
 		if(shared_this->mortallyWounded()) break;
 		while(shared_this->dispatch());
 		if(shared_this->detached() && shared_this->_activationQueue->empty()) break;
@@ -154,18 +160,6 @@ bool poet::detail::scheduler_impl::mortallyWounded() const
 {
 	boost::mutex::scoped_lock lock(_mutex);
 	return _mortallyWounded;
-}
-
-bool poet::detail::scheduler_impl::wakePending() const
-{
-	boost::mutex::scoped_lock lock(_mutex);
-	return _wakePending ;
-}
-
-void poet::detail::scheduler_impl::setWakePending(bool value)
-{
-	boost::mutex::scoped_lock lock(_mutex);
-	_wakePending = value;
 }
 
 void poet::detail::scheduler_impl::detach()

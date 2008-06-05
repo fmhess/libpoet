@@ -40,7 +40,7 @@ poet::future<boost::variant<T1, T2> > operator||(const poet::future<T1> &f1, con
 
 int main()
 {
-	std::cerr << __FILE__ << "... " << std::endl;
+	std::cerr << __FILE__ << "... ";
 
 	poet::promise<int> pi;
 	poet::promise<double> pd;
@@ -63,8 +63,10 @@ int main()
 	assert(fall.ready() == false);
 
 	assert(fany.ready() == false);
+	assert(fstr.ready() == false);
 	pstr.fulfill("hello");
 	assert(fany.ready() == true);
+	assert(fstr.ready() == true);
 
 	assert(fall.ready() == false);
 	assert(fany2.ready() == false);

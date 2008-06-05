@@ -91,5 +91,6 @@ poet::exception_ptr poet::current_exception()
 
 void poet::rethrow_exception( exception_ptr p )
 {
-    p->rethrow();
+	BOOST_ASSERT(p);
+	p->rethrow();
 }

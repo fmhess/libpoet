@@ -99,6 +99,15 @@ namespace poet
 				if(_guard) return (*_guard)();
 				return true;
 			}
+			virtual future<void> dependencies() const
+			{
+#if POET_ACTIVE_FUNCTION_NUM_ARGS == 0
+				future<int> ready_future = 1;
+				return ready_future;
+#else
+				return future_barrier(POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg));
+#endif
+			}
 		protected:
 			POET_AF_METHOD_REQUEST_CLASS_NAME(const promise<passive_result_type> &returnValue,
 				POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)

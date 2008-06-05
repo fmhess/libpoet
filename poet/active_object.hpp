@@ -27,6 +27,7 @@
 #include <list>
 #include <poet/detail/condition.hpp>
 #include <poet/future.hpp>
+#include <poet/future_select.hpp>
 
 namespace poet
 {
@@ -63,6 +64,7 @@ namespace poet
 		{
 			return update_signal.connect(slot);
 		}
+		virtual future<void> dependencies() const = 0;
 	protected:
 		update_signal_type update_signal;
 	private:
@@ -117,6 +119,9 @@ namespace poet
 		virtual void clear() = 0;
 		virtual size_type size() const = 0;
 		virtual bool empty() const = 0;
+		virtual future<void> queue_is_ready() const = 0;
+		virtual void pop_queue_is_ready() = 0;
+		virtual void wake() = 0;
 	};
 
 	class in_order_activation_queue: public activation_queue_base
@@ -129,6 +134,7 @@ namespace poet
 		{
 			boost::mutex::scoped_lock lock(_mutex);
 			_pendingRequests.clear();
+			//FIXME: need to clear or reset _selector
 		}
 		virtual size_type size() const
 		{
@@ -140,12 +146,26 @@ namespace poet
 			boost::mutex::scoped_lock lock(_mutex);
 			return _pendingRequests.empty();
 		}
+		virtual future<void> queue_is_ready() const
+		{
+			return _selector.selected();
+		}
+		virtual void pop_queue_is_ready()
+		{
+			_selector.pop_selected();
+		}
+		virtual void wake()
+		{
+			future<int> ready_future = 1;
+			_selector.push(ready_future);
+		}
 	protected:
 		inline boost::shared_ptr<method_request_base> unlockedGetRequest();
 
 		typedef std::list<boost::shared_ptr<method_request_base> > list_type;
 		list_type _pendingRequests;
 		mutable boost::mutex _mutex;
+		poet::future_selector<void> _selector;
 	};
 
 	class out_of_order_activation_queue: public in_order_activation_queue
@@ -156,7 +176,7 @@ namespace poet
 		virtual ~out_of_order_activation_queue() {}
 		inline virtual void push_back(const boost::shared_ptr<method_request_base> &request);
 		inline virtual boost::shared_ptr<method_request_base> get_request();
-	private:	
+	private:
 		list_type::iterator _next;
 	};
 
@@ -187,7 +207,6 @@ namespace poet
 		private:
 			inline bool dispatch();
 			inline bool wakePending() const;
-			inline void setWakePending(bool value);
 			bool detached() const
 			{
 				return _detached;
@@ -195,7 +214,6 @@ namespace poet
 
 			boost::shared_ptr<activation_queue_base> _activationQueue;
 			poet::detail::condition _wakeCondition;
-			bool _wakePending;
 			mutable boost::mutex _mutex;
 			bool _mortallyWounded;
 			int _millisecTimeout;

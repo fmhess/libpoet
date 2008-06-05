@@ -24,6 +24,7 @@
 #include <boost/weak_ptr.hpp>
 #include <poet/active_object.hpp>
 #include <poet/future.hpp>
+#include <poet/future_barrier.hpp>
 #include <vector>
 
 #ifndef POET_ACTIVE_FUNCTION_MAX_ARGS

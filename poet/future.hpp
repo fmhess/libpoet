@@ -21,6 +21,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -28,7 +29,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread_time.hpp>
 #include <boost/thread_safe_signal.hpp>
+#include <boost/weak_ptr.hpp>
 #include <poet/detail/condition.hpp>
+#include <poet/detail/event_queue.hpp>
 #include <poet/detail/nonvoid.hpp>
 #include <poet/exception_ptr.hpp>
 #include <poet/exceptions.hpp>
@@ -45,23 +48,88 @@ namespace poet
 
 	namespace detail
 	{
-		class future_body_untyped_base
+		class future_body_untyped_base;
+
+		/* class for holding wait callbacks.  Any thread can post a functor to the waiter_event_queue,
+		but only future-waiting threads should pop them off and execute them. */
+		class waiter_event_queue
+		{
+			typedef boost::signal<void (const event_queue::event_type &)> event_posted_type;
+		public:
+			typedef event_posted_type::slot_type slot_type;
+			waiter_event_queue(boost::mutex &mutex, boost::condition &condition):
+				_mutex(mutex), _condition(condition)
+			{}
+
+			void set_owner(const boost::shared_ptr<const void> &queue_owner)
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				boost::shared_ptr<waiter_event_queue> shared_this(queue_owner, this);
+				_weak_this = shared_this;
+			}
+			template<typename Event>
+			void post(const Event &event)
+			{
+				BOOST_ASSERT(_weak_this.expired() == false);
+				_events.post(event);
+				_event_posted(create_poll_event());
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				_condition.notify_all();
+			}
+			void poll()
+			{
+				_events.poll();
+			}
+			event_queue::event_type create_poll_event()
+			{
+				event_queue::event_type event = boost::bind(&waiter_event_queue::poll_event_impl, _weak_this);
+				return event;
+			}
+			boost::signalslib::connection connect_slot(const slot_type &slot)
+			{
+				return _event_posted.connect(slot);
+			}
+		private:
+			static void poll_event_impl(const boost::weak_ptr<waiter_event_queue> &weak_this)
+			{
+				boost::shared_ptr<waiter_event_queue> shared_this = weak_this.lock();
+				if(!shared_this) return;
+				shared_this->poll();
+			}
+
+			event_queue _events;
+			boost::mutex &_mutex;
+			boost::condition &_condition;
+			event_posted_type _event_posted;
+			boost::weak_ptr<waiter_event_queue> _weak_this;
+		};
+
+		class future_body_untyped_base: public boost::enable_shared_from_this<future_body_untyped_base>
 		{
 		public:
 			typedef boost::signal<void ()> update_signal_type;
 
-			virtual ~future_body_untyped_base() {}
+			future_body_untyped_base()
+			{
+			}
+			virtual ~future_body_untyped_base()
+			{
+			}
 			virtual bool ready() const = 0;
 			virtual void join() const = 0;
 			virtual bool timed_join(const boost::system_time &absolute_time) const = 0;
 			virtual void cancel(const poet::exception_ptr &) = 0;
 			virtual exception_ptr get_exception_ptr() const = 0;
+			virtual waiter_event_queue& waiter_callbacks() const = 0;
 			boost::signalslib::connection connectUpdate(const update_signal_type::slot_type &slot)
 			{
 				return _updateSignal.connect(slot);
 			}
 		protected:
 			update_signal_type _updateSignal;
+			mutable boost::mutex _mutex;
+			mutable boost::condition _condition;
+			mutable poet::exception_ptr _exception;
 		};
 
 		template <typename T> class future_body_base: public virtual future_body_untyped_base
@@ -74,20 +142,26 @@ namespace poet
 		template <typename T> class future_body: public future_body_base<T>
 		{
 		public:
-			future_body()
+			future_body(): _waiter_callbacks(this->_mutex, this->_condition)
 			{}
-			future_body(const T &value): _value(value)
+			future_body(const T &value): _value(value),
+				_waiter_callbacks(this->_mutex, this->_condition)
 			{}
+			future_body(const poet::exception_ptr &ep, int):
+				_waiter_callbacks(this->_mutex, this->_condition)
+			{
+				this->_exception = ep;
+			}
 			virtual ~future_body() {}
 			virtual void setValue(const T &value)
 			{
 				bool emit_signal = false;
 				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
-					if(_exception == false && !_value)
+					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					if(this->_exception == false && !_value)
 					{
 						_value = value;
-						_readyCondition.notify_all();
+						this->_condition.notify_all();
 						emit_signal = true;
 					}
 				}
@@ -98,46 +172,45 @@ namespace poet
 			}
 			virtual bool ready() const
 			{
-					boost::unique_lock<boost::mutex> lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(this->_mutex);
 				return _value;
 			}
 			virtual const T& getValue() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				_readyCondition.wait(lock, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
-				if(_exception)
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				this->_condition.wait(lock, boost::bind(&future_body<T>::check_if_complete, this, &lock));
+				if(this->_exception)
 				{
-					rethrow_exception(_exception);
+					rethrow_exception(this->_exception);
 				}
 				BOOST_ASSERT(_value);
 				return _value.get();
 			}
 			virtual void join() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				_readyCondition.wait(lock, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
-				if(_exception)
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				this->_condition.wait(lock, boost::bind(&future_body<T>::check_if_complete, this, &lock));
+				if(this->_exception)
 				{
-					rethrow_exception(_exception);
+					rethrow_exception(this->_exception);
 				}
 				BOOST_ASSERT(_value);
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				_readyCondition.timed_wait(lock, absolute_time, boost::bind(&poet::detail::future_body<T>::readyOrCancelled, this));
-				return readyOrCancelled();
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				return this->_condition.timed_wait(lock, absolute_time, boost::bind(&future_body<T>::check_if_complete, this, &lock));
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{
 				bool emitSignal = false;
 				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
-					if(_exception == false && !_value)
+					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					if(this->_exception == false && !_value)
 					{
 						emitSignal = true;
-						_readyCondition.notify_all();
-						_exception = exp;
+						this->_condition.notify_all();
+						this->_exception = exp;
 					}
 				}
 				if(emitSignal)
@@ -147,19 +220,29 @@ namespace poet
 			}
 			virtual exception_ptr get_exception_ptr() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				return _exception;
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				return this->_exception;
+			}
+			virtual waiter_event_queue& waiter_callbacks() const
+			{
+				_waiter_callbacks.set_owner(this->shared_from_this());
+				return _waiter_callbacks;
 			}
 		private:
-			bool readyOrCancelled() const
+			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
 			{
-				return _value || _exception;
+				// do initial check to make sure we don't run any wait callbacks if we are already complete
+				const bool complete = _value || this->_exception;
+				if(complete) return complete;
+
+				lock->unlock();
+				_waiter_callbacks.poll();
+				lock->lock();
+				return _value || this->_exception;
 			}
 
 			boost::optional<T> _value;
-			mutable boost::mutex _mutex;
-			mutable boost::condition _readyCondition;
-			poet::exception_ptr _exception;
+			mutable waiter_event_queue _waiter_callbacks;
 		};
 
 		template<typename ProxyType, typename ActualType>
@@ -186,8 +269,23 @@ namespace poet
 				const boost::function<ProxyType (const ActualType&)> &conversionFunction)
 			{
 				boost::shared_ptr<future_body_proxy> new_object(new future_body_proxy(actualFutureBody, conversionFunction));
+
+				new_object->_waiter_callbacks.set_owner(new_object);
+
 				typedef typename future<ActualType>::update_slot_type slot_type;
-				new_object->_actualFutureBody->connectUpdate(slot_type(new_object->_updateSignal).track(new_object));
+				new_object->_actualFutureBody->connectUpdate(
+					slot_type(&future_body_proxy::handle_actual_body_complete, new_object.get()).track(new_object));
+				if(actualFutureBody->ready() || actualFutureBody->get_exception_ptr())
+				{
+					new_object->handle_actual_body_complete();
+				}
+
+				typedef typename waiter_event_queue::slot_type event_slot_type;
+				actualFutureBody->waiter_callbacks().connect_slot(event_slot_type(
+					&waiter_event_queue::post<event_queue::event_type>, &new_object->waiter_callbacks(), _1).
+					track(new_object));
+				// deal with any events already in _actualFutureBody's event queue
+				new_object->waiter_callbacks().post(actualFutureBody->waiter_callbacks().create_poll_event());
 				return new_object;
 			}
 			virtual void setValue(const ProxyType &value)
@@ -198,44 +296,102 @@ namespace poet
 			}
 			virtual bool ready() const
 			{
-				return _actualFutureBody->ready();
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				return _proxyValue;
 			}
 			virtual const ProxyType& getValue() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				if(!_proxyValue)
-				{
-					_proxyValue = _conversionFunction(_actualFutureBody->getValue());
-				}
+				_actualFutureBody->join();
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				this->_condition.wait(lock, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
+				if(this->_exception) rethrow_exception(this->_exception);
+				BOOST_ASSERT(_proxyValue);
 				return _proxyValue.get();
 			}
 			virtual void join() const
 			{
 				_actualFutureBody->join();
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				this->_condition.wait(lock, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
-				return _actualFutureBody->timed_join(absolute_time);
+				if(_actualFutureBody->timed_join(absolute_time) == false) return false;
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				return this->_condition.timed_wait(lock, absolute_time, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{
 				_actualFutureBody->cancel(exp);
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				this->_condition.notify_all();
 			}
 			virtual exception_ptr get_exception_ptr() const
 			{
-				return _actualFutureBody->get_exception_ptr();
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				return this->_exception;
+			}
+			virtual waiter_event_queue& waiter_callbacks() const
+			{
+				return _waiter_callbacks;
 			}
 		private:
 			future_body_proxy(boost::shared_ptr<future_body_base<ActualType> > actualFutureBody,
 				const boost::function<ProxyType (const ActualType&)> &conversionFunction):
 				_actualFutureBody(actualFutureBody),
-				_conversionFunction(conversionFunction)
+				_conversionFunction(conversionFunction),
+				_waiter_callbacks(this->_mutex, this->_condition),
+				_conversionEventPosted(false)
 			{}
+
+			void waiter_event()
+			{
+				boost::optional<ProxyType> value;
+				try
+				{
+					value = _conversionFunction(_actualFutureBody->getValue());
+				}catch(...)
+				{
+					{
+						boost::unique_lock<boost::mutex> lock(this->_mutex);
+						this->_exception = current_exception();
+					}
+					this->_updateSignal();
+					return;
+				}
+				{
+					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					BOOST_ASSERT(!_proxyValue);
+					_proxyValue = value;
+				}
+				this->_updateSignal();
+			}
+			void handle_actual_body_complete()
+			{
+				{
+					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					if(_conversionEventPosted) return;
+					_conversionEventPosted = true;
+				}
+				_waiter_callbacks.post(boost::bind(&future_body_proxy::waiter_event, this));
+			}
+			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
+			{
+				// do initial check to make sure we don't run any wait callbacks if we are already complete
+				const bool complete =  _proxyValue || this->_exception;
+				if(complete) return complete;
+
+				lock->unlock();
+				_waiter_callbacks.poll();
+				lock->lock();
+				return _proxyValue || this->_exception;
+			}
 
 			boost::shared_ptr<future_body_base<ActualType> > _actualFutureBody;
 			boost::function<ProxyType (const ActualType&)> _conversionFunction;
 			mutable boost::optional<ProxyType> _proxyValue;
-			mutable boost::mutex _mutex;
+			mutable waiter_event_queue _waiter_callbacks;
+			mutable bool _conversionEventPosted;
 		};
 
 		template <typename T> class promise_body
@@ -272,12 +428,24 @@ namespace poet
 		};
 
 		template<typename T>
+			class nonvoid_future_body_base
+		{
+		public:
+			typedef future_body_base<T> type;
+		};
+		template<>
+			class nonvoid_future_body_base<void>
+		{
+		public:
+			typedef future_body_untyped_base type;
+		};
+
+		template<typename T>
 			future<T> create_future(const boost::shared_ptr<future_body_untyped_base> &body);
 		template<>
 			future<void> create_future<void>(const boost::shared_ptr<future_body_untyped_base> &body);
 		template<typename T>
-			const boost::shared_ptr<future_body_base<T> >& get_future_body(const poet::future<T> &f);
-		const boost::shared_ptr<future_body_untyped_base>& get_future_body(const poet::future<void> &f);
+			const boost::shared_ptr<typename nonvoid_future_body_base<T>::type>& get_future_body(const poet::future<T> &f);
 	} // namespace detail
 
 	template <typename T>
@@ -301,7 +469,8 @@ namespace poet
 		void fulfill(const future<T> &future_value)
 		{
 			typedef typename future<T>::update_slot_type slot_type;
-			future_value.connect_update(slot_type(&detail::promise_body<T>::handle_future_fulfillment, _pimpl, future_value));
+			future_value.connect_update(
+				slot_type(&detail::promise_body<T>::handle_future_fulfillment, _pimpl.get(), future_value).track(_pimpl));
 		}
 		template <typename E>
 		void renege(const E &exception)
@@ -365,7 +534,7 @@ namespace poet
 	template <typename T> class future
 	{
 		friend future<T> detail::create_future<T>(const boost::shared_ptr<detail::future_body_untyped_base> &body);
-		friend const boost::shared_ptr<detail::future_body_base<T> >& detail::get_future_body<T>(const poet::future<T> &f);
+		friend const boost::shared_ptr<typename detail::nonvoid_future_body_base<T>::type>& detail::get_future_body<T>(const poet::future<T> &f);
 	public:
 		template <typename OtherType> friend class future;
 		friend class future<void>;
@@ -402,6 +571,9 @@ namespace poet
 		bool ready() const
 		{
 			if(_future_body == 0) return false;
+			bool result = _future_body->ready();
+			if(result == true) return result;
+			_future_body->waiter_callbacks().poll();
 			return _future_body->ready();
 		}
 		const T& get() const
@@ -418,6 +590,7 @@ namespace poet
 		}
 		bool timed_join(const boost::system_time &absolute_time) const
 		{
+			if(_future_body == false) return true;
 			return _future_body->timed_join(absolute_time);
 		}
 		template <typename OtherType> const future<T>& operator=(const future<OtherType> &other)
@@ -433,11 +606,15 @@ namespace poet
 		}
 		void cancel()
 		{
+			if(_future_body == false) return;
 			_future_body->cancel(poet::copy_exception(cancelled_future()));
 		}
 		bool has_exception() const
 		{
 			if(_future_body == 0) return true;
+			bool result = _future_body->get_exception_ptr();
+			if(result == true) return result;
+			_future_body->waiter_callbacks().poll();
 			return _future_body->get_exception_ptr();
 		}
 	private:
@@ -451,7 +628,7 @@ namespace poet
 	class future<void>
 	{
 		friend future<void> detail::create_future<void>(const boost::shared_ptr<detail::future_body_untyped_base> &body);
-		friend const boost::shared_ptr<detail::future_body_untyped_base>& detail::get_future_body(const poet::future<void> &f);
+		friend const boost::shared_ptr<detail::nonvoid_future_body_base<void>::type>& detail::get_future_body<void>(const poet::future<void> &f);
 	public:
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
@@ -500,11 +677,16 @@ namespace poet
 		}
 		bool timed_join(const boost::system_time &absolute_time) const
 		{
+			if(_future_body == 0)
+			{
+				return true;
+			}
 			return _future_body->timed_join(absolute_time);
 		}
 		bool ready() const
 		{
 			if(_future_body == 0) return false;
+			_future_body->waiter_callbacks().poll();
 			return _future_body->ready();
 		}
 		boost::signalslib::connection connect_update(const update_slot_type &slot) const
@@ -514,11 +696,13 @@ namespace poet
 		}
 		void cancel()
 		{
+			if(_future_body == false) return;
 			_future_body->cancel(poet::copy_exception(cancelled_future()));
 		}
 		bool has_exception() const
 		{
 			if(_future_body == 0) return true;
+			_future_body->waiter_callbacks().poll();
 			return _future_body->get_exception_ptr();
 		}
 	private:
@@ -568,14 +752,29 @@ namespace poet
 		{
 			return future<void>(body);
 		}
+
 		template<typename T>
-			const boost::shared_ptr<future_body_base<T> >& get_future_body(const poet::future<T> &f)
+			class shared_uncertain_future_body
 		{
+		public:
+			static boost::shared_ptr<typename nonvoid_future_body_base<T>::type> value;
+		};
+		template<typename T>
+			boost::shared_ptr<typename nonvoid_future_body_base<T>::type>
+				shared_uncertain_future_body<T>::value(
+					new future_body<typename nonvoid<T>::type>(
+						copy_exception(uncertain_future()), 0));
+
+		template<typename T>
+			const boost::shared_ptr<typename nonvoid_future_body_base<T>::type>& get_future_body(const poet::future<T> &f)
+		{
+			if(!f._future_body) return shared_uncertain_future_body<T>::value;
 			return f._future_body;
 		}
-			const boost::shared_ptr<future_body_untyped_base>& get_future_body(const poet::future<void> &f)
+		template<typename T>
+			boost::weak_ptr<typename nonvoid_future_body_base<T>::type> get_weak_future_body(const poet::future<T> &f)
 		{
-			return f._future_body;
+			return boost::weak_ptr<typename nonvoid_future_body_base<T>::type>(get_future_body(f));
 		}
 	} // namespace detail
 
@@ -583,7 +782,7 @@ namespace poet
 	{
 		typedef future<void>::update_slot_type slot_type;
 		future_value.connect_update(slot_type(&detail::promise_body<detail::nonvoid<void>::type>::handle_future_void_fulfillment,
-			_pimpl, future_value));
+			_pimpl.get(), future_value).track(_pimpl));
 	}
 }
 

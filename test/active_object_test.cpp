@@ -41,6 +41,10 @@ private:
 		}
 		virtual void run() {_returnValue.fulfill(_servant->increment(_inputValue));}
 		virtual bool ready() const {return _inputValue.ready();}
+		virtual poet::future<void> dependencies() const
+		{
+			return _inputValue;
+		}
 	private:
 		Servant *_servant;
 		poet::future<int> _inputValue;
