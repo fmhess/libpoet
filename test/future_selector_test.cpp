@@ -9,10 +9,13 @@ void preready_push_test()
 {
 	poet::future_selector<int> selector;
 	poet::future<int> selected_future = selector.selected();
+	assert(selector.size() == 0);
 	selector.pop_selected();
+	assert(selector.size() == -1);
 	poet::future<int> preready_future = 1;
 	selector.push(preready_future);
 	assert(selected_future.ready());
+	assert(selector.size() == 0);
 }
 
 void future_selector_scope_test()

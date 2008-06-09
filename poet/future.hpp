@@ -485,6 +485,16 @@ namespace poet
 		{
 			return _pimpl->has_future();
 		}
+		void reset()
+		{
+			promise temp;
+			swap(temp);
+		}
+		void swap(promise &other)
+		{
+			using std::swap;
+			swap(_pimpl, other._pimpl);
+		}
 	private:
 		boost::shared_ptr<detail::promise_body<T> > _pimpl;
 	};
@@ -520,16 +530,16 @@ namespace poet
 			base_type::fulfill(null_type());
 		}
 		inline void fulfill(const future<void> &future_value);
-		template <typename E>
-		void renege(const E &exception)
-		{
-			base_type::renege(exception);
-		}
-		void renege(const poet::exception_ptr &exp)
-		{
-			base_type::renege(exp);
-		}
+		using base_type::renege;
+		using base_type::reset;
+		using base_type::swap;
 	};
+
+	template<typename T>
+	void swap(promise<T> &a, promise<T> &b)
+	{
+		a.swap(b);
+	}
 
 	template <typename T> class future
 	{
@@ -587,6 +597,14 @@ namespace poet
 		operator const T&() const
 		{
 			return get();
+		}
+		void join() const
+		{
+			if(_future_body == 0)
+			{
+				return;
+			}
+			_future_body->join();
 		}
 		bool timed_join(const boost::system_time &absolute_time) const
 		{
@@ -674,6 +692,14 @@ namespace poet
 			BOOST_ASSERT(typeid(void) != typeid(OtherType));
 			_future_body = other._future_body;
 			return *this;
+		}
+		void join() const
+		{
+			if(_future_body == 0)
+			{
+				return;
+			}
+			_future_body->join();
 		}
 		bool timed_join(const boost::system_time &absolute_time) const
 		{

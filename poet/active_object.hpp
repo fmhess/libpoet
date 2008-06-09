@@ -19,7 +19,6 @@
 #ifndef _POET_ACTIVE_OBJECT_H
 #define _POET_ACTIVE_OBJECT_H
 
-#include <boost/deconstruct_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -33,79 +32,11 @@ namespace poet
 {
 	class method_request_base
 	{
-	protected:
-		typedef boost::signal<void ()> update_signal_type;
 	public:
-		typedef boost::signal<void ()>::slot_type update_slot_type;
-
-		method_request_base(): _cancelled(false) {}
+		method_request_base() {}
 		virtual ~method_request_base() {}
 		virtual void run() = 0;
-		virtual bool ready() const {return true;}
-		virtual void cancel()
-		{
-			bool emitSignal = false;
-			{
-				boost::mutex::scoped_lock lock(_cancelMutex);
-				if(_cancelled == false)
-				{
-					emitSignal = true;
-					_cancelled = true;
-				}
-			}
-			if(emitSignal) update_signal();
-		}
-		virtual bool cancelled() const
-		{
-			boost::mutex::scoped_lock lock(_cancelMutex);
-			return _cancelled;
-		}
-		boost::signalslib::connection connect_update(const update_slot_type &slot)
-		{
-			return update_signal.connect(slot);
-		}
-		virtual future<void> dependencies() const = 0;
-	protected:
-		update_signal_type update_signal;
-	private:
-		mutable boost::mutex _cancelMutex;
-		bool _cancelled;
-	};
-
-	template<typename ResultType>
-	class method_request: public method_request_base, public boost::postconstructible,
-    public boost::enable_shared_from_this<method_request<ResultType> >
-	{
-	public:
-		typedef ResultType result_type;
-
-		virtual ~method_request()
-		{}
-		virtual void cancel()
-		{
-			method_request_base::cancel();
-			future<result_type>(return_value).cancel();
-		}
-	protected:
-		typedef typename future<ResultType>::update_slot_type future_slot_type;
-
-		method_request(const promise<result_type> &returnValue):
-			return_value(returnValue)
-		{}
-		virtual void postconstruct()
-		{
-			future<result_type>(return_value).connect_update(
-				future_slot_type(&method_request<ResultType>::handle_return_value_update, this).track(this->shared_from_this()));
-		}
-		promise<result_type> return_value;
-	private:
-		void handle_return_value_update()
-		{
-			if(future<result_type>(return_value).has_exception())
-			{
-				method_request_base::cancel();
-			}
-		}
+		virtual future<void> scheduling_guard() const = 0;
 	};
 
 	class activation_queue_base
@@ -116,11 +47,8 @@ namespace poet
 		virtual ~activation_queue_base() {}
 		virtual void push_back(const boost::shared_ptr<method_request_base> &request) = 0;
 		virtual boost::shared_ptr<method_request_base> get_request() = 0;
-		virtual void clear() = 0;
 		virtual size_type size() const = 0;
 		virtual bool empty() const = 0;
-		virtual future<void> queue_is_ready() const = 0;
-		virtual void pop_queue_is_ready() = 0;
 		virtual void wake() = 0;
 	};
 
@@ -130,12 +58,6 @@ namespace poet
 		virtual ~in_order_activation_queue() {}
 		inline virtual void push_back(const boost::shared_ptr<method_request_base> &request);
 		inline virtual boost::shared_ptr<method_request_base> get_request();
-		virtual void clear()
-		{
-			boost::mutex::scoped_lock lock(_mutex);
-			_pendingRequests.clear();
-			//FIXME: need to clear or reset _selector
-		}
 		virtual size_type size() const
 		{
 			boost::mutex::scoped_lock lock(_mutex);
@@ -146,38 +68,41 @@ namespace poet
 			boost::mutex::scoped_lock lock(_mutex);
 			return _pendingRequests.empty();
 		}
-		virtual future<void> queue_is_ready() const
-		{
-			return _selector.selected();
-		}
-		virtual void pop_queue_is_ready()
-		{
-			_selector.pop_selected();
-		}
-		virtual void wake()
-		{
-			future<int> ready_future = 1;
-			_selector.push(ready_future);
-		}
-	protected:
-		inline boost::shared_ptr<method_request_base> unlockedGetRequest();
+		inline virtual void wake();
+	private:
+		typedef std::deque<boost::shared_ptr<method_request_base> > request_container_type;
 
-		typedef std::list<boost::shared_ptr<method_request_base> > list_type;
-		list_type _pendingRequests;
+		request_container_type _pendingRequests;
 		mutable boost::mutex _mutex;
-		poet::future_selector<void> _selector;
+		promise<boost::shared_ptr<method_request_base> >_next_method_request;
+		promise<boost::shared_ptr<method_request_base> >_wake_promise;
 	};
 
-	class out_of_order_activation_queue: public in_order_activation_queue
+	class out_of_order_activation_queue: public activation_queue_base
 	{
 	public:
-		out_of_order_activation_queue(): _next(in_order_activation_queue::_pendingRequests.end())
+		out_of_order_activation_queue()
 		{}
 		virtual ~out_of_order_activation_queue() {}
+
 		inline virtual void push_back(const boost::shared_ptr<method_request_base> &request);
 		inline virtual boost::shared_ptr<method_request_base> get_request();
+		virtual size_type size() const
+		{
+			const ssize_t size = _selector.size();
+			BOOST_ASSERT(size >= 0);
+			return size;
+		}
+		virtual bool empty() const
+		{
+			BOOST_ASSERT(_selector.size() >= 0);
+			return _selector.size() == 0;
+		}
+		inline virtual void wake();
 	private:
-		list_type::iterator _next;
+		mutable boost::mutex _mutex;
+		future_selector<boost::shared_ptr<method_request_base> >_selector;
+		promise<boost::shared_ptr<method_request_base> >_wake_promise;
 	};
 
 	class scheduler_base
@@ -186,7 +111,6 @@ namespace poet
 		virtual ~scheduler_base()
 		{}
 		virtual void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest) = 0;
-		virtual void wake() = 0;
 		virtual void kill() = 0;
 		virtual void join() = 0;
 	};
@@ -199,24 +123,22 @@ namespace poet
 			inline scheduler_impl(int millisecTimeout, const boost::shared_ptr<activation_queue_base> &activationQueue);
 			~scheduler_impl() {}
 			inline void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest);
-			inline void wake();
 			inline void kill();
 			inline void detach();
 			inline bool mortallyWounded() const;
 			static inline void dispatcherThreadFunction(const boost::shared_ptr<scheduler_impl> &shared_this);
 		private:
 			inline bool dispatch();
-			inline bool wakePending() const;
 			bool detached() const
 			{
 				return _detached;
 			}
 
 			boost::shared_ptr<activation_queue_base> _activationQueue;
-			poet::detail::condition _wakeCondition;
+			poet::promise<boost::shared_ptr<method_request_base> > _wake_promise;
 			mutable boost::mutex _mutex;
 			bool _mortallyWounded;
-			int _millisecTimeout;
+			int _millisecTimeout;	//FIXME timeout is useless now
 			bool _detached;
 		};
 	}
@@ -233,10 +155,6 @@ namespace poet
 		virtual void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest)
 		{
 			_pimpl->post_method_request(methodRequest);
-		}
-		virtual void wake()
-		{
-			_pimpl->wake();
 		}
 		virtual void kill()
 		{

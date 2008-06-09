@@ -22,30 +22,6 @@ int increment(int value)
 	return ++value;
 }
 
-bool black_knight()
-{
-	return false;
-}
-
-bool myGuard()
-{
-	return true;
-}
-
-void cancellation_test()
-{
-	boost::shared_ptr<poet::out_of_order_activation_queue> queue(new poet::out_of_order_activation_queue());
-	boost::shared_ptr<poet::scheduler> sched(new poet::scheduler(-1, queue));
-	poet::active_function<int (int)> cancelme(&increment, &black_knight, sched);
-	poet::future<int> result = cancelme(0);
-	BOOST_ASSERT(queue->empty() == false);
-	BOOST_ASSERT(result.has_exception() == false);
-	result.cancel();
-	BOOST_ASSERT(result.has_exception() == true);
-	boost::this_thread::sleep(boost::posix_time::seconds(1));
-	BOOST_ASSERT(queue->empty() == true);
-}
-
 class myclass
 {
 public:
@@ -85,7 +61,7 @@ int main()
 	// the bind() is only for illustration and isn't actually needed in this case,
 	// since the signatures match exactly.
 	poet::active_function<int (int)> inc1(boost::bind(&increment, _1));
-	poet::active_function<int (int)> inc2(&increment, &myGuard);
+	poet::active_function<int (int)> inc2(&increment);
 	std::vector<poet::future<int> > results(2);
 	unsigned i;
 	std::cerr << "getting Futures..." << std::endl;
@@ -103,7 +79,6 @@ int main()
 		std::cerr << "value from results[" << i << "] is " << value << std::endl;
 	}
 
-	cancellation_test();
 	slot_tracking_test();
 
 	return 0;

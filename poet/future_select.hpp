@@ -73,6 +73,7 @@ namespace poet
 					boost::unique_lock<boost::mutex> lock(_mutex);
 
 					eraser_info->iterator = _dependencies.insert(_dependencies.end(), body);
+					++_dependencies_size;
 					eraser_info->iterator_valid = true;
 				}
 				typedef typename future_body_untyped_base::update_signal_type::slot_type update_slot_type;
@@ -102,15 +103,12 @@ namespace poet
 			}
 			void pop_selected()
 			{
-				boost::shared_ptr<dependent_type> dependent;
-
 				boost::unique_lock<boost::mutex> lock(_mutex);
 				if(_fulfilled_promises.empty())
 				{
 					lock.unlock();
 
-					dependent.reset(new dependent_type);
-
+					boost::shared_ptr<dependent_type> dependent(new dependent_type);
 					typedef waiter_event_queue::slot_type event_slot_type;
 					event_slot_type event_slot(&waiter_event_queue::post<event_queue::event_type>,
 						&dependent->waiter_callbacks(), _1);
@@ -119,18 +117,23 @@ namespace poet
 					// deal with any events already in our event queue
 					dependent->waiter_callbacks().post(_waiter_callbacks.create_poll_event());
 
+					/* stick a shared_ptr that owns this onto the dependent so it will keep us alive
+					as long as it needs us. */
+					dependent->connectUpdate(boost::bind(&future_selector_body::do_nothing, this->shared_from_this()));
+
 					lock.lock();
+					_selected = dependent;
+					_selected_promises.push_back(dependent);
 				}else
 				{
-					dependent = _fulfilled_promises.front();
+					_selected = _fulfilled_promises.front();
 					_fulfilled_promises.pop_front();
 				}
-				_selected = dependent;
-				_selected_promises.push_back(dependent);
-
-				/* stick a shared_ptr that owns this onto the dependent so it will keep us alive
-				as long as it needs us. */
-				dependent->connectUpdate(boost::bind(&future_selector_body::do_nothing, this->shared_from_this()));
+			}
+			ssize_t size() const
+			{
+				boost::unique_lock<boost::mutex> lock(_mutex);
+				return _dependencies_size +_fulfilled_promises.size() - _selected_promises.size() + 1;
 			}
 			/* detach means the user isn't going to call push or pop_selected any more,
 			since future_selector object has destructed.  So cancel futures that
@@ -138,7 +141,7 @@ namespace poet
 			void detach()
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
-				const int extra_selected = _selected_promises.size() - _dependencies.size();
+				const int extra_selected = _selected_promises.size() - _dependencies_size;
 				int i;
 				boost::shared_ptr<dependent_type> dependent;
 				for(i = 0; i < extra_selected; ++i)
@@ -153,20 +156,13 @@ namespace poet
 			}
 		private:
 			future_selector_body():
-				_waiter_callbacks(_mutex, _condition)
+				_waiter_callbacks(_mutex, _condition), _dependencies_size(0)
 			{
 				pop_selected();
 			}
 			void wait_event(boost::shared_ptr<dependent_type> fulfilled_promise,
 				const boost::shared_ptr<typename nonvoid_future_body_base<T>::type> &dependency)
 			{
-				bool store_promise = false;
-				if(fulfilled_promise == false)
-				{
-					fulfilled_promise.reset(new dependent_type);
-					store_promise = true;
-				}
-
 				const bool dep_ready = dependency->ready();
 
 				if(dep_ready)
@@ -176,11 +172,6 @@ namespace poet
 				{
 					exception_ptr ep = dependency->get_exception_ptr();
 					fulfilled_promise->cancel(ep);
-				}
-				if(store_promise)
-				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
-					_fulfilled_promises.push_back(fulfilled_promise);
 				}
 			}
 			void check_dependency(const boost::weak_ptr<typename nonvoid_future_body_base<T>::type> &weak_dependency,
@@ -206,17 +197,18 @@ namespace poet
 						{
 							return;
 						}
-						if(_selected_promises.empty() == false)
+						if(_selected_promises.empty())
+						{
+							fulfilled_promise.reset(new dependent_type);
+							_fulfilled_promises.push_back(fulfilled_promise);
+						}else
 						{
 							fulfilled_promise = _selected_promises.front().lock();
 							_selected_promises.pop_front();
 						}
 						_dependencies.erase(dependency_eraser_info->iterator);
+						--_dependencies_size;
 						dependency_eraser_info->iterator_valid = false;
-						if(fulfilled_promise == false)
-						{
-							throw boost::expired_slot();
-						}
 					}
 					_waiter_callbacks.post(boost::bind(&future_selector_body::wait_event, this, fulfilled_promise, dependency));
 					throw boost::expired_slot();
@@ -232,6 +224,7 @@ namespace poet
 			fulfilled_container_type _fulfilled_promises;
 			boost::shared_ptr<dependent_type> _selected;
 			dependencies_type _dependencies;
+			size_t _dependencies_size;
 		};
 
 		/* future_body for void futures returned by future_select.  Becomes ready
@@ -423,9 +416,29 @@ namespace poet
 			future<T> converted_f = future_combining_barrier(converter, f);
 			push(converted_f);
 		}
+		ssize_t size() const
+		{
+			return _selector_body->size();
+		}
+		void reset()
+		{
+			future_selector temp;
+			swap(temp);
+		}
+		void swap(future_selector &other)
+		{
+			using std::swap;
+			swap(_selector_body, other._selector_body);
+		}
 	private:
 		boost::shared_ptr<detail::future_selector_body<T> > _selector_body;
 	};
+
+	template<typename T>
+	void swap(future_selector<T> &a, future_selector<T> &b)
+	{
+		a.swap(b);
+	}
 
 	template<typename InputIterator>
 	typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end)

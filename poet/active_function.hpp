@@ -46,18 +46,7 @@ namespace poet
 	public:
 		active_function(const typename base_type::passive_slot_type &passive_function,
 			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>()):
-			base_type(passive_function, boost::function<bool ()>(0), scheduler)
-		{}
-		active_function(const typename base_type::passive_slot_type &passive_function,
-			const typename base_type::guard_slot_type &guard,
-			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>()):
-			base_type(passive_function, guard, scheduler)
-		{}
-		// added this constructor to avoid overload ambiguity seen under msvc 9 with 2 arguments
-		template<typename T>
-		active_function(const typename base_type::passive_slot_type &passive_function,
-			boost::shared_ptr<T> scheduler = boost::shared_ptr<scheduler_base>()):
-			base_type(passive_function, boost::function<bool ()>(0), scheduler)
+			base_type(passive_function, scheduler)
 		{}
 		virtual ~active_function() {}
 	};

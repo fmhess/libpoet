@@ -19,6 +19,8 @@ int passive_function()
 
 int main()
 {
+	std::cerr << __FILE__ << "... ";
+
 	std::vector<poet::future<int> > results;
 	{
 		poet::active_function<int ()> short_lived(&passive_function);
@@ -31,5 +33,6 @@ int main()
 	{
 		results.at(i).get();
 	}
+	std::cerr << "OK" << std::endl;
 	return 0;
 }

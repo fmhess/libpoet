@@ -37,11 +37,9 @@ private:
 		IncrementRequest(Servant *servant, poet::future<int> inputValue, poet::promise<int> returnValue):
 			_servant(servant), _inputValue(inputValue), _returnValue(returnValue)
 		{
-			_readyConnection = inputValue.connect_update(boost::bind(boost::ref(update_signal)));
 		}
 		virtual void run() {_returnValue.fulfill(_servant->increment(_inputValue));}
-		virtual bool ready() const {return _inputValue.ready();}
-		virtual poet::future<void> dependencies() const
+		virtual poet::future<void> scheduling_guard() const
 		{
 			return _inputValue;
 		}
@@ -49,7 +47,6 @@ private:
 		Servant *_servant;
 		poet::future<int> _inputValue;
 		poet::promise<int> _returnValue;
-		boost::signalslib::scoped_connection _readyConnection;
 	};
 
 	Servant _servant;
