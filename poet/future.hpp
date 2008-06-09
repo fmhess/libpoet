@@ -108,6 +108,7 @@ namespace poet
 		{
 		public:
 			typedef boost::signal<void ()> update_signal_type;
+			typedef update_signal_type::slot_type update_slot_type;
 
 			future_body_untyped_base()
 			{
@@ -272,7 +273,7 @@ namespace poet
 
 				new_object->_waiter_callbacks.set_owner(new_object);
 
-				typedef typename future<ActualType>::update_slot_type slot_type;
+				typedef typename future_body_untyped_base::update_slot_type slot_type;
 				new_object->_actualFutureBody->connectUpdate(
 					slot_type(&future_body_proxy::handle_actual_body_complete, new_object.get()).track(new_object));
 				if(actualFutureBody->ready() || actualFutureBody->get_exception_ptr())
@@ -468,8 +469,8 @@ namespace poet
 		}
 		void fulfill(const future<T> &future_value)
 		{
-			typedef typename future<T>::update_slot_type slot_type;
-			future_value.connect_update(
+			typedef typename detail::future_body_untyped_base::update_slot_type slot_type;
+			detail::get_future_body(future_value)->connectUpdate(
 				slot_type(&detail::promise_body<T>::handle_future_fulfillment, _pimpl.get(), future_value).track(_pimpl));
 		}
 		template <typename E>
@@ -550,7 +551,6 @@ namespace poet
 		friend class future<void>;
 
 		typedef T value_type;
-		typedef typename detail::future_body_untyped_base::update_signal_type::slot_type update_slot_type;
 
 		future(const promise<T> &promise): _future_body(promise._pimpl->_future_body)
 		{}
@@ -617,16 +617,6 @@ namespace poet
 			_future_body = detail::future_body_proxy<T, OtherType>::create(other._future_body);
 			return *this;
 		}
-		boost::signalslib::connection connect_update(const update_slot_type &slot) const
-		{
-			if(_future_body == 0) throw std::invalid_argument("Future doesn't refer to any value yet. Cannot connect slot.");
-			return _future_body->connectUpdate(slot);
-		}
-		void cancel()
-		{
-			if(_future_body == false) return;
-			_future_body->cancel(poet::copy_exception(cancelled_future()));
-		}
 		bool has_exception() const
 		{
 			if(_future_body == 0) return true;
@@ -651,7 +641,6 @@ namespace poet
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
 
-		typedef detail::future_body_untyped_base::update_signal_type::slot_type update_slot_type;
 		typedef void value_type;
 
 		future(const promise<void> &promise): _future_body(promise._pimpl->_future_body)
@@ -714,16 +703,6 @@ namespace poet
 			if(_future_body == 0) return false;
 			_future_body->waiter_callbacks().poll();
 			return _future_body->ready();
-		}
-		boost::signalslib::connection connect_update(const update_slot_type &slot) const
-		{
-			if(_future_body == 0) throw std::invalid_argument("Future doesn't refer to any value yet. Cannot connect slot.");
-			return _future_body->connectUpdate(slot);
-		}
-		void cancel()
-		{
-			if(_future_body == false) return;
-			_future_body->cancel(poet::copy_exception(cancelled_future()));
 		}
 		bool has_exception() const
 		{
@@ -806,8 +785,8 @@ namespace poet
 
 	void promise<void>::fulfill(const future<void> &future_value)
 	{
-		typedef future<void>::update_slot_type slot_type;
-		future_value.connect_update(slot_type(&detail::promise_body<detail::nonvoid<void>::type>::handle_future_void_fulfillment,
+		typedef detail::future_body_untyped_base::update_slot_type slot_type;
+		detail::get_future_body(future_value)->connectUpdate(slot_type(&detail::promise_body<detail::nonvoid<void>::type>::handle_future_void_fulfillment,
 			_pimpl.get(), future_value).track(_pimpl));
 	}
 }
