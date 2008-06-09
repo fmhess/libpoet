@@ -9,6 +9,7 @@
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <iostream>
+#include <poet/detail/identity.hpp>
 #include <poet/future_barrier.hpp>
 #include <poet/future_select.hpp>
 #include <utility>
@@ -62,7 +63,7 @@ void combining_barrier_test()
 		std::copy(promises.begin(), promises.end(), std::back_inserter(futures));
 		bool combiner_run_flag = false;
 		poet::future<void> all_ready = poet::future_combining_barrier_range<void>(
-			boost::bind(&myslot, &combiner_run_flag), futures.begin(), futures.end());
+			boost::bind(&myslot, &combiner_run_flag), poet::detail::identity(), futures.begin(), futures.end());
 		assert(all_ready.ready() == false);
 		assert(combiner_run_flag == false);
 		assert(all_ready.has_exception() == false);
@@ -84,7 +85,7 @@ void combining_barrier_test()
 		std::copy(promises.begin(), promises.end(), std::back_inserter(futures));
 		unsigned combiner_sum = 0;
 		poet::future<void> all_ready = poet::future_combining_barrier_range<void>(
-			my_iterating_combiner(&combiner_sum), futures.begin(), futures.end());
+			my_iterating_combiner(&combiner_sum), poet::detail::identity(), futures.begin(), futures.end());
 		assert(all_ready.ready() == false);
 		assert(combiner_sum == 0);
 		assert(all_ready.has_exception() == false);
@@ -106,7 +107,7 @@ void combining_barrier_test()
 		std::copy(promises.begin(), promises.end(), std::back_inserter(futures));
 		unsigned combiner_sum = 0;
 		poet::future<unsigned> all_ready = poet::future_combining_barrier_range<unsigned>(
-			my_iterating_combiner(&combiner_sum), futures.begin(), futures.end());
+			my_iterating_combiner(&combiner_sum), poet::detail::identity(), futures.begin(), futures.end());
 		assert(all_ready.ready() == false);
 		assert(combiner_sum == 0);
 		assert(all_ready.has_exception() == false);
@@ -134,7 +135,7 @@ void combining_barrier_test()
 		poet::future<double> future2 = promise2;
 		poet::future<boost::tuple<unsigned, double> > all_ready =
 			poet::future_combining_barrier<boost::tuple<unsigned, double> >(
-				&my_hetero_combiner, future0, future1, future2);
+				&my_hetero_combiner, poet::detail::identity(), future0, future1, future2);
 		assert(all_ready.ready() == false);
 		assert(all_ready.has_exception() == false);
 		promise0.fulfill(unsigned_test_value);

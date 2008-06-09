@@ -22,6 +22,7 @@
 #include <boost/optional.hpp>
 #include <boost/type_traits.hpp>
 #include <iterator>
+#include <poet/detail/identity.hpp>
 #include <poet/detail/nonvoid.hpp>
 #include <poet/detail/template_static.hpp>
 #include <poet/future.hpp>
@@ -107,9 +108,13 @@ namespace poet
 				return _waiter_callbacks;
 			}
 		protected:
-			future_barrier_body_base(const boost::function<void ()> &bound_combiner):
+			typedef boost::function<exception_ptr (const exception_ptr &)> exception_handler_type;
+			
+			future_barrier_body_base(const boost::function<void ()> &bound_combiner,
+				const exception_handler_type &exception_handler):
 				_waiter_callbacks(this->_mutex, this->_condition),
-				_ready_count(0), _ready(false), _bound_combiner(bound_combiner), _combiner_event_posted(false)
+				_ready_count(0), _ready(false), _bound_combiner(bound_combiner),
+				_exception_handler(exception_handler), _combiner_event_posted(false)
 			{}
 
 			template<typename U, typename FutureBodyIterator>
@@ -137,15 +142,27 @@ namespace poet
 				}
 			}
 		private:
-			void waiter_event()
+			void waiter_event(const exception_ptr &dependency_exception)
 			{
 				exception_ptr ep;
-				try
+				if(dependency_exception)
 				{
-					_bound_combiner();
-				}catch(...)
+					try
+					{
+						ep = _exception_handler(dependency_exception);
+					}catch(...)
+					{
+						BOOST_ASSERT(false);
+					}
+				}else
 				{
-					ep = current_exception();
+					try
+					{
+						_bound_combiner();
+					}catch(...)
+					{
+						ep = current_exception();
+					}
 				}
 				{
 					boost::unique_lock<boost::mutex> lock(this->_mutex);
@@ -158,23 +175,23 @@ namespace poet
 			void check_dependency(const boost::weak_ptr<future_body_untyped_base > &weak_dependency, unsigned dependency_index)
 			{
 				boost::shared_ptr<future_body_untyped_base> dependency(weak_dependency);
+				exception_ptr dependency_exception;
 				bool all_ready = false;
 				bool received_first_exception = false;
 				{
 					boost::unique_lock<boost::mutex> lock(_mutex);
 
-					if(_combiner_event_posted || _exception) return;
+					if(_combiner_event_posted) return;
 
 					if(_dependency_completes.at(dependency_index) == false)
 					{
 						const bool dep_ready = dependency->ready();
-						const bool dep_has_exception = dependency->get_exception_ptr();
-						if(dep_has_exception && _exception == false)
+						dependency_exception = dependency->get_exception_ptr();
+						if(dependency_exception && _exception == false)
 						{
 							_dependency_completes.at(dependency_index) = true;
-							_exception = dependency->get_exception_ptr();
 							received_first_exception = true;
-							_condition.notify_all();
+							_combiner_event_posted = true;
 						}
 						if(dep_ready)
 						{
@@ -188,12 +205,9 @@ namespace poet
 						}
 					}
 				}
-				if(all_ready)
+				if(all_ready || received_first_exception)
 				{
-					_waiter_callbacks.post(boost::bind(&future_barrier_body_base::waiter_event, this));
-				}else if(received_first_exception)
-				{
-					this->_updateSignal();
+					_waiter_callbacks.post(boost::bind(&future_barrier_body_base::waiter_event, this, dependency_exception));
 				}
 			}
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
@@ -213,6 +227,7 @@ namespace poet
 			mutable unsigned _ready_count;
 			mutable bool _ready;
 			mutable boost::function<void ()> _bound_combiner;
+			mutable exception_handler_type _exception_handler;
 			mutable bool _combiner_event_posted;
 		};
 
@@ -276,9 +291,11 @@ namespace poet
 		public:
 			template<typename InputFutureIterator>
 			static boost::shared_ptr<future_barrier_body> create(const Combiner &combiner,
+				const barrier_base_class::exception_handler_type &exception_handler,
 				InputFutureIterator future_begin, InputFutureIterator future_end)
 			{
-				boost::shared_ptr<future_barrier_body> new_object(new future_barrier_body(combiner, future_begin, future_end));
+				boost::shared_ptr<future_barrier_body> new_object(new future_barrier_body(combiner, exception_handler,
+					future_begin, future_end));
 				barrier_base_class::init(new_object, new_object->_input_futures.begin(), new_object->_input_futures.end());
 				return new_object;
 			}
@@ -298,8 +315,10 @@ namespace poet
 			}
 		private:
 			template<typename InputFutureIterator>
-			future_barrier_body(const Combiner &combiner, InputFutureIterator future_begin, InputFutureIterator future_end):
-				barrier_base_class(boost::bind(&future_barrier_body::invoke_combiner, this)),
+			future_barrier_body(const Combiner &combiner,
+				const barrier_base_class::exception_handler_type &exception_handler,
+				InputFutureIterator future_begin, InputFutureIterator future_end):
+				barrier_base_class(boost::bind(&future_barrier_body::invoke_combiner, this), exception_handler),
 				_input_futures(future_begin, future_end),
 				_combiner_invoker(combiner)
 			{}
@@ -328,17 +347,19 @@ namespace poet
 	future<void> future_barrier_range(InputIterator future_begin, InputIterator future_end)
 	{
 		typedef detail::future_barrier_body<void, detail::null_void_combiner, void> body_type;
-		future<void> result = detail::create_future<void>(body_type::create(detail::null_void_combiner(), future_begin, future_end));
+		future<void> result = detail::create_future<void>(body_type::create(detail::null_void_combiner(), detail::identity(),
+			future_begin, future_end));
 		return result;
 	}
 
-	template<typename R, typename Combiner, typename InputIterator>
-	future<R> future_combining_barrier_range(const Combiner &combiner, InputIterator future_begin, InputIterator future_end)
+	template<typename R, typename Combiner, typename ExceptionHandler, typename InputIterator>
+	future<R> future_combining_barrier_range(const Combiner &combiner, const ExceptionHandler &exception_handler,
+		InputIterator future_begin, InputIterator future_end)
 	{
 		typedef typename std::iterator_traits<InputIterator>::value_type input_future_type;
 		typedef typename input_future_type::value_type input_value_type;
 		typedef detail::future_barrier_body<R, Combiner, input_value_type> body_type;
-		future<R> result = detail::create_future<R>(body_type::create(combiner, future_begin, future_end));
+		future<R> result = detail::create_future<R>(body_type::create(combiner, exception_handler, future_begin, future_end));
 		return result;
 	}
 }

@@ -94,11 +94,11 @@ nonvoid_future_get<TN>(fN)
 			typedef future_barrier_body_base barrier_base_class;
 		public:
 			static boost::shared_ptr<FUTURE_HETRO_COMBINING_BARRIER_BODY_N> create(
-				const Combiner &combiner,
+				const Combiner &combiner, const barrier_base_class::exception_handler_type &exception_handler,
 				POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, input_future))
 			{
 				boost::shared_ptr<FUTURE_HETRO_COMBINING_BARRIER_BODY_N> new_object(
-					new FUTURE_HETRO_COMBINING_BARRIER_BODY_N(combiner,
+					new FUTURE_HETRO_COMBINING_BARRIER_BODY_N(combiner, exception_handler,
 						POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, input_future)));
 
 				std::vector<future<void> > input_futures;
@@ -131,8 +131,9 @@ input_futures.push_back(input_futureN);
 			}
 		private:
 			FUTURE_HETRO_COMBINING_BARRIER_BODY_N(const Combiner &combiner,
+				const barrier_base_class::exception_handler_type &exception_handler,
 				POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, input_future)):
-				barrier_base_class(boost::bind(&FUTURE_HETRO_COMBINING_BARRIER_BODY_N::invoke_combiner, this)),
+				barrier_base_class(boost::bind(&FUTURE_HETRO_COMBINING_BARRIER_BODY_N::invoke_combiner, this), exception_handler),
 				POET_REPEATED_ARG_CONSTRUCTOR(POET_FUTURE_WAITS_NUM_ARGS, input_future),
 				_combiner_invoker(combiner)
 			{
@@ -175,13 +176,13 @@ inputs.push_back(fn);
 		return future_barrier_range(inputs.begin(), inputs.end());
 	}
 
-	template<typename R, typename Combiner, POET_REPEATED_TYPENAMES(POET_FUTURE_WAITS_NUM_ARGS, T)>
-	future<R> future_combining_barrier(const Combiner &combiner,
+	template<typename R, typename Combiner, typename ExceptionHandler, POET_REPEATED_TYPENAMES(POET_FUTURE_WAITS_NUM_ARGS, T)>
+	future<R> future_combining_barrier(const Combiner &combiner, const ExceptionHandler &exception_handler,
 		POET_FUTURE_WAITS_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS, f))
 	{
 		typedef detail::FUTURE_HETRO_COMBINING_BARRIER_BODY_N<R, Combiner, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, T)> body_type;
 		future<R> result = detail::create_future<R>(body_type::create(
-			combiner, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, f)));
+			combiner, exception_handler, POET_REPEATED_ARG_NAMES(POET_FUTURE_WAITS_NUM_ARGS, f)));
 		return result;
 	}
 }
