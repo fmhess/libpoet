@@ -34,7 +34,7 @@
 				executes in its own thread.  Futures are employed to communicate with active objects
 				in a thread-safe manner.  To learn
 				more about the active object concept, see the paper
-				<ulink url="http://www.cse.wustl.edu/~doc/pspdfs/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming."</ulink>
+				<ulink url="http://www.cs.wustl.edu/~schmidt/PDF/Act-Obj.pdf">"Active Object, An Object Behavioral Pattern for Concurrent Programming."</ulink>
 				by R. Greg Lavender and Douglas C. Schmidt.
 				Some of the more important active object classes in libpoet
 				are <classname>poet::active_function</classname>, <classname>poet::future</classname>,
@@ -43,7 +43,7 @@
 			<para>
 				Monitor objects provide thread-safety via automatically locked access to an object.
 				See the paper
-				<ulink url="http://www.cse.wustl.edu/~schmidt/PDF/monitor.pdf">"Monitor Object, An Object Behavioral Pattern for Concurrent Programming"</ulink>
+				<ulink url="http://www.cs.wustl.edu/~schmidt/PDF/monitor.pdf">"Monitor Object, An Object Behavioral Pattern for Concurrent Programming"</ulink>
 				by Douglas C. Schmidt for more information about monitor objects.
 				The <classname>poet::monitor_ptr</classname>, <classname>poet::monitor</classname>,
 				and <classname>poet::monitor_base</classname> classes in libpoet provide support for monitor
