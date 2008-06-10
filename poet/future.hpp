@@ -776,11 +776,6 @@ namespace poet
 			if(!f._future_body) return shared_uncertain_future_body<T>::value;
 			return f._future_body;
 		}
-		template<typename T>
-			boost::weak_ptr<typename nonvoid_future_body_base<T>::type> get_weak_future_body(const poet::future<T> &f)
-		{
-			return boost::weak_ptr<typename nonvoid_future_body_base<T>::type>(get_future_body(f));
-		}
 	} // namespace detail
 
 	void promise<void>::fulfill(const future<void> &future_value)

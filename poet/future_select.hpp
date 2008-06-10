@@ -329,7 +329,7 @@ namespace poet
 				{
 					typedef update_signal_type::slot_type update_slot_type;
 					update_slot_type update_slot(&future_select_body::check_dependency, new_object.get(),
-						get_weak_future_body(*it));
+						make_weak(get_future_body(*it)));
 					update_slot.track(new_object);
 					get_future_body(*it)->connectUpdate(update_slot);
 					if(new_object->check_dependency(get_future_body(*it))) break;

@@ -25,6 +25,7 @@
 #include <poet/detail/identity.hpp>
 #include <poet/detail/nonvoid.hpp>
 #include <poet/detail/template_static.hpp>
+#include <poet/detail/utility.hpp>
 #include <poet/future.hpp>
 #include <vector>
 
@@ -109,7 +110,7 @@ namespace poet
 			}
 		protected:
 			typedef boost::function<exception_ptr (const exception_ptr &)> exception_handler_type;
-			
+
 			future_barrier_body_base(const boost::function<void ()> &bound_combiner,
 				const exception_handler_type &exception_handler):
 				_waiter_callbacks(this->_mutex, this->_condition),
@@ -128,7 +129,7 @@ namespace poet
 				{
 					owner->_dependency_completes.push_back(false);
 					update_signal_type::slot_type update_slot(&future_barrier_body_base::check_dependency, owner.get(),
-						get_weak_future_body(*it), i);
+						make_weak(get_future_body(*it)), i);
 					update_slot.track(owner);
 					get_future_body(*it)->connectUpdate(update_slot);
 					owner->check_dependency(get_future_body(*it), i);
