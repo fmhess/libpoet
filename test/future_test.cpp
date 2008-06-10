@@ -6,6 +6,8 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <cassert>
+#include <poet/detail/identity.hpp>
+#include <poet/future_barrier.hpp>
 #include <poet/future.hpp>
 #include <iostream>
 #include <vector>
@@ -37,6 +39,22 @@ void promise_fulfill_ready_future_test()
 	assert(myfuture.get() == test_value);
 }
 
+// fulfill a promise with a lazy future that must be waited on to become ready
+void promise_fulfill_lazy_future_test()
+{
+	static const int test_value = 3;
+	poet::promise<int> mypromise;
+	poet::future<int> myfuture = mypromise;
+	poet::promise<int> dependency_promise;
+	poet::future<int> dependency = dependency_promise;
+	poet::future<int> lazy_fulfilling_future = poet::future_combining_barrier<int>(
+		poet::detail::identity(), poet::detail::identity(), dependency);
+	mypromise.fulfill(lazy_fulfilling_future);
+	dependency_promise.fulfill(test_value);
+	assert(myfuture.ready());
+	assert(myfuture.get() == test_value);
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -59,6 +77,7 @@ int main()
 	}
 
 	promise_fulfill_ready_future_test();
+	promise_fulfill_lazy_future_test();
 
 	std::cerr << "OK\n";
 	return 0;
