@@ -472,6 +472,10 @@ namespace poet
 			typedef typename detail::future_body_untyped_base::update_slot_type slot_type;
 			detail::get_future_body(future_value)->connectUpdate(
 				slot_type(&detail::promise_body<T>::handle_future_fulfillment, _pimpl.get(), future_value).track(_pimpl));
+			if(future_value.ready() || future_value.has_exception())
+			{
+				_pimpl->handle_future_fulfillment(future_value);
+			}
 		}
 		template <typename E>
 		void renege(const E &exception)
@@ -783,6 +787,10 @@ namespace poet
 		typedef detail::future_body_untyped_base::update_slot_type slot_type;
 		detail::get_future_body(future_value)->connectUpdate(slot_type(&detail::promise_body<detail::nonvoid<void>::type>::handle_future_void_fulfillment,
 			_pimpl.get(), future_value).track(_pimpl));
+		if(future_value.ready() || future_value.has_exception())
+		{
+			_pimpl->handle_future_void_fulfillment(future_value);
+		}
 	}
 }
 

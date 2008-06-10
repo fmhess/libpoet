@@ -5,16 +5,16 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <cassert>
 #include <poet/future.hpp>
 #include <iostream>
 #include <vector>
 
 static void delayed_increment(poet::promise<int> mypromise, poet::future<int> value)
 {
-	boost::this_thread::sleep(boost::posix_time::seconds(1));
+	boost::this_thread::sleep(boost::posix_time::millisec(100));
 	int intValue = value;
 	++intValue;
-	std::cerr << "Setting future value to " << intValue << std::endl;
 	mypromise.fulfill(intValue);
 };
 
@@ -25,11 +25,24 @@ static poet::future<int> async_delayed_increment(poet::future<int> value)
 	return mypromise;
 }
 
+// fulfill a promise with a future that is already ready
+void promise_fulfill_ready_future_test()
+{
+	static const int test_value = 4;
+	poet::promise<int> mypromise;
+	poet::future<int> myfuture = mypromise;
+	poet::future<int> fulfilling_future = test_value;
+	mypromise.fulfill(fulfilling_future);
+	assert(myfuture.ready());
+	assert(myfuture.get() == test_value);
+}
+
 int main()
 {
+	std::cerr << __FILE__ << "... ";
+
 	std::vector<poet::future<int> > futures;
 	unsigned i;
-	std::cerr << "getting Futures..." << std::endl;
 	for(i = 0; i < 10; ++i)
 	{
 		if(i == 0)
@@ -40,11 +53,13 @@ int main()
 			futures.push_back(async_delayed_increment(futures.at(i - 1)));
 		}
 	}
-	std::cerr << "converting Futures to values..." << std::endl;
 	for(i = 0; i < 10; ++i)
 	{
-		int value = futures.at(i);
-		std::cerr << "value from futures[" << i << "] is " << value << std::endl;
+		assert(futures.at(i).get() == static_cast<int>(i + 1));
 	}
+
+	promise_fulfill_ready_future_test();
+
+	std::cerr << "OK\n";
 	return 0;
 }
