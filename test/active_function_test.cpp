@@ -18,7 +18,7 @@ int increment(int value)
 {
 // 	std::cerr << __FUNCTION__ << std::endl;
 	// sleep for a bit to simulate doing something nontrivial
-	boost::this_thread::sleep(boost::posix_time::seconds(1));
+	boost::this_thread::sleep(boost::posix_time::millisec(100));
 	return ++value;
 }
 
@@ -52,34 +52,61 @@ void slot_tracking_test()
 	}
 	catch(const boost::expired_slot &err)
 	{
-		std::cout << "Caught expired_slot exception (good!): " << err.what() << std::endl;
 	}
+	catch(...)
+	{
+		assert(false);
+	}
+}
+
+void in_order_activation_queue_test()
+{
+	boost::shared_ptr<poet::in_order_activation_queue> activation_queue(new poet::in_order_activation_queue);
+	boost::shared_ptr<poet::scheduler> scheduler(new poet::scheduler(-1, activation_queue));
+	poet::active_function<int (int)> inc(&increment, scheduler);
+	std::vector<poet::promise<int> > promises;
+	std::vector<poet::future<int> > results;
+
+	promises.push_back(poet::promise<int>());
+	results.push_back(inc(promises.back()));
+
+	promises.push_back(poet::promise<int>());
+	results.push_back(inc(promises.back()));
+
+	promises.at(1).fulfill(1);
+
+	assert(results.at(1).timed_join(boost::get_system_time() + boost::posix_time::milliseconds(100)) == false);
+	assert(results.at(0).ready() == false);
+
+	promises.at(0).fulfill(0);
+	assert(results.at(0).get() == 0);
+	assert(results.at(1).get() == 1);
 }
 
 int main()
 {
-	// the bind() is only for illustration and isn't actually needed in this case,
-	// since the signatures match exactly.
-	poet::active_function<int (int)> inc1(boost::bind(&increment, _1));
-	poet::active_function<int (int)> inc2(&increment);
-	std::vector<poet::future<int> > results(2);
-	unsigned i;
-	std::cerr << "getting Futures..." << std::endl;
-	for(i = 0; i < results.size(); ++i)
-	{
-		poet::future<unsigned> temp = inc1(i);
-		std::cerr << "passing result of inc1 to inc2..." << std::endl;
-		results.at(i) = inc2(temp);
-		std::cerr << "stored future results[" << i << "]" << std::endl;
-	}
-	std::cerr << "converting Futures to values..." << std::endl;
-	for(i = 0; i < results.size(); ++i)
-	{
-		int value = results.at(i);
-		std::cerr << "value from results[" << i << "] is " << value << std::endl;
-	}
+	std::cerr << __FILE__ << "... ";
 
+	{
+		// the bind() is only for illustration and isn't actually needed in this case,
+		// since the signatures match exactly.
+		poet::active_function<int (int)> inc1(boost::bind(&increment, _1));
+		poet::active_function<int (int)> inc2(&increment);
+		std::vector<poet::future<int> > results(2);
+		unsigned i;
+		for(i = 0; i < results.size(); ++i)
+		{
+			poet::future<unsigned> temp = inc1(i);
+			results.at(i) = inc2(temp);
+		}
+		for(i = 0; i < results.size(); ++i)
+		{
+			assert(results.at(i).get() == static_cast<int>(i + 2));
+		}
+	}
 	slot_tracking_test();
+	in_order_activation_queue_test();
 
+	std::cerr << "OK\n";
 	return 0;
 }
