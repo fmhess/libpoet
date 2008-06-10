@@ -42,6 +42,47 @@ void future_selector_scope_test()
 	assert(selected_future.get() == test_value);
 }
 
+void future_selector_copy_test()
+{
+	std::vector<poet::promise<int> > promises;
+	promises.push_back(poet::promise<int>());
+	promises.push_back(poet::promise<int>());
+	promises.push_back(poet::promise<int>());
+
+	poet::future_selector<int> selector;
+	selector.push(promises.at(0));
+	poet::future_selector<int> selector_copy;
+	selector_copy = selector;
+	selector.push(promises.at(1));
+	selector_copy.push(promises.at(2));
+
+	assert(selector.selected().ready() == false);
+	assert(selector_copy.selected().ready() == false);
+	promises.at(0).fulfill(0);
+	assert(selector.selected().ready());
+	assert(selector.selected().get() == 0);
+	assert(selector_copy.selected().ready());
+	assert(selector_copy.selected().get() == 0);
+
+	selector.pop_selected();
+	selector_copy.pop_selected();
+
+	assert(selector.selected().ready() == false);
+	assert(selector_copy.selected().ready() == false);
+	promises.at(1).fulfill(1);
+	assert(selector.selected().ready());
+	assert(selector.selected().get() == 1);
+	assert(selector_copy.selected().ready() == false);
+
+	selector.pop_selected();
+
+	assert(selector.selected().ready() == false);
+	promises.at(2).fulfill(2);
+	assert(selector_copy.selected().ready());
+	assert(selector_copy.selected().get() == 2);
+	assert(selector.selected().ready() == false);
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -94,6 +135,7 @@ int main()
 
 	preready_push_test();
 	future_selector_scope_test();
+	future_selector_copy_test();
 
 	std::cerr << "OK" << std::endl;
 	return 0;

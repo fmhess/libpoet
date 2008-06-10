@@ -4,6 +4,8 @@
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/weak_ptr.hpp>
+
 namespace poet
 {
 	namespace detail
@@ -21,6 +23,12 @@ namespace poet
 				if(a.try_lock()) return;
 				b.unlock();
 			}
+		}
+
+		template<typename T>
+			boost::weak_ptr<T> make_weak(const boost::shared_ptr<T> &sp)
+		{
+			return boost::weak_ptr<T>(sp);
 		}
 	}
 }

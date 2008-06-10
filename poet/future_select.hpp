@@ -17,12 +17,12 @@
 
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <iterator>
 #include <poet/future.hpp>
 #include <poet/detail/nonvoid.hpp>
+#include <poet/detail/utility.hpp>
 #include <deque>
 #include <list>
 
@@ -64,37 +64,29 @@ namespace poet
 				new_object->_waiter_callbacks.set_owner(new_object);
 				return new_object;
 			}
+			boost::shared_ptr<future_selector_body> clone() const
+			{
+				boost::shared_ptr<future_selector_body> new_object(new future_selector_body(*this));
+				new_object->_waiter_callbacks.set_owner(new_object);
+				typename dependencies_type::iterator it;
+				for(it = new_object->_dependencies.begin(); it != new_object->_dependencies.end(); ++it)
+				{
+					new_object->connect_to_dependency(it);
+				}
+				return new_object;
+			}
 			void push(const future<T> &f)
 			{
 				const boost::shared_ptr<typename nonvoid_future_body_base<T>::type> body = get_future_body(f);
-
-				boost::shared_ptr<dependency_eraser_info> eraser_info(new dependency_eraser_info);
+				const boost::shared_ptr<dependency_eraser_info> eraser_info(new dependency_eraser_info);
+				typename dependencies_type::iterator dep_it;
 				{
 					boost::unique_lock<boost::mutex> lock(_mutex);
 
-					eraser_info->iterator = _dependencies.insert(_dependencies.end(), body);
+					dep_it = _dependencies.insert(_dependencies.end(), body);
 					++_dependencies_size;
-					eraser_info->iterator_valid = true;
 				}
-				typedef typename future_body_untyped_base::update_signal_type::slot_type update_slot_type;
-				update_slot_type update_slot(&future_selector_body::check_dependency, this,
-					boost::weak_ptr<typename nonvoid_future_body_base<T>::type>(body), eraser_info);
-				update_slot.track(this->shared_from_this());
-				body->connectUpdate(update_slot);
-				// deal with futures which completed before we got them
-				try
-				{
-					update_slot();
-				}
-				catch(const boost::expired_slot &)
-				{}
-
-				typedef waiter_event_queue::slot_type event_slot_type;
-				body->waiter_callbacks().connect_slot(event_slot_type(
-					&waiter_event_queue::post<event_queue::event_type>, &_waiter_callbacks, _1).track(this->shared_from_this()));
-
-				// deal with any events already in dependency's event queue
-				_waiter_callbacks.post(body->waiter_callbacks().create_poll_event());
+				connect_to_dependency(dep_it);
 			}
 			future<T> selected() const
 			{
@@ -118,7 +110,8 @@ namespace poet
 					dependent->waiter_callbacks().post(_waiter_callbacks.create_poll_event());
 
 					/* stick a shared_ptr that owns this onto the dependent so it will keep us alive
-					as long as it needs us. */
+					as long as it needs us. FIXME: we should drop the shared_ptr from the dependent
+					once it no longer needs (once it gets a value) */
 					dependent->connectUpdate(boost::bind(&future_selector_body::do_nothing, this->shared_from_this()));
 
 					lock.lock();
@@ -160,9 +153,41 @@ namespace poet
 			{
 				pop_selected();
 			}
-			void wait_event(boost::shared_ptr<dependent_type> fulfilled_promise,
-				const boost::shared_ptr<typename nonvoid_future_body_base<T>::type> &dependency)
+			future_selector_body(const future_selector_body &other):
+				_waiter_callbacks(_mutex, _condition)
 			{
+				boost::unique_lock<boost::mutex> lock(other._mutex);
+
+				/* _selected_promises in new_object should have same size as original,
+				but only has expired weak_ptr, since the original will handle fulfilling
+				the its real _selected_promises. */
+				_selected_promises.resize(other._selected_promises.size());
+				_selected = other._selected;
+				_fulfilled_promises = other._fulfilled_promises;
+				_dependencies = other._dependencies;
+				_dependencies_size = other._dependencies_size;
+			}
+			void wait_event(typename dependencies_type::iterator completed_dependency)
+			{
+				boost::shared_ptr<typename nonvoid_future_body_base<T>::type> dependency;
+				boost::shared_ptr<dependent_type> fulfilled_promise;
+ 				{
+					boost::unique_lock<boost::mutex> lock(_mutex);
+					if(_selected_promises.empty())
+					{
+						fulfilled_promise.reset(new dependent_type);
+						_fulfilled_promises.push_back(fulfilled_promise);
+					}else
+					{
+						fulfilled_promise = _selected_promises.front().lock();
+						_selected_promises.pop_front();
+					}
+					dependency = *completed_dependency;
+					_dependencies.erase(completed_dependency);
+					--_dependencies_size;
+				}
+				if(fulfilled_promise == false) return;
+
 				const bool dep_ready = dependency->ready();
 
 				if(dep_ready)
@@ -177,11 +202,11 @@ namespace poet
 			void check_dependency(const boost::weak_ptr<typename nonvoid_future_body_base<T>::type> &weak_dependency,
 				const boost::shared_ptr<dependency_eraser_info> &dependency_eraser_info)
 			{
-					boost::shared_ptr<typename nonvoid_future_body_base<T>::type> dependency = weak_dependency.lock();
-					if(!dependency)
-					{
-						return;
-					}
+				boost::shared_ptr<typename nonvoid_future_body_base<T>::type> dependency = weak_dependency.lock();
+				if(!dependency)
+				{
+					throw boost::expired_slot();
+				}
 
 				const bool dep_ready = dependency->ready();
 				exception_ptr ep;
@@ -190,29 +215,44 @@ namespace poet
 
 				if(dep_ready || ep)
 				{
-					boost::shared_ptr<dependent_type> fulfilled_promise;
 					{
 						boost::unique_lock<boost::mutex> lock(_mutex);
 						if(dependency_eraser_info->iterator_valid == false)
 						{
-							return;
+							throw boost::expired_slot();
 						}
-						if(_selected_promises.empty())
-						{
-							fulfilled_promise.reset(new dependent_type);
-							_fulfilled_promises.push_back(fulfilled_promise);
-						}else
-						{
-							fulfilled_promise = _selected_promises.front().lock();
-							_selected_promises.pop_front();
-						}
-						_dependencies.erase(dependency_eraser_info->iterator);
-						--_dependencies_size;
 						dependency_eraser_info->iterator_valid = false;
 					}
-					_waiter_callbacks.post(boost::bind(&future_selector_body::wait_event, this, fulfilled_promise, dependency));
+					_waiter_callbacks.post(boost::bind(&future_selector_body::wait_event, this, dependency_eraser_info->iterator));
 					throw boost::expired_slot();
 				}
+			}
+			void connect_to_dependency(typename dependencies_type::iterator dep_it)
+			{
+				const boost::shared_ptr<typename nonvoid_future_body_base<T>::type> body = *dep_it;
+				boost::shared_ptr<dependency_eraser_info> eraser_info(new dependency_eraser_info);
+				eraser_info->iterator = dep_it;
+				eraser_info->iterator_valid = true;
+
+				typedef typename future_body_untyped_base::update_signal_type::slot_type update_slot_type;
+				update_slot_type update_slot(&future_selector_body::check_dependency, this,
+					make_weak(body), eraser_info);
+				update_slot.track(this->shared_from_this());
+				body->connectUpdate(update_slot);
+				// deal with futures which completed before we got them
+				try
+				{
+					update_slot();
+				}
+				catch(const boost::expired_slot &)
+				{}
+
+				typedef waiter_event_queue::slot_type event_slot_type;
+				body->waiter_callbacks().connect_slot(event_slot_type(
+					&waiter_event_queue::post<event_queue::event_type>, &_waiter_callbacks, _1).track(this->shared_from_this()));
+
+				// deal with any events already in dependency's event queue
+				_waiter_callbacks.post(body->waiter_callbacks().create_poll_event());
 			}
 			void do_nothing() const
 			{}
@@ -388,16 +428,27 @@ namespace poet
 	} // namespace detail
 
 	template<typename T>
-		class future_selector: public boost::noncopyable // FIXME: haven't implemented proper copy semantics yet
+		class future_selector
 	{
 	public:
 		future_selector(): _selector_body(detail::future_selector_body<T>::create())
 		{}
+		future_selector(const future_selector &other):
+			_selector_body(other._selector_body->clone())
+		{}
+
 		~future_selector()
 		{
 			_selector_body->detach();
 		}
 
+		future_selector& operator=(const future_selector &rhs)
+		{
+			if(&rhs == this) return *this;
+			future_selector temp(rhs);
+			swap(temp);
+			return *this;
+		}
 		future<T> selected() const
 		{
 			return _selector_body->selected();
