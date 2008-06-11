@@ -118,12 +118,12 @@ namespace poet
 				_exception_handler(exception_handler), _combiner_event_posted(false)
 			{}
 
-			template<typename U, typename FutureBodyIterator>
-			static void init(const boost::shared_ptr<U> &owner, FutureBodyIterator future_begin, FutureBodyIterator future_end)
+			template<typename U, typename FutureIterator>
+			static void init(const boost::shared_ptr<U> &owner, FutureIterator future_begin, FutureIterator future_end)
 			{
 				owner->_waiter_callbacks.set_owner(owner);
 
-				FutureBodyIterator it;
+				FutureIterator it;
 				unsigned i = 0;
 				for(it = future_begin; it != future_end; ++it, ++i)
 				{
@@ -132,7 +132,14 @@ namespace poet
 						make_weak(get_future_body(*it)), i);
 					update_slot.track(owner);
 					get_future_body(*it)->connectUpdate(update_slot);
-					owner->check_dependency(get_future_body(*it), i);
+					try
+					{
+						owner->check_dependency(get_future_body(*it), i);
+					}
+					catch(const boost::expired_slot &)
+					{
+						break;
+					}
 
 					typedef typename waiter_event_queue::slot_type event_slot_type;
 					get_future_body(*it)->waiter_callbacks().connect_slot(event_slot_type(
@@ -209,6 +216,7 @@ namespace poet
 				if(all_ready || received_first_exception)
 				{
 					_waiter_callbacks.post(boost::bind(&future_barrier_body_base::waiter_event, this, dependency_exception));
+					throw boost::expired_slot();
 				}
 			}
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const

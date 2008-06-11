@@ -329,7 +329,14 @@ namespace poet
 						make_weak(get_future_body(*it)));
 					update_slot.track(new_object);
 					get_future_body(*it)->connectUpdate(update_slot);
-					if(new_object->check_dependency(get_future_body(*it))) break;
+					try
+					{
+						new_object->check_dependency(get_future_body(*it));
+					}
+					catch(const boost::expired_slot&)
+					{
+						break;
+					}
 
 					typedef typename waiter_event_queue::slot_type event_slot_type;
 					get_future_body(*it)->waiter_callbacks().connect_slot(event_slot_type(
@@ -344,11 +351,14 @@ namespace poet
 
 			mutable future_body_dependency_type _first_complete_dependency;
 		private:
-			bool check_dependency(const boost::weak_ptr<future_body_untyped_base> &weak_dependency) const
+			void check_dependency(const boost::weak_ptr<future_body_untyped_base> &weak_dependency) const
 			{
 				boost::shared_ptr<future_body_untyped_base> dependency(weak_dependency);
+				if(dependency == false)
+				{
+					throw boost::expired_slot();
+				}
 				bool emit_signal = false;
-				bool is_complete;
 				{
 					boost::unique_lock<boost::mutex> lock(_mutex);
 					if(!_first_complete_dependency)
@@ -361,13 +371,12 @@ namespace poet
 							_condition.notify_all();
 						}
 					}
-					is_complete = _first_complete_dependency;
 				}
 				if(emit_signal)
 				{
 					this->_updateSignal();
+					throw boost::expired_slot();
 				}
-				return is_complete;
 			}
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
 			{
