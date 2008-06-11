@@ -73,8 +73,8 @@ namespace poet
 		class waiter_event_queue
 		{
 			typedef boost::signal<void (const event_queue::event_type &)> event_posted_type;
-		public:
 			typedef event_posted_type::slot_type slot_type;
+		public:
 			waiter_event_queue(boost::mutex &mutex, boost::condition &condition):
 				_mutex(mutex), _condition(condition)
 			{}
@@ -88,7 +88,6 @@ namespace poet
 			template<typename Event>
 			void post(const Event &event)
 			{
-				BOOST_ASSERT(_weak_this.expired() == false);
 				_events.post(event);
 				_event_posted(create_poll_event());
 				boost::unique_lock<boost::mutex> lock(_mutex);
@@ -98,16 +97,26 @@ namespace poet
 			{
 				_events.poll();
 			}
-			event_queue::event_type create_poll_event()
+			boost::signalslib::connection observe(waiter_event_queue &other)
 			{
+				slot_type slot(&waiter_event_queue::post<event_queue::event_type>, this, _1);
+				BOOST_ASSERT(_weak_this.expired() == false);
+				slot.track(_weak_this);
+				boost::signalslib::connection connection = other._event_posted.connect(slot);
+				post(other.create_poll_event());
+				return connection;
+			}
+			void disconnect_all_observers()
+			{
+				_event_posted.disconnect_all_slots();
+			}
+		private:
+			event_queue::event_type create_poll_event() const
+			{
+				BOOST_ASSERT(_weak_this.expired() == false);
 				event_queue::event_type event = boost::bind(&waiter_event_queue::poll_event_impl, _weak_this);
 				return event;
 			}
-			boost::signalslib::connection connect_slot(const slot_type &slot)
-			{
-				return _event_posted.connect(slot);
-			}
-		private:
 			static void poll_event_impl(const boost::weak_ptr<waiter_event_queue> &weak_this)
 			{
 				boost::shared_ptr<waiter_event_queue> shared_this = weak_this.lock();
@@ -312,12 +321,8 @@ namespace poet
 					new_object->handle_actual_body_complete();
 				}
 
-				typedef typename waiter_event_queue::slot_type event_slot_type;
-				actualFutureBody->waiter_callbacks().connect_slot(event_slot_type(
-					&waiter_event_queue::post<event_queue::event_type>, &new_object->waiter_callbacks(), _1).
-					track(new_object));
-				// deal with any events already in _actualFutureBody's event queue
-				new_object->waiter_callbacks().post(actualFutureBody->waiter_callbacks().create_poll_event());
+				new_object->waiter_callbacks().observe(actualFutureBody->waiter_callbacks());
+
 				return new_object;
 			}
 			virtual void setValue(const ProxyType &value)
@@ -487,12 +492,7 @@ namespace poet
 					{}
 				}
 
-				typedef typename waiter_event_queue::slot_type event_slot_type;
-				fulfiller_body->waiter_callbacks().connect_slot(event_slot_type(
-					&waiter_event_queue::post<event_queue::event_type>, &_future_body->waiter_callbacks(), _1).
-					track(_future_body));
-				// deal with any events already in fulfilling future's event queue
-				_future_body->waiter_callbacks().post(fulfiller_body->waiter_callbacks().create_poll_event());
+				_future_body->waiter_callbacks().observe(fulfiller_body->waiter_callbacks());
 
 				// stick shared_ptr to future_value in dependent _future_body
 				downcast_future_body()->add_dependency(fulfiller_body);

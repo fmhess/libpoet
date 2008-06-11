@@ -62,6 +62,7 @@ namespace poet
 			{
 				boost::shared_ptr<future_selector_body> new_object(new future_selector_body);
 				new_object->_waiter_callbacks.set_owner(new_object);
+				new_object->pop_selected();
 				return new_object;
 			}
 			boost::shared_ptr<future_selector_body> clone() const
@@ -101,13 +102,7 @@ namespace poet
 					lock.unlock();
 
 					boost::shared_ptr<dependent_type> dependent(new dependent_type);
-					typedef waiter_event_queue::slot_type event_slot_type;
-					event_slot_type event_slot(&waiter_event_queue::post<event_queue::event_type>,
-						&dependent->waiter_callbacks(), _1);
-					event_slot.track(dependent);
-					_waiter_callbacks.connect_slot(event_slot);
-					// deal with any events already in our event queue
-					dependent->waiter_callbacks().post(_waiter_callbacks.create_poll_event());
+					dependent->waiter_callbacks().observe(_waiter_callbacks);
 
 					/* stick a shared_ptr that owns this onto the dependent so it will keep us alive
 					as long as it needs us. */
@@ -150,7 +145,6 @@ namespace poet
 			future_selector_body():
 				_waiter_callbacks(_mutex, _condition), _dependencies_size(0)
 			{
-				pop_selected();
 			}
 			future_selector_body(const future_selector_body &other):
 				_waiter_callbacks(_mutex, _condition)
@@ -246,12 +240,7 @@ namespace poet
 				catch(const boost::expired_slot &)
 				{}
 
-				typedef waiter_event_queue::slot_type event_slot_type;
-				body->waiter_callbacks().connect_slot(event_slot_type(
-					&waiter_event_queue::post<event_queue::event_type>, &_waiter_callbacks, _1).track(this->shared_from_this()));
-
-				// deal with any events already in dependency's event queue
-				_waiter_callbacks.post(body->waiter_callbacks().create_poll_event());
+				_waiter_callbacks.observe(body->waiter_callbacks());
 			}
 
 			waiter_event_queue _waiter_callbacks;
@@ -338,12 +327,7 @@ namespace poet
 						break;
 					}
 
-					typedef typename waiter_event_queue::slot_type event_slot_type;
-					get_future_body(*it)->waiter_callbacks().connect_slot(event_slot_type(
-						&waiter_event_queue::post<event_queue::event_type>, &new_object->waiter_callbacks(), _1).
-							track(new_object));
-					// deal with any events already in dependency's event queue
-					new_object->waiter_callbacks().post(get_future_body(*it)->waiter_callbacks().create_poll_event());
+					new_object->waiter_callbacks().observe(get_future_body(*it)->waiter_callbacks());
 
 					new_object->_dependencies.push_back(get_future_body(*it));
 				}

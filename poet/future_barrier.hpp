@@ -141,12 +141,7 @@ namespace poet
 						break;
 					}
 
-					typedef typename waiter_event_queue::slot_type event_slot_type;
-					get_future_body(*it)->waiter_callbacks().connect_slot(event_slot_type(
-						&waiter_event_queue::post<event_queue::event_type>, &owner->waiter_callbacks(), _1).
-						track(owner));
-					// deal with any events already in dependency's event queue
-					owner->waiter_callbacks().post(get_future_body(*it)->waiter_callbacks().create_poll_event());
+					owner->waiter_callbacks().observe(get_future_body(*it)->waiter_callbacks());
 				}
 			}
 		private:
