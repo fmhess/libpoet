@@ -42,17 +42,33 @@ void promise_fulfill_ready_future_test()
 // fulfill a promise with a lazy future that must be waited on to become ready
 void promise_fulfill_lazy_future_test()
 {
-	static const int test_value = 3;
-	poet::promise<int> mypromise;
-	poet::future<int> myfuture = mypromise;
-	poet::promise<int> dependency_promise;
-	poet::future<int> dependency = dependency_promise;
-	poet::future<int> lazy_fulfilling_future = poet::future_combining_barrier<int>(
-		poet::detail::identity(), poet::detail::identity(), dependency);
-	mypromise.fulfill(lazy_fulfilling_future);
-	dependency_promise.fulfill(test_value);
-	assert(myfuture.ready());
-	assert(myfuture.get() == test_value);
+	{
+		static const int test_value = 3;
+		poet::promise<int> mypromise;
+		poet::future<int> myfuture = mypromise;
+		poet::promise<int> dependency_promise;
+		poet::future<int> dependency = dependency_promise;
+		poet::future<int> lazy_fulfilling_future = poet::future_combining_barrier<int>(
+			poet::detail::identity(), poet::detail::identity(), dependency);
+		mypromise.fulfill(lazy_fulfilling_future);
+		dependency_promise.fulfill(test_value);
+		assert(myfuture.ready());
+		assert(myfuture.get() == test_value);
+	}
+	// now test promise<void> specialization
+	{
+		static const int test_value = 3;
+		poet::promise<void> mypromise;
+		poet::future<void> myfuture = mypromise;
+		poet::promise<int> dependency_promise;
+		poet::future<int> dependency = dependency_promise;
+		poet::future<int> lazy_fulfilling_future = poet::future_combining_barrier<int>(
+			poet::detail::identity(), poet::detail::identity(), dependency);
+		mypromise.fulfill(lazy_fulfilling_future);
+		dependency_promise.fulfill(test_value);
+		assert(myfuture.ready());
+		myfuture.get();
+	}
 }
 
 int main()

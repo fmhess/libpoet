@@ -33,6 +33,7 @@
 #include <poet/detail/condition.hpp>
 #include <poet/detail/event_queue.hpp>
 #include <poet/detail/nonvoid.hpp>
+#include <poet/detail/utility.hpp>
 #include <poet/exception_ptr.hpp>
 #include <poet/exceptions.hpp>
 #include <iostream>
@@ -48,7 +49,24 @@ namespace poet
 
 	namespace detail
 	{
+		// forward declarations
 		class future_body_untyped_base;
+		template<typename T>
+			class future_body_base;
+		template<typename T>
+			class nonvoid_future_body_base
+		{
+		public:
+			typedef future_body_base<T> type;
+		};
+		template<>
+			class nonvoid_future_body_base<void>
+		{
+		public:
+			typedef future_body_untyped_base type;
+		};
+		template<typename T>
+			const boost::shared_ptr<typename nonvoid_future_body_base<T>::type>& get_future_body(const poet::future<T> &f);
 
 		/* class for holding wait callbacks.  Any thread can post a functor to the waiter_event_queue,
 		but only future-waiting threads should pop them off and execute them. */
@@ -164,6 +182,7 @@ namespace poet
 						_value = value;
 						this->_condition.notify_all();
 						emit_signal = true;
+						clear_dependencies();
 					}
 				}
 				if(emit_signal)
@@ -212,6 +231,7 @@ namespace poet
 						emitSignal = true;
 						this->_condition.notify_all();
 						this->_exception = exp;
+						clear_dependencies();
 					}
 				}
 				if(emitSignal)
@@ -229,6 +249,12 @@ namespace poet
 				_waiter_callbacks.set_owner(this->shared_from_this());
 				return _waiter_callbacks;
 			}
+			void add_dependency(const boost::shared_ptr<void> &dependency)
+			{
+				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				if(_value || this->_exception) return;
+				_dependencies.push_back(dependency);
+			}
 		private:
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
 			{
@@ -241,9 +267,14 @@ namespace poet
 				lock->lock();
 				return _value || this->_exception;
 			}
+			void clear_dependencies()
+			{
+				std::vector<boost::shared_ptr<void> >().swap(_dependencies);
+			}
 
 			boost::optional<T> _value;
 			mutable waiter_event_queue _waiter_callbacks;
+			std::vector<boost::shared_ptr<void> > _dependencies;
 		};
 
 		template<typename ProxyType, typename ActualType>
@@ -291,9 +322,7 @@ namespace poet
 			}
 			virtual void setValue(const ProxyType &value)
 			{
-				std::ostringstream message;
-				message << __FUNCTION__ << ": didn't ever expect this function to actually get called!";
-				throw std::invalid_argument(message.str());
+				BOOST_ASSERT(false);
 			}
 			virtual bool ready() const
 			{
@@ -407,8 +436,27 @@ namespace poet
 
 			void fulfill(const T &value)
 			{
-				_future_body->setValue(value);
+				downcast_future_body()->setValue(value);
 			}
+			void fulfill(const future<T> &future_value)
+			{
+				typedef typename future_body_untyped_base::update_slot_type slot_type;
+				slot_type update_slot(&promise_body::handle_future_fulfillment, _future_body.get(), get_future_body(future_value).get());
+				update_slot.track(_future_body);
+				update_slot.track(get_future_body(future_value));
+				future_fulfill_guts(get_future_body(future_value), update_slot);
+			}
+
+			// provided for promise<void>
+			void future_void_fulfill(const future<void> &future_value)
+			{
+				typedef typename future_body_untyped_base::update_slot_type slot_type;
+				slot_type update_slot(&promise_body::handle_future_void_fulfillment, _future_body.get(), get_future_body(future_value).get());
+				update_slot.track(_future_body);
+				update_slot.track(get_future_body(future_value));
+				future_fulfill_guts(get_future_body(future_value), update_slot);
+			}
+
 			template <typename E>
 			void renege(const E &exception)
 			{
@@ -418,35 +466,57 @@ namespace poet
 			{
 				_future_body->cancel(exp);
 			}
-			inline void handle_future_fulfillment(const future<T> &future_value);
-			inline void handle_future_void_fulfillment(const future<void> &future_value);
 			bool has_future() const
 			{
 				return !_future_body.unique();
 			}
 
 			boost::shared_ptr<future_body_base<T> > _future_body;
-		};
+		private:
+			template<typename U>
+				void future_fulfill_guts(const boost::shared_ptr<U> &fulfiller_body, const future_body_untyped_base::update_slot_type &update_slot)
+			{
+				fulfiller_body->connectUpdate(update_slot);
+				if(fulfiller_body->ready() || fulfiller_body->get_exception_ptr())
+				{
+					try
+					{
+						update_slot();
+					}
+					catch(const boost::expired_slot&)
+					{}
+				}
 
-		template<typename T>
-			class nonvoid_future_body_base
-		{
-		public:
-			typedef future_body_base<T> type;
-		};
-		template<>
-			class nonvoid_future_body_base<void>
-		{
-		public:
-			typedef future_body_untyped_base type;
+				typedef typename waiter_event_queue::slot_type event_slot_type;
+				fulfiller_body->waiter_callbacks().connect_slot(event_slot_type(
+					&waiter_event_queue::post<event_queue::event_type>, &_future_body->waiter_callbacks(), _1).
+					track(_future_body));
+				// deal with any events already in fulfilling future's event queue
+				_future_body->waiter_callbacks().post(fulfiller_body->waiter_callbacks().create_poll_event());
+
+				// stick shared_ptr to future_value in dependent _future_body
+				downcast_future_body()->add_dependency(fulfiller_body);
+			}
+			inline static void handle_future_fulfillment(future_body_base<T> *fulfillee,
+				future_body_base<T> *fulfiller);
+			inline static void handle_future_void_fulfillment(future_body_base<nonvoid<void>::type> *fulfillee,
+				future_body_untyped_base *fulfiller);
+			boost::shared_ptr<future_body<T> > downcast_future_body() const
+			{
+				using boost::dynamic_pointer_cast;
+				boost::shared_ptr<future_body<T> > downcast = dynamic_pointer_cast<future_body<T> >(_future_body);
+				if(downcast == false)
+				{
+					throw std::invalid_argument("Cannot fulfill a promise<T> for T non-void through a promise<void>");
+				}
+				return downcast;
+			}
 		};
 
 		template<typename T>
 			future<T> create_future(const boost::shared_ptr<future_body_untyped_base> &body);
 		template<>
 			future<void> create_future<void>(const boost::shared_ptr<future_body_untyped_base> &body);
-		template<typename T>
-			const boost::shared_ptr<typename nonvoid_future_body_base<T>::type>& get_future_body(const poet::future<T> &f);
 	} // namespace detail
 
 	template <typename T>
@@ -469,13 +539,7 @@ namespace poet
 		}
 		void fulfill(const future<T> &future_value)
 		{
-			typedef typename detail::future_body_untyped_base::update_slot_type slot_type;
-			detail::get_future_body(future_value)->connectUpdate(
-				slot_type(&detail::promise_body<T>::handle_future_fulfillment, _pimpl.get(), future_value).track(_pimpl));
-			if(future_value.ready() || future_value.has_exception())
-			{
-				_pimpl->handle_future_fulfillment(future_value);
-			}
+			_pimpl->fulfill(future_value);
 		}
 		template <typename E>
 		void renege(const E &exception)
@@ -534,7 +598,10 @@ namespace poet
 		{
 			base_type::fulfill(null_type());
 		}
-		inline void fulfill(const future<void> &future_value);
+		void fulfill(const future<void> &future_value)
+		{
+			_pimpl->future_void_fulfill(future_value);
+		}
 		using base_type::renege;
 		using base_type::reset;
 		using base_type::swap;
@@ -723,31 +790,34 @@ namespace poet
 
 	namespace detail
 	{
-		template <typename T>
-		void promise_body<T>::handle_future_fulfillment(const future<T> &future_value)
-		{
-			try
-			{
-				fulfill(future_value.get());
-			}
-			catch(...)
-			{
-				renege(current_exception());
-			}
-		}
-
 		template<typename T>
-		void promise_body<T>::handle_future_void_fulfillment(const future<void> &future_value)
+			void promise_body<T>::handle_future_fulfillment(future_body_base<T> *fulfillee,
+			future_body_base<T> *fulfiller)
 		{
 			try
 			{
-				future_value.get();
-				fulfill(null_type());
+				fulfillee->setValue(fulfiller->getValue());
 			}
 			catch(...)
 			{
-				renege(current_exception());
+				fulfillee->cancel(current_exception());
 			}
+			throw boost::expired_slot();
+		}
+		template <typename T>
+		void promise_body<T>::handle_future_void_fulfillment(future_body_base<nonvoid<void>::type> * fulfillee,
+			future_body_untyped_base * fulfiller)
+		{
+			exception_ptr ep = fulfiller->get_exception_ptr();
+			if(ep)
+			{
+				fulfillee->cancel(ep);
+			}else
+			{
+				BOOST_ASSERT(fulfiller->ready());
+				fulfillee->setValue(null_type());
+			}
+			throw boost::expired_slot();
 		}
 
 		template<typename T>
@@ -781,17 +851,6 @@ namespace poet
 			return f._future_body;
 		}
 	} // namespace detail
-
-	void promise<void>::fulfill(const future<void> &future_value)
-	{
-		typedef detail::future_body_untyped_base::update_slot_type slot_type;
-		detail::get_future_body(future_value)->connectUpdate(slot_type(&detail::promise_body<detail::nonvoid<void>::type>::handle_future_void_fulfillment,
-			_pimpl.get(), future_value).track(_pimpl));
-		if(future_value.ready() || future_value.has_exception())
-		{
-			_pimpl->handle_future_void_fulfillment(future_value);
-		}
-	}
 }
 
 

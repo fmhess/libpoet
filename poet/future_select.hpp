@@ -110,9 +110,8 @@ namespace poet
 					dependent->waiter_callbacks().post(_waiter_callbacks.create_poll_event());
 
 					/* stick a shared_ptr that owns this onto the dependent so it will keep us alive
-					as long as it needs us. FIXME: we should drop the shared_ptr from the dependent
-					once it no longer needs (once it gets a value) */
-					dependent->connectUpdate(boost::bind(&future_selector_body::do_nothing, this->shared_from_this()));
+					as long as it needs us. */
+					dependent->add_dependency(this->shared_from_this());
 
 					lock.lock();
 					_selected = dependent;
@@ -254,8 +253,6 @@ namespace poet
 				// deal with any events already in dependency's event queue
 				_waiter_callbacks.post(body->waiter_callbacks().create_poll_event());
 			}
-			void do_nothing() const
-			{}
 
 			waiter_event_queue _waiter_callbacks;
 			mutable boost::mutex _mutex;
