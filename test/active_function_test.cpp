@@ -79,8 +79,8 @@ void in_order_activation_queue_test()
 	assert(results.at(0).ready() == false);
 
 	promises.at(0).fulfill(0);
-	assert(results.at(0).get() == 0);
-	assert(results.at(1).get() == 1);
+	assert(results.at(0).get() == 1);
+	assert(results.at(1).get() == 2);
 }
 
 int main()
