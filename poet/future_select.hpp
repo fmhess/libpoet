@@ -101,7 +101,7 @@ namespace poet
 				{
 					lock.unlock();
 
-					boost::shared_ptr<dependent_type> dependent(new dependent_type);
+					boost::shared_ptr<dependent_type> dependent = dependent_type::create();
 					dependent->waiter_callbacks().observe(_waiter_callbacks);
 
 					/* stick a shared_ptr that owns this onto the dependent so it will keep us alive
@@ -168,7 +168,7 @@ namespace poet
 					boost::unique_lock<boost::mutex> lock(_mutex);
 					if(_selected_promises.empty())
 					{
-						fulfilled_promise.reset(new dependent_type);
+						fulfilled_promise = dependent_type::create();
 						_fulfilled_promises.push_back(fulfilled_promise);
 					}else
 					{

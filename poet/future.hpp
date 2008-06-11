@@ -170,16 +170,19 @@ namespace poet
 		template <typename T> class future_body: public future_body_base<T>
 		{
 		public:
-			future_body(): _waiter_callbacks(this->_mutex, this->_condition)
-			{}
-			future_body(const T &value): _value(value),
-				_waiter_callbacks(this->_mutex, this->_condition)
-			{}
-			future_body(const poet::exception_ptr &ep, int):
-				_waiter_callbacks(this->_mutex, this->_condition)
+			static boost::shared_ptr<future_body> create()
 			{
-				this->_exception = ep;
+				boost::shared_ptr<future_body> new_object(new future_body);
+				new_object->_waiter_callbacks.set_owner(new_object);
+				return new_object;
 			}
+			static boost::shared_ptr<future_body> create(const T &value)
+			{
+				boost::shared_ptr<future_body> new_object(new future_body(value));
+				new_object->_waiter_callbacks.set_owner(new_object);
+				return new_object;
+			}
+
 			virtual ~future_body() {}
 			virtual void setValue(const T &value)
 			{
@@ -255,7 +258,6 @@ namespace poet
 			}
 			virtual waiter_event_queue& waiter_callbacks() const
 			{
-				_waiter_callbacks.set_owner(this->shared_from_this());
 				return _waiter_callbacks;
 			}
 			void add_dependency(const boost::shared_ptr<void> &dependency)
@@ -265,6 +267,12 @@ namespace poet
 				_dependencies.push_back(dependency);
 			}
 		private:
+			future_body(): _waiter_callbacks(this->_mutex, this->_condition)
+			{}
+			future_body(const T &value): _value(value),
+				_waiter_callbacks(this->_mutex, this->_condition)
+			{}
+
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
 			{
 				// do initial check to make sure we don't run any wait callbacks if we are already complete
@@ -432,7 +440,7 @@ namespace poet
 		template <typename T> class promise_body
 		{
 		public:
-			promise_body(): _future_body(new future_body<T>())
+			promise_body(): _future_body(future_body<T>::create())
 			{}
 			~promise_body()
 			{
@@ -631,7 +639,7 @@ namespace poet
 			future<OtherType> other_future(promise);
 			*this = other_future;
 		}
-		future(const T &value): _future_body(new detail::future_body<T>(value))
+		future(const T &value): _future_body(detail::future_body<T>::create(value))
 		{}
 		template <typename OtherType> future(const future<OtherType> &other)
 		{
@@ -837,12 +845,18 @@ namespace poet
 		{
 		public:
 			static boost::shared_ptr<typename nonvoid_future_body_base<T>::type> value;
+		private:
+			static boost::shared_ptr<typename nonvoid_future_body_base<T>::type> create()
+			{
+				boost::shared_ptr<typename nonvoid_future_body_base<T>::type> new_object(
+					future_body<typename nonvoid<T>::type>::create());
+				new_object->cancel(copy_exception(uncertain_future()));
+				return new_object;
+			}
 		};
 		template<typename T>
 			boost::shared_ptr<typename nonvoid_future_body_base<T>::type>
-				shared_uncertain_future_body<T>::value(
-					new future_body<typename nonvoid<T>::type>(
-						copy_exception(uncertain_future()), 0));
+				shared_uncertain_future_body<T>::value(shared_uncertain_future_body<T>::create());
 
 		template<typename T>
 			const boost::shared_ptr<typename nonvoid_future_body_base<T>::type>& get_future_body(const poet::future<T> &f)
