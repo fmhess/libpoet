@@ -322,11 +322,17 @@ namespace poet
 				new_object->_waiter_callbacks.set_owner(new_object);
 
 				typedef typename future_body_untyped_base::update_slot_type slot_type;
-				new_object->_actualFutureBody->connectUpdate(
-					slot_type(&future_body_proxy::handle_actual_body_complete, new_object.get()).track(new_object));
+				slot_type update_slot(&future_body_proxy::handle_actual_body_complete, new_object.get());
+				update_slot.track(new_object);
+				new_object->_actualFutureBody->connectUpdate(update_slot);
 				if(actualFutureBody->ready() || actualFutureBody->get_exception_ptr())
 				{
-					new_object->handle_actual_body_complete();
+					try
+					{
+						update_slot();
+					}
+					catch(const boost::expired_slot &)
+					{}
 				}
 
 				new_object->waiter_callbacks().observe(actualFutureBody->waiter_callbacks());
@@ -417,6 +423,7 @@ namespace poet
 					_conversionEventPosted = true;
 				}
 				_waiter_callbacks.post(boost::bind(&future_body_proxy::waiter_event, this));
+				throw boost::expired_slot();
 			}
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
 			{
