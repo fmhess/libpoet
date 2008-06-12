@@ -321,6 +321,10 @@ namespace poet
 			virtual const typename nonvoid<R>::type& getValue() const
 			{
 				this->join();
+				if(this->_exception)
+				{
+					rethrow_exception(this->_exception);
+				}
 				return *this->_combiner_result;
 			}
 			virtual void setValue(const typename nonvoid<R>::type &value)
@@ -339,7 +343,12 @@ namespace poet
 
 			void invoke_combiner()
 			{
-				_combiner_invoker(_combiner_result, _input_futures.begin(), _input_futures.end());
+				boost::optional<typename nonvoid<R>::type> result;
+				_combiner_invoker(result, _input_futures.begin(), _input_futures.end());
+				{
+					boost::unique_lock<boost::mutex> lock(_mutex);
+					_combiner_result = result;
+				}
 			}
 
 			std::vector<future<T> > _input_futures;

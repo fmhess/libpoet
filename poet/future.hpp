@@ -793,6 +793,8 @@ namespace poet
 				throw uncertain_future();
 			}
 			_future_body->join();
+			exception_ptr ep = _future_body->get_exception_ptr();
+			if(ep) rethrow_exception(ep);
 		}
 		operator void () const
 		{

@@ -123,6 +123,10 @@ input_futures.push_back(input_futureN);
 			virtual const typename nonvoid<R>::type& getValue() const
 			{
 				this->join();
+				if(this->_exception)
+				{
+					rethrow_exception(this->_exception);
+				}
 				return *this->_combiner_result;
 			}
 			virtual void setValue(const typename nonvoid<R>::type &value)
