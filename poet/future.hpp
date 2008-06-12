@@ -74,9 +74,10 @@ namespace poet
 		{
 			typedef boost::signal<void (const event_queue::event_type &)> event_posted_type;
 			typedef event_posted_type::slot_type slot_type;
+			typedef std::vector<boost::signalslib::connection> connections_type;
 		public:
-			waiter_event_queue(boost::mutex &mutex, boost::condition &condition):
-				_mutex(mutex), _condition(condition)
+			waiter_event_queue(boost::mutex &condition_mutex, boost::condition &condition):
+				_condition_mutex(condition_mutex), _condition(condition), _posting_closed(false)
 			{}
 
 			void set_owner(const boost::shared_ptr<const void> &queue_owner)
@@ -88,10 +89,17 @@ namespace poet
 			template<typename Event>
 			void post(const Event &event)
 			{
+				{
+					boost::unique_lock<boost::mutex> lock(_mutex);
+
+					if(_posting_closed) return;
+				}
 				_events.post(event);
 				_event_posted(create_poll_event());
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				_condition.notify_all();
+				{
+					boost::unique_lock<boost::mutex> lock(_condition_mutex);
+					_condition.notify_all();
+				}
 			}
 			void poll()
 			{
@@ -99,16 +107,32 @@ namespace poet
 			}
 			boost::signalslib::connection observe(waiter_event_queue &other)
 			{
-				slot_type slot(&waiter_event_queue::post<event_queue::event_type>, this, _1);
-				BOOST_ASSERT(_weak_this.expired() == false);
-				slot.track(_weak_this);
-				boost::signalslib::connection connection = other._event_posted.connect(slot);
+				boost::signalslib::connection connection;
+				{
+					boost::unique_lock<boost::mutex> lock(_mutex);
+
+					if(_posting_closed) return connection;
+
+					slot_type slot(&waiter_event_queue::post<event_queue::event_type>, this, _1);
+					BOOST_ASSERT(_weak_this.expired() == false);
+					slot.track(_weak_this);
+					connection = other._event_posted.connect(slot);
+					_connections.push_back(connection);
+				}
 				post(other.create_poll_event());
 				return connection;
 			}
-			void disconnect_all_observers()
+			void close_posting()
 			{
-				_event_posted.disconnect_all_slots();
+				boost::unique_lock<boost::mutex> lock(_mutex);
+
+				_posting_closed = true;
+
+				connections_type::iterator it;
+				for(it = _connections.begin(); it != _connections.end(); ++it)
+				{
+					it->disconnect();
+				}
 			}
 		private:
 			event_queue::event_type create_poll_event() const
@@ -125,10 +149,13 @@ namespace poet
 			}
 
 			event_queue _events;
-			boost::mutex &_mutex;
+			boost::mutex _mutex;
+			boost::mutex &_condition_mutex;
 			boost::condition &_condition;
 			event_posted_type _event_posted;
 			boost::weak_ptr<waiter_event_queue> _weak_this;
+			connections_type _connections;
+			bool _posting_closed;
 		};
 
 		class future_body_untyped_base: public boost::enable_shared_from_this<future_body_untyped_base>
@@ -287,6 +314,7 @@ namespace poet
 			void clear_dependencies()
 			{
 				std::vector<boost::shared_ptr<void> >().swap(_dependencies);
+				_waiter_callbacks.close_posting();
 			}
 
 			boost::optional<T> _value;
@@ -330,9 +358,13 @@ namespace poet
 					try
 					{
 						update_slot();
+						BOOST_ASSERT(false);
 					}
 					catch(const boost::expired_slot &)
 					{}
+					/* we don't need to bother observing actualFutureBody's waiter_event_queue
+					if it was already complete */
+					return new_object;
 				}
 
 				new_object->waiter_callbacks().observe(actualFutureBody->waiter_callbacks());
@@ -423,6 +455,7 @@ namespace poet
 					_conversionEventPosted = true;
 				}
 				_waiter_callbacks.post(boost::bind(&future_body_proxy::waiter_event, this));
+				_waiter_callbacks.close_posting();
 				throw boost::expired_slot();
 			}
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
@@ -502,9 +535,12 @@ namespace poet
 					try
 					{
 						update_slot();
+						BOOST_ASSERT(false);
 					}
 					catch(const boost::expired_slot&)
 					{}
+					/* if fulfiller_body was already complete, we are finished. */
+					return;
 				}
 
 				_future_body->waiter_callbacks().observe(fulfiller_body->waiter_callbacks());

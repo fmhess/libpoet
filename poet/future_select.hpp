@@ -54,6 +54,7 @@ namespace poet
 			{
 				dependency_eraser_info(): iterator_valid(false)
 				{}
+				boost::signalslib::connection waiter_connection;
 				typename dependencies_type::iterator iterator;
 				bool iterator_valid;
 			};
@@ -215,6 +216,7 @@ namespace poet
 							throw boost::expired_slot();
 						}
 						dependency_eraser_info->iterator_valid = false;
+						dependency_eraser_info->waiter_connection.disconnect();
 					}
 					_waiter_callbacks.post(boost::bind(&future_selector_body::wait_event, this, dependency_eraser_info->iterator));
 					throw boost::expired_slot();
@@ -223,9 +225,11 @@ namespace poet
 			void connect_to_dependency(typename dependencies_type::iterator dep_it)
 			{
 				const boost::shared_ptr<typename nonvoid_future_body_base<T>::type> body = *dep_it;
+
 				boost::shared_ptr<dependency_eraser_info> eraser_info(new dependency_eraser_info);
 				eraser_info->iterator = dep_it;
 				eraser_info->iterator_valid = true;
+				eraser_info->waiter_connection = _waiter_callbacks.observe(body->waiter_callbacks());
 
 				typedef typename future_body_untyped_base::update_signal_type::slot_type update_slot_type;
 				update_slot_type update_slot(&future_selector_body::check_dependency, this,
@@ -239,8 +243,6 @@ namespace poet
 				}
 				catch(const boost::expired_slot &)
 				{}
-
-				_waiter_callbacks.observe(body->waiter_callbacks());
 			}
 
 			waiter_event_queue _waiter_callbacks;
@@ -359,6 +361,7 @@ namespace poet
 				if(emit_signal)
 				{
 					this->_updateSignal();
+					_waiter_callbacks.close_posting();
 					throw boost::expired_slot();
 				}
 			}

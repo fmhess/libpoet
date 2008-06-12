@@ -211,6 +211,7 @@ namespace poet
 				if(all_ready || received_first_exception)
 				{
 					_waiter_callbacks.post(boost::bind(&future_barrier_body_base::waiter_event, this, dependency_exception));
+					_waiter_callbacks.close_posting();
 					throw boost::expired_slot();
 				}
 			}
