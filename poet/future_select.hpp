@@ -488,6 +488,7 @@ namespace poet
 	typename std::iterator_traits<InputIterator>::value_type future_select_range(InputIterator future_begin, InputIterator future_end)
 	{
 		typedef typename std::iterator_traits<InputIterator>::value_type future_type;
+		if(future_begin == future_end) return future_type();
 		typedef detail::future_select_body<typename future_type::value_type> body_type;
 		future_type result = detail::create_future<typename future_type::value_type>(
 			body_type::create(future_begin, future_end));

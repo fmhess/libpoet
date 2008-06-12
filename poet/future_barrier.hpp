@@ -123,6 +123,15 @@ namespace poet
 			{
 				owner->_waiter_callbacks.set_owner(owner);
 
+				// handle special case of no dependencies
+				if(future_begin == future_end)
+				{
+					owner->_combiner_event_posted = true;
+					owner->_waiter_callbacks.post(boost::bind(&future_barrier_body_base::waiter_event, owner.get(), exception_ptr()));
+					owner->_waiter_callbacks.close_posting();
+					return;
+				}
+
 				FutureIterator it;
 				unsigned i = 0;
 				for(it = future_begin; it != future_end; ++it, ++i)

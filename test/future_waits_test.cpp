@@ -152,6 +152,61 @@ void combining_barrier_test()
 	}
 }
 
+void select_none_test()
+{
+	std::vector<poet::future<int> > futures;
+	poet::future<int> selected_future = poet::future_select_range(futures.begin(), futures.end());
+	assert(selected_future.ready() == false);
+	assert(selected_future.has_exception());
+	try
+	{
+		selected_future.get();
+		assert(false);
+	}
+	catch(const poet::uncertain_future&)
+	{}
+	catch(...)
+	{
+		assert(false);
+	}
+}
+
+void barrier_none_test()
+{
+	{
+		std::vector<poet::future<int> > futures;
+		poet::future<void> result = poet::future_barrier_range(futures.begin(), futures.end());
+		assert(result.ready());
+		assert(result.has_exception() == false);
+		try
+		{
+			result.get();
+		}
+		catch(...)
+		{
+			assert(false);
+		}
+	}
+	// again, but with future_combining_barrier_range
+	{
+		std::vector<poet::future<unsigned> > futures;
+		unsigned sum = 0;
+		poet::future<unsigned> result = poet::future_combining_barrier_range<unsigned>(my_iterating_combiner(&sum),
+			poet::detail::identity(),
+			futures.begin(), futures.end());
+		assert(result.ready());
+		assert(result.has_exception() == false);
+		try
+		{
+			assert(result.get() == sum);
+		}
+		catch(...)
+		{
+			assert(false);
+		}
+	}
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -224,6 +279,8 @@ int main()
 	}
 
 	combining_barrier_test();
+	select_none_test();
+	barrier_none_test();
 
 	std::cerr << "OK\n";
 	return 0;
