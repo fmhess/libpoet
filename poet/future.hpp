@@ -747,6 +747,11 @@ namespace poet
 			_future_body->waiter_callbacks().poll();
 			return _future_body->get_exception_ptr();
 		}
+		void swap(future &other)
+		{
+			using std::swap;
+			swap(_future_body, other._future_body);
+		}
 	private:
 		future(const boost::shared_ptr<detail::future_body_base<T> > &future_body):_future_body(future_body)
 		{}
@@ -834,12 +839,23 @@ namespace poet
 			_future_body->waiter_callbacks().poll();
 			return _future_body->get_exception_ptr();
 		}
+		void swap(future &other)
+		{
+			using std::swap;
+			swap(_future_body, other._future_body);
+		}
 	private:
 		future(const boost::shared_ptr<detail::future_body_untyped_base > &future_body):_future_body(future_body)
 		{}
 
 		boost::shared_ptr<detail::future_body_untyped_base > _future_body;
 	};
+
+	template<typename T>
+	void swap(future<T> &a, future<T> &b)
+	{
+		a.swap(b);
+	}
 
 	namespace detail
 	{

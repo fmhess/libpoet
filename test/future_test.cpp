@@ -71,6 +71,18 @@ void promise_fulfill_lazy_future_test()
 	}
 }
 
+void future_swap_test()
+{
+	poet::future<int> a;
+	poet::promise<int> p;
+	poet::future<int> b = p;
+	using std::swap;
+	swap(a, b);
+	p.fulfill(0);
+	assert(b.ready() == false);
+	assert(a.ready());
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -94,6 +106,7 @@ int main()
 
 	promise_fulfill_ready_future_test();
 	promise_fulfill_lazy_future_test();
+	future_swap_test();
 
 	std::cerr << "OK\n";
 	return 0;
