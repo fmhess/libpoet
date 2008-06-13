@@ -28,9 +28,6 @@
 				<typedef name="value_type">
 					<type>T</type>
 				</typedef>
-				<typedef name="update_slot_type">
-					<type>boost::signal&lt;void ()&gt;</type>
-				</typedef>
 				<method-group name="public member functions">
 					<method name="ready" cv="const"><type>bool</type>
 						<description><para></para></description>
@@ -59,16 +56,6 @@
 						<description><para>timed_join() blocks until <computeroutput>absolute_time</computeroutput> is reached, or either ready() or has_exception() becomes true.</para></description>
 						<returns><para><code>true</code> if either <methodname>ready</methodname> or <methodname>has_exception</methodname>
 								return <code>true</code>.</para></returns>
-					</method>
-					<method name="connect_update" cv="const">
-						<type>boost::signalslib::connection</type>
-						<parameter name="slot"><paramtype>const update_slot_type &amp;</paramtype></parameter>
-						<description><para>Connect a slot to be run when the future's status changes, either because its value is ready or its promise has been broken. </para></description>
-					</method>
-					<method name="cancel" cv="">
-						<type>void</type>
-						<description><para>Cancel a future by reneging on its promise with a <classname>cancelled_future</classname>
-								exception. </para></description>
 					</method>
 					<method name="has_exception" cv="const">
 						<type>bool</type>
@@ -116,9 +103,6 @@
 				<typedef name="value_type">
 					<type>void</type>
 				</typedef>
-				<typedef name="update_slot_type">
-					<type>boost::signal&lt;void ()&gt;::slot_type</type>
-				</typedef>
 				<constructor>
 					<parameter name="promise_in"><paramtype>const <classname>promise</classname>&lt;void&gt; &amp;</paramtype></parameter>
 					<description><para>Same as the corresponding constructor for an unspecialized <classname>future</classname>.</para></description>
@@ -157,15 +141,6 @@
 					</method>
 					<method name="ready" cv="const">
 						<type>bool</type>
-						<description><para>Same as the corresponding function for an unspecialized <classname>future</classname>.</para></description>
-					</method>
-					<method name="connect_update" cv="const">
-						<type>boost::signalslib::connection</type>
-						<parameter name="slot"><paramtype>const update_slot_type &amp;</paramtype></parameter>
-						<description><para>Same as the corresponding function for an unspecialized <classname>future</classname>.</para></description>
-					</method>
-					<method name="cancel" cv="">
-						<type>void</type>
 						<description><para>Same as the corresponding function for an unspecialized <classname>future</classname>.</para></description>
 					</method>
 					<method name="has_exception" cv="const">
