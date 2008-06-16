@@ -2,7 +2,7 @@
 	<namespace name="poet">
 		<class name="future">
 			<template><template-type-parameter name="T"/></template>
-			<purpose>A handle to a future value. </purpose>
+			<purpose>A placeholder for a future value. </purpose>
 			<description>
 				<para>Futures are placeholders for values which may not exist yet. They may be used to conveniently
 					support asyncronous function calls with built-in thread safety.
@@ -50,10 +50,18 @@
 						<type>const T &amp;</type>
 						<description><para>The conversion operator provides implicit conversions to values. It has the same effects as the explicit get() function. </para></description>
 					</method>
+					<method name="join" cv="const">
+						<type>void</type>
+						<description><para><code>join</code> blocks until either <methodname>ready</methodname> or
+								<methodname>has_exception</methodname> becomes true.  Unlike the
+							<methodname>get</methodname> method, <code>join</code> will not throw if <methodname>has_exception</methodname>
+							is <code>true</code>.</para></description>
+					</method>
 					<method name="timed_join" cv="const">
 						<type>bool</type>
 						<parameter name="absolute_time"><paramtype>const boost::system_time &amp;</paramtype></parameter>
-						<description><para>timed_join() blocks until <computeroutput>absolute_time</computeroutput> is reached, or either ready() or has_exception() becomes true.</para></description>
+						<description><para><code>timed_join</code> blocks until <computeroutput>absolute_time</computeroutput> is reached,
+								or either <methodname>ready</methodname> or <methodname>has_exception</methodname> becomes true.</para></description>
 						<returns><para><code>true</code> if either <methodname>ready</methodname> or <methodname>has_exception</methodname>
 								return <code>true</code>.</para></returns>
 					</method>
@@ -61,6 +69,11 @@
 						<type>bool</type>
 						<description><para></para></description>
 						<returns><para><code>true</code> if this future's promise has been broken. Attempting to get the future's value will throw an exception that may give more information on why the promise was broken. </para></returns>
+					</method>
+					<method name="swap">
+						<type>void</type>
+						<parameter name="other"><paramtype>future &amp;</paramtype></parameter>
+						<description><para>Swaps <code>*this</code> with <code>other</code>.</para></description>
 					</method>
 				</method-group>
 				<constructor>
@@ -73,10 +86,18 @@
 				</constructor>
 				<constructor><parameter name="value"><paramtype>const T &amp;</paramtype></parameter>
 					<description><para>Creates a new future with an initialized value, and provides implicit conversion from a value to the corresponding future. </para></description>
-				</constructor><constructor>
+				</constructor>
+				<constructor>
+					<parameter name="other"><paramtype>const <classname>future</classname> &amp;</paramtype></parameter>
+					<description><para>Creates a future from another future with an identical template type.
+						The two futures will both reference the same <classname>promise</classname>.</para></description>
+				</constructor>
+				<constructor>
 					<template><template-type-parameter name="OtherType"/></template>
 					<parameter name="other"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
-					<description><para>Creates a future from another future with a compatible template type. The two futures will both reference the same <classname>promise</classname>. </para></description>
+					<description><para>Creates a future from another future with a compatible template type. <code>*this</code> will
+						indirectly reference the <classname>promise</classname> or <code>other</code>, obtaining its value
+						by implicit conversion of <code>other</code>'s value once it is ready. </para></description>
 				</constructor>
 				<constructor>
 					<description><para>Creates an uncertain future with no promise. An attempt to get an uncertain future's value will throw an <classname>uncertain_future</classname> exception. An uncertain future may gain promise by assigning it another future with promise. </para></description>
@@ -85,12 +106,28 @@
 					<description><para></para></description>
 				</destructor>
 				<copy-assignment>
+					<parameter name="rhs"><paramtype>const <classname>future</classname> &amp;</paramtype></parameter>
+					<description><para>Assignment from a future with an identical template type results in
+						two futures which share the same promise.</para></description>
+				</copy-assignment>
+				<copy-assignment>
 					<template><template-type-parameter name="OtherType"/></template>
-					<parameter name="other"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
+					<parameter name="rhs"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
 					<description><para>Assignment from a future&lt;U&gt; is supported if <code>U</code> is implicitly convertible to
 							<code>T</code>. The assignment happens immediately, and does not block waiting for <code>other</code> to become ready. </para></description>
 				</copy-assignment>
 			</access>
+			<free-function-group name="free functions">
+				<function name="swap">
+					<template>
+						<template-type-parameter name="T"/>
+					</template>
+					<type>void</type>
+					<parameter name="a"><paramtype>future&lt;T&gt; &amp;</paramtype></parameter>
+					<parameter name="b"><paramtype>future&lt;T&gt; &amp;</paramtype></parameter>
+					<description><para>Swaps futures <code>a</code> and <code>b</code>.</para></description>
+				</function>
+			</free-function-group>
 		</class>
 		<class-specialization name="future">
 			<template></template>
@@ -115,6 +152,10 @@
 					<description><para>A future&lt;void&gt; can be constructed from any type of <classname>promise</classname>.</para></description>
 				</constructor>
 				<constructor>
+					<parameter name="other"><paramtype>const <classname>future</classname> &amp;</paramtype></parameter>
+					<description><para>Same as the corresponding constructor for an unspecialized <classname>future</classname>.</para></description>
+				</constructor>
+				<constructor>
 					<template><template-type-parameter name="OtherType"/></template>
 					<parameter name="other"><paramtype>const <classname>future</classname>&lt;OtherType&gt; &amp;</paramtype></parameter>
 					<description><para>A future&lt;void&gt; can be constructed from any type of <classname>future</classname>.</para></description>
@@ -134,6 +175,10 @@
 						<type>void</type>
 						<description><para>The conversion operator has the same effects as the explicit get() function. </para></description>
 					</method>
+					<method name="join" cv="const">
+						<type>void</type>
+						<description><para>Same as the corresponding function for an unspecialized <classname>future</classname>.</para></description>
+					</method>
 					<method name="timed_join" cv="const">
 						<type>bool</type>
 						<parameter name="absolute_time"><paramtype>const boost::system_time &amp;</paramtype></parameter>
@@ -147,7 +192,16 @@
 						<type>bool</type>
 						<description><para>Same as the corresponding function for an unspecialized <classname>future</classname>.</para></description>
 					</method>
+					<method name="swap">
+						<type>void</type>
+						<parameter name="other"><paramtype>future &amp;</paramtype></parameter>
+						<description><para>Swaps <code>*this</code> with <code>other</code>.</para></description>
+					</method>
 				</method-group>
+				<copy-assignment>
+					<parameter name="rhs"><paramtype>const <classname>future</classname> &amp;</paramtype></parameter>
+					<description><para>Same as the corresponding function for an unspecialized <classname>future</classname>.</para></description>
+				</copy-assignment>
 				<copy-assignment>
 					<template>
 						<template-type-parameter name="OtherType"/>
