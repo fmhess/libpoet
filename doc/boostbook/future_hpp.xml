@@ -235,6 +235,43 @@
 						<parameter name="future_value"><paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype></parameter>
 						<description><para>Chain the promise to another promise by giving it a future. All futures which reference this promise will receive the value from future_value when it becomes ready. If the promise referenced by future_value is broken, this promise will also be broken. </para></description>
 					</method>
+					<method name="has_future" cv="const">
+						<type>bool</type>
+						<description>
+							<para>
+								The <code>has_future</code> query allows a promise-fulfilling thread to query if there are any futures left
+								which refer to this promise.  This enables a promise-fulfilling thread to exit early if noone
+								is interested in its result.
+							</para>
+						</description>
+						<returns>
+							<para><code>true</code> if there are any <classname>future</classname> objects in existance which
+								will obtain their value/exception from this promise.
+							</para>
+						</returns>
+					</method>
+					<method name="reset">
+						<type>void</type>
+						<description>
+							<para>
+								Resets the promise by swapping it with a default-constructed promise.
+							</para>
+						</description>
+						<postconditions>
+							<para>
+								<code>has_future()==false</code>
+							</para>
+						</postconditions>
+					</method>
+					<method name="swap">
+						<type>void</type>
+						<parameter name="other"><paramtype>promise &amp;</paramtype></parameter>
+						<description>
+							<para>
+								Swaps <code>*this</code> with <code>other</code>.
+							</para>
+						</description>
+					</method>
 					<overloaded-method name="renege">
 						<signature>
 							<template><template-type-parameter name="E"/></template>
@@ -249,7 +286,26 @@
 					</overloaded-method>
 				</method-group>
 				<constructor/>
+				<constructor>
+					<parameter name="other"><paramtype>const promise &amp;</paramtype></parameter>
+					<description><para>Copy construction creates a shallow copy of <code>other</code>.</para></description>
+				</constructor>
+				<copy-assignment>
+					<parameter name="rhs"><paramtype>const <classname>promise</classname> &amp;</paramtype></parameter>
+					<description><para>Assignment makes <code>*this</code> a shallow copy of <code>rhs</code>.</para></description>
+				</copy-assignment>
 			</access>
+			<free-function-group name="free functions">
+				<function name="swap">
+					<template>
+						<template-type-parameter name="T"/>
+					</template>
+					<type>void</type>
+					<parameter name="a"><paramtype>promise&lt;T&gt; &amp;</paramtype></parameter>
+					<parameter name="b"><paramtype>promise&lt;T&gt; &amp;</paramtype></parameter>
+					<description><para>Swaps promises <code>a</code> and <code>b</code>.</para></description>
+				</function>
+			</free-function-group>
 		</class>
 		<class-specialization name="promise">
 			<template></template>
@@ -266,7 +322,7 @@
 					<description><para>Same as the corresponding constructor for an unspecialized <classname>promise</classname>.</para></description>
 				</constructor>
 				<constructor>
-					<parameter name="other"><paramtype>const <classname>promise</classname>&lt;void&gt; &amp;</paramtype></parameter>
+					<parameter name="other"><paramtype>const <classname>promise</classname> &amp;</paramtype></parameter>
 					<description><para>Same as the corresponding constructor for an unspecialized <classname>promise</classname>.</para></description>
 				</constructor>
 				<constructor>
@@ -274,8 +330,17 @@
 					<parameter name="other">
 						<paramtype>const <classname>promise</classname>&lt;OtherType&gt; &amp;</paramtype>
 					</parameter>
-					<description><para>A promise&lt;void&gt; may be constructed from a promise with any template type, although it cannot fulfill such a promise. It can renege on the promise, however. </para></description>
+					<description>
+						<para>
+							A promise&lt;void&gt; may be constructed from a promise with any template type, although it cannot
+							fulfill such a promise. It can renege on the promise, however.
+						</para>
+					</description>
 				</constructor>
+				<copy-assignment>
+					<parameter name="rhs"><paramtype>const <classname>promise</classname> &amp;</paramtype></parameter>
+					<description><para>Assignment makes <code>*this</code> a shallow copy of <code>rhs</code>.</para></description>
+				</copy-assignment>
 				<destructor specifiers="virtual"/>
 				<method-group name="public member functions">
 					<method name="fulfill" cv="">
@@ -287,6 +352,19 @@
 						<type>void</type>
 						<description><para>Will make any future&lt;void&gt; objects referencing this promise become ready.</para></description>
 						<throws><simpara><classname>std::invalid_argument</classname> </simpara></throws>
+					</method>
+					<method name="has_future" cv="const">
+						<type>bool</type>
+						<description><para>Same as the corresponding function for an unspecialized <classname>promise</classname>.</para></description>
+					</method>
+					<method name="reset">
+						<type>void</type>
+						<description><para>Same as the corresponding function for an unspecialized <classname>promise</classname>.</para></description>
+					</method>
+					<method name="swap">
+						<type>void</type>
+						<parameter name="other"><paramtype>promise &amp;</paramtype></parameter>
+						<description><para>Same as the corresponding function for an unspecialized <classname>promise</classname>.</para></description>
 					</method>
 					<overloaded-method name="renege">
 						<signature>
