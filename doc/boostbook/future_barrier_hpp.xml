@@ -177,6 +177,7 @@
 					function, and must be manually specified when calling <code>future_combining_barrier</code>.
 					The rest of the template type parameters may be deduced from the types of
 					the input parameters.
+				</para>
 				<para>
 					If all the input futures sucessfully become ready, the returned future
 					will become ready by obtaining its value from the return value of <code>combiner(v1, v2, ..., vN)</code>
