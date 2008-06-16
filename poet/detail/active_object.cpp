@@ -129,9 +129,8 @@ namespace poet
 	{
 		// scheduler_impl
 
-		scheduler_impl::scheduler_impl(int millisecTimeout,
-			const boost::shared_ptr<activation_queue_base> &activationQueue):
-			_activationQueue(activationQueue), _mortallyWounded(false), _millisecTimeout(millisecTimeout),
+		scheduler_impl::scheduler_impl(const boost::shared_ptr<activation_queue_base> &activationQueue):
+			_activationQueue(activationQueue), _mortallyWounded(false),
 			_detached(false)
 		{
 		}
@@ -199,9 +198,8 @@ namespace poet
 
 	// scheduler
 
-	scheduler::scheduler(int millisecTimeout,
-		const boost::shared_ptr<activation_queue_base> &activationQueue):
-		_pimpl(new detail::scheduler_impl(millisecTimeout, activationQueue))
+	scheduler::scheduler(const boost::shared_ptr<activation_queue_base> &activationQueue):
+		_pimpl(new detail::scheduler_impl(activationQueue))
 	{
 		_dispatcherThread.reset(new boost::thread(boost::bind(&detail::scheduler_impl::dispatcherThreadFunction, _pimpl)));
 	}

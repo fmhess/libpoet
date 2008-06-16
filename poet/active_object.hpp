@@ -120,7 +120,7 @@ namespace poet
 		class scheduler_impl
 		{
 		public:
-			inline scheduler_impl(int millisecTimeout, const boost::shared_ptr<activation_queue_base> &activationQueue);
+			inline scheduler_impl(const boost::shared_ptr<activation_queue_base> &activationQueue);
 			~scheduler_impl() {}
 			inline void post_method_request(const boost::shared_ptr<method_request_base> &methodRequest);
 			inline void kill();
@@ -138,7 +138,6 @@ namespace poet
 			poet::promise<boost::shared_ptr<method_request_base> > _wake_promise;
 			mutable boost::mutex _mutex;
 			bool _mortallyWounded;
-			int _millisecTimeout;	//FIXME timeout is useless now
 			bool _detached;
 		};
 	}
@@ -146,7 +145,7 @@ namespace poet
 	class scheduler: public scheduler_base
 	{
 	public:
-		inline scheduler(int millisecTimeout = -1, const boost::shared_ptr<activation_queue_base> &activationQueue =
+		inline scheduler(const boost::shared_ptr<activation_queue_base> &activationQueue =
 			boost::shared_ptr<activation_queue_base>(new out_of_order_activation_queue));
 		virtual ~scheduler()
 		{

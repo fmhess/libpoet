@@ -62,7 +62,7 @@ void slot_tracking_test()
 void in_order_activation_queue_test()
 {
 	boost::shared_ptr<poet::in_order_activation_queue> activation_queue(new poet::in_order_activation_queue);
-	boost::shared_ptr<poet::scheduler> scheduler(new poet::scheduler(-1, activation_queue));
+	boost::shared_ptr<poet::scheduler> scheduler(new poet::scheduler(activation_queue));
 	poet::active_function<int (int)> inc(&increment, scheduler);
 	std::vector<poet::promise<int> > promises;
 	std::vector<poet::future<int> > results;
