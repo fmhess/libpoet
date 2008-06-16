@@ -3,14 +3,11 @@
 		<overloaded-function name="future_select">
 			<signature>
 				<template>
-					<template-type-parameter name="InputFutureIterator"/>
+					<template-type-parameter name="T"/>
 				</template>
-				<type><classname>future</classname>&lt;std::iterator_traits&lt;InputFutureIterator&gt;::value_type&gt;</type>
-				<parameter name="first">
-					<paramtype>InputFutureIterator</paramtype>
-				</parameter>
-				<parameter name="last">
-					<paramtype>InputFutureIterator</paramtype>
+				<type><classname>future</classname>&lt;T&gt;</type>
+				<parameter name="f1">
+					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
 			</signature>
 			<signature>
@@ -36,8 +33,8 @@
 				<parameter name="f2">
 					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
-				<parameter name="...">
-					<paramtype></paramtype>
+				<parameter name="">
+					<paramtype>...</paramtype>
 				</parameter>
 				<parameter name="fN">
 					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
@@ -52,7 +49,20 @@
 					<title>See also</title>
 					<listitem>
 						<para>
-							<functionname>future_barrier</functionname>: construct a future which becomes ready when all of a group of futures are ready or have an exception.
+							<functionname>future_select_range</functionname>: Same as <code>future_select</code> except
+							it takes iterators to a range of futures as its parameters.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<functionname>future_selector</functionname>: Efficiently perform repeated waits
+							on a group of futures, waiting for the next future to become ready.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<functionname>future_barrier</functionname>: construct a future which becomes ready when all of a
+							group of futures are ready or one has an exception.
 						</para>
 					</listitem>
 				</itemizedlist>
@@ -65,5 +75,22 @@
 				</para>
 			</returns>
 		</overloaded-function>
+		<function name="future_select_range">
+			<template>
+				<template-type-parameter name="InputFutureIterator"/>
+			</template>
+			<type><classname>future</classname>&lt;std::iterator_traits&lt;InputFutureIterator&gt;::value_type&gt;</type>
+			<parameter name="first">
+				<paramtype>InputFutureIterator</paramtype>
+			</parameter>
+			<parameter name="last">
+				<paramtype>InputFutureIterator</paramtype>
+			</parameter>
+			<description>
+				<para>Similar to <functionname>future_select</functionname> except this version takes input iterators
+					to a range of futures as its input parameters.
+				</para>
+			</description>
+		</function>
 	</namespace>
 </header>
