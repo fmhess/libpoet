@@ -81,6 +81,9 @@ void future_swap_test()
 	p.fulfill(0);
 	assert(b.ready() == false);
 	assert(a.ready());
+	a.swap(b);
+	assert(a.ready() == false);
+	assert(b.ready());
 }
 
 int main()
