@@ -35,10 +35,6 @@
 					<type><classname>boost::slot</classname>&lt;Signature&gt;</type>
 					<description><para>Slot type for the passive function the active_function is constructed from.</para></description>
 				</typedef>
-				<typedef name="guard_slot_type">
-					<type><classname>boost::slot</classname>&lt;bool ()&gt;</type>
-					<description><para>Slot type for guard functions.</para></description>
-				</typedef>
 				<method-group name="public member functions">
 					<overloaded-method name="operator()">
 						<signature>
@@ -60,10 +56,6 @@
 							<para>Note the active_function takes futures as arguments, as well as returning a <classname>future</classname>. This allows future results to be passed from one active_function to another without waiting for the result to become ready. Since futures are constructible from their value types, the active_function can also take ordinary values not wrapped in futures as arguments. </para>
 						</description>
 					</overloaded-method>
-					<method name="wake" cv="">
-						<type>void</type>
-						<description><para>Calls scheduler_base::wake() on the active_function's scheduler. </para></description>
-					</method>
 					<method name="expired" cv="const">
 						<type>bool</type>
 						<description><para>Calls the boost::slot::expired() query method on the slot this active_function was constructed from. </para></description>
@@ -74,10 +66,6 @@
 						<paramtype>const <classname>passive_slot_type</classname> &amp;</paramtype>
 						<description><para>The underlying function this active_function object will call. The boost::slot class supports tracking of arbitrary boost::shared_ptr which are associated with the slot. For example, if the slot is constructed from a non-static member function, the lifetime of the member function's object can be tracked and the slot prevented from running after the object is destroyed. </para></description>
 					</parameter>
-					<parameter name="guard">
-						<paramtype>const guard_slot_type &amp;</paramtype>
-						<description><para>The active_function's scheduler will not execute a method request until the guard returns true and all the input futures are ready.</para></description>
-					</parameter>
 					<parameter name="scheduler">
 						<paramtype>boost::shared_ptr&lt;<classname>scheduler_base</classname>&gt;</paramtype>
 						<default>boost::shared_ptr&lt;scheduler_base&gt;()</default>
@@ -86,23 +74,13 @@
 					<description><para></para></description>
 				</constructor>
 				<constructor>
-					<parameter name="passive_function">
-						<paramtype>const <classname>passive_slot_type</classname> &amp;</paramtype>
-					</parameter>
-					<parameter name="scheduler">
-						<paramtype>boost::shared_ptr&lt; <classname>scheduler_base</classname> &gt;</paramtype>
-						<default>boost::shared_ptr&lt; scheduler_base &gt;()</default>
-					</parameter>
-					<description><para>Overloaded constructor.</para></description>
-				</constructor>
-				<constructor>
 					<parameter name="other">
 						<paramtype>const active_function &amp;</paramtype>
 					</parameter>
 					<description>
 						<para>
 							The copy constructor creates a shallow copy of <code>other</code>.
-							Both copies share the same scheduler, passive function, and guard.
+							Both copies share the same scheduler and passive function.
 						</para>
 					</description>
 				</constructor>
@@ -115,7 +93,7 @@
 					</parameter>
 					<description>
 						<para>Assignment turns <code>*this</code> into a shallow copy of <code>rhs</code>.  Both copies share the
-							same scheduler, passive function, and guard.
+							same scheduler and passive function.
 						</para>
 					</description>
 				</copy-assignment>
