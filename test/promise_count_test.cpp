@@ -27,6 +27,20 @@ void future_count_test()
 	BOOST_ASSERT(mypromise.has_future() == false);
 }
 
+void promise_void_future_count_test()
+{
+	poet::promise<double> mypromise;
+	poet::promise<void> void_promise = mypromise;
+	BOOST_ASSERT(void_promise.has_future() == false);
+
+	boost::optional<poet::future<double> > fut0(mypromise);
+	BOOST_ASSERT(void_promise.has_future());
+
+	fut0.reset();
+
+	BOOST_ASSERT(void_promise.has_future() == false);
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -55,6 +69,7 @@ int main()
 	}
 
 	future_count_test();
+	promise_void_future_count_test();
 
 	std::cerr << "OK\n";
 	return 0;

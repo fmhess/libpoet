@@ -477,19 +477,29 @@ namespace poet
 			mutable bool _conversionEventPosted;
 		};
 
-		template <typename T> class promise_body
+		class promise_body_untyped_base
+		{
+		public:
+			virtual ~promise_body_untyped_base()
+			{}
+			virtual void renege(const exception_ptr &exp) = 0;
+			virtual bool has_future() const = 0;
+			virtual boost::shared_ptr<future_body_untyped_base> shared_future_body() const = 0;
+		};
+
+		template <typename T> class promise_body: public promise_body_untyped_base
 		{
 		public:
 			promise_body(): _future_body(future_body<T>::create())
 			{}
 			~promise_body()
 			{
-				renege(uncertain_future());
+				renege(copy_exception(uncertain_future()));
 			}
 
 			void fulfill(const T &value)
 			{
-				downcast_future_body()->setValue(value);
+				_future_body->setValue(value);
 			}
 			void fulfill(const future<T> &future_value)
 			{
@@ -510,21 +520,20 @@ namespace poet
 				future_fulfill_guts(get_future_body(future_value), update_slot);
 			}
 
-			template <typename E>
-			void renege(const E &exception)
-			{
-				_future_body->cancel(poet::copy_exception(exception));
-			}
-			void renege(const exception_ptr &exp)
+			virtual void renege(const exception_ptr &exp)
 			{
 				_future_body->cancel(exp);
 			}
-			bool has_future() const
+			virtual bool has_future() const
 			{
 				return !_future_body.unique();
 			}
+			virtual boost::shared_ptr<future_body_untyped_base> shared_future_body() const
+			{
+				return _future_body;
+			}
 
-			boost::shared_ptr<future_body_base<T> > _future_body;
+			boost::shared_ptr<future_body<T> > _future_body;
 		private:
 			template<typename U>
 				void future_fulfill_guts(const boost::shared_ptr<U> &fulfiller_body, const future_body_untyped_base::update_slot_type &update_slot)
@@ -546,22 +555,12 @@ namespace poet
 				_future_body->waiter_callbacks().observe(fulfiller_body->waiter_callbacks());
 
 				// stick shared_ptr to future_value in dependent _future_body
-				downcast_future_body()->add_dependency(fulfiller_body);
+				_future_body->add_dependency(fulfiller_body);
 			}
 			inline static void handle_future_fulfillment(future_body_base<T> *fulfillee,
 				future_body_base<T> *fulfiller);
 			inline static void handle_future_void_fulfillment(future_body_base<nonvoid<void>::type> *fulfillee,
 				future_body_untyped_base *fulfiller);
-			boost::shared_ptr<future_body<T> > downcast_future_body() const
-			{
-				using boost::dynamic_pointer_cast;
-				boost::shared_ptr<future_body<T> > downcast = dynamic_pointer_cast<future_body<T> >(_future_body);
-				if(downcast == false)
-				{
-					throw std::invalid_argument("Cannot fulfill a promise<T> for T non-void through a promise<void>");
-				}
-				return downcast;
-			}
 		};
 
 		template<typename T>
@@ -573,13 +572,12 @@ namespace poet
 	template <typename T>
 	class promise
 	{
-	public:
 		template <typename U>
 		friend class future;
 		template <typename U>
 		friend class promise;
 		friend class promise<void>;
-
+	public:
 		typedef T value_type;
 		promise(): _pimpl(new detail::promise_body<T>)
 		{}
@@ -595,7 +593,7 @@ namespace poet
 		template <typename E>
 		void renege(const E &exception)
 		{
-			_pimpl->renege(exception);
+			_pimpl->renege(poet::copy_exception(exception));
 		}
 		void renege(const poet::exception_ptr &exp)
 		{
@@ -621,41 +619,67 @@ namespace poet
 
 	// void specialization
 	template<>
-	class promise<void>: private promise<detail::nonvoid<void>::type>
+	class promise<void>
 	{
-	private:
-		typedef promise<detail::nonvoid<void>::type> base_type;
-	public:
 		template <typename U>
 		friend class future;
-
+		template <typename U>
+		friend class promise;
+	public:
 		typedef void value_type;
 
-		promise()
-		{}
-		promise(const promise<void> &other): base_type(other)
+		promise(): _pimpl(new detail::promise_body<detail::nonvoid<void>::type>)
 		{}
 		// allow conversion from a promise with any template type to a promise<void>
 		template <typename OtherType>
-		promise(const promise<OtherType> &other)
-		{
-			boost::function<null_type (const OtherType&)> conversion_function =
-				boost::bind(&detail::null_conversion_function<OtherType>, _1);
-			_pimpl->_future_body = detail::future_body_proxy<detail::nonvoid<void>::type, OtherType>::create(
-				other._pimpl->_future_body, conversion_function);
-		}
+		promise(const promise<OtherType> &other): _pimpl(other._pimpl)
+		{}
 		virtual ~promise() {}
 		void fulfill()
 		{
-			base_type::fulfill(null_type());
+			downcast_pimpl()->fulfill(detail::nonvoid<void>::type());
 		}
 		void fulfill(const future<void> &future_value)
 		{
-			_pimpl->future_void_fulfill(future_value);
+			downcast_pimpl()->future_void_fulfill(future_value);
 		}
-		using base_type::renege;
-		using base_type::reset;
-		using base_type::swap;
+		template <typename E>
+		void renege(const E &exception)
+		{
+			_pimpl->renege(poet::copy_exception(exception));
+		}
+		void renege(const poet::exception_ptr &exp)
+		{
+			_pimpl->renege(exp);
+		}
+		bool has_future() const
+		{
+			return _pimpl->has_future();
+		}
+		void reset()
+		{
+			promise temp;
+			swap(temp);
+		}
+		void swap(promise &other)
+		{
+			using std::swap;
+			swap(_pimpl, other._pimpl);
+		}
+	private:
+		boost::shared_ptr<detail::promise_body<detail::nonvoid<void>::type> > downcast_pimpl() const
+		{
+			using boost::dynamic_pointer_cast;
+			boost::shared_ptr<detail::promise_body<detail::nonvoid<void>::type> > downcast =
+				dynamic_pointer_cast<detail::promise_body<detail::nonvoid<void>::type> >(_pimpl);
+			if(downcast == false)
+			{
+				throw std::invalid_argument("Cannot fulfill a promise<T> for non-void T through a promise<void>");
+			}
+			return downcast;
+		}
+
+		boost::shared_ptr<detail::promise_body_untyped_base> _pimpl;
 	};
 
 	template<typename T>
@@ -770,7 +794,7 @@ namespace poet
 
 		typedef void value_type;
 
-		future(const promise<void> &promise): _future_body(promise._pimpl->_future_body)
+		future(const promise<void> &promise): _future_body(promise._pimpl->shared_future_body())
 		{}
 		template <typename OtherType>
 		future(const promise<OtherType> &promise)
