@@ -36,6 +36,11 @@
 					The <code>future_select</code> function constructs a future which can be used to
 					wait on a group of futures until any one is ready (or has an exception).
 				</para>
+				<para>
+					By default, overloads which accept 2 to 10 future arguments are provided.
+					The user may obtain more or fewer overloads by defining the macro
+					<code>POET_FUTURE_SELECT_MAX_ARGS</code> prior to including poet/future_select.hpp.
+				</para>
 				<itemizedlist>
 					<title>See also</title>
 					<listitem>

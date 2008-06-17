@@ -36,8 +36,13 @@
 			</signature>
 			<description>
 				<para>
-					The <code>future_barrier</code> function constructs a future which can be used to
+					The <code>future_barrier</code> functions construct a future which can be used to
 					wait on a group of futures until they are all ready (or one has an exception).
+				</para>
+				<para>
+					By default, overloads which accept 2 to 10 future arguments are provided.
+					The user may obtain more or fewer overloads by defining the macro
+					<code>POET_FUTURE_BARRIER_MAX_ARGS</code> prior to including poet/future_barrier.hpp.
 				</para>
 				<itemizedlist>
 					<title>See also</title>
@@ -185,6 +190,11 @@
 					future.  The return value of the user's <code>exception_handler</code> functor
 					should be of type <classname>exception_ptr</classname> and hold the
 					exception which the user desires to be transported to the returned future.
+				</para>
+				<para>
+					By default, overloads which accept 1 to 10 future arguments are provided.
+					The user may obtain more or fewer overloads by defining the macro
+					<code>POET_FUTURE_BARRIER_MAX_ARGS</code> prior to including poet/future_barrier.hpp.
 				</para>
 				<itemizedlist>
 					<title>See also</title>
