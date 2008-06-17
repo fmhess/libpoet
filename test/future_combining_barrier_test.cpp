@@ -58,10 +58,12 @@ struct mycombiner
 void barrier_exception_test()
 {
 	{
-		poet::promise<int> p;
-		poet::future<int> f = p;
-		poet::future<void> result = poet::future_barrier(f);
-		p.renege(std::runtime_error("test error"));
+		poet::promise<int> p1;
+		poet::future<int> f1 = p1;
+		poet::promise<int> p2;
+		poet::future<int> f2 = p2;
+		poet::future<void> result = poet::future_barrier(f1, f2);
+		p1.renege(std::runtime_error("test error"));
 		assert(result.has_exception());
 		assert(result.ready() == false);
 		try

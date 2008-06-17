@@ -4,15 +4,6 @@
 			<signature>
 				<template>
 					<template-type-parameter name="T1"/>
-				</template>
-				<type><classname>future</classname>&lt;void&gt;</type>
-				<parameter name="f1">
-					<paramtype>const <classname>future</classname>&lt;T1&gt; &amp;</paramtype>
-				</parameter>
-			</signature>
-			<signature>
-				<template>
-					<template-type-parameter name="T1"/>
 					<template-type-parameter name="T2"/>
 				</template>
 				<type><classname>future</classname>&lt;void&gt;</type>

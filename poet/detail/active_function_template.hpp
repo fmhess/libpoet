@@ -77,6 +77,8 @@ namespace poet
 #if POET_ACTIVE_FUNCTION_NUM_ARGS == 0
 				future<int> ready_future = 1;
 				return ready_future;
+#elif POET_ACTIVE_FUNCTION_NUM_ARGS == 1
+				return _arg1;
 #else
 				return future_barrier(POET_REPEATED_ARG_NAMES(POET_ACTIVE_FUNCTION_NUM_ARGS, _arg));
 #endif

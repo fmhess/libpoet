@@ -13,10 +13,7 @@
 
 #include <poet/detail/preprocessor_macros.hpp>
 
-#define POET_FUTURE_WAITS_NUM_ARGS BOOST_PP_ITERATION()
-// const poet::future<Tn> &
-#define POET_FUTURE_WAITS_ARG_TYPE(z, n, data) \
-	const poet::future<BOOST_PP_CAT(T, BOOST_PP_INC(n))> &
+#define POET_FUTURE_SELECT_NUM_ARGS BOOST_PP_ITERATION()
 // const poet::future<T> &fn
 #define POET_FUTURE_SELECT_ARG_DECL(z, n, data) \
 	const poet::future<T> & POET_ARG_NAME(~, n, f)
@@ -27,19 +24,18 @@
 namespace poet
 {
 	template<typename T>
-	future<T> future_select(POET_FUTURE_SELECT_REPEATED_ARG_DECLARATIONS(POET_FUTURE_WAITS_NUM_ARGS))
+	future<T> future_select(POET_FUTURE_SELECT_REPEATED_ARG_DECLARATIONS(POET_FUTURE_SELECT_NUM_ARGS))
 	{
 		std::vector<future<T> > inputs;
 // inputs.push_back(fn);
 #define POET_MISC_STATEMENT(z, n, data) \
 	inputs.push_back(POET_ARG_NAME(~, n, f));
-		BOOST_PP_REPEAT(POET_FUTURE_WAITS_NUM_ARGS, POET_MISC_STATEMENT, ~)
+		BOOST_PP_REPEAT(POET_FUTURE_SELECT_NUM_ARGS, POET_MISC_STATEMENT, ~)
 #undef POET_MISC_STATEMENT
 		return future_select_range(inputs.begin(), inputs.end());
 	}
 }
 
-#undef POET_FUTURE_WAITS_NUM_ARGS
-#undef POET_FUTURE_WAITS_ARG_TYPE
+#undef POET_FUTURE_SELECT_NUM_ARGS
 #undef POET_FUTURE_SELECT_ARG_DECL
 #undef POET_FUTURE_SELECT_REPEATED_ARG_DECLARATIONS

@@ -9,15 +9,6 @@
 				<parameter name="f1">
 					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
-			</signature>
-			<signature>
-				<template>
-					<template-type-parameter name="T"/>
-				</template>
-				<type><classname>future</classname>&lt;T&gt;</type>
-				<parameter name="f1">
-					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
-				</parameter>
 				<parameter name="f2">
 					<paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype>
 				</parameter>
