@@ -424,6 +424,8 @@ namespace poet
 		class future_selector
 	{
 	public:
+		typedef future<T> value_type;
+
 		future_selector(): _selector_body(detail::future_selector_body<T>::create())
 		{}
 		future_selector(const future_selector &other):
@@ -454,10 +456,10 @@ namespace poet
 		{
 			_selector_body->push(f);
 		}
-		template<typename Converter, typename U>
-		void push(const Converter &converter, const future<U> &f)
+		template<typename Converter, typename ExceptionHandler, typename U>
+		void push(const Converter &converter, const ExceptionHandler &exception_handler, const future<U> &f)
 		{
-			future<T> converted_f = future_combining_barrier(converter, f);
+			future<T> converted_f = future_combining_barrier<T>(converter, exception_handler, f);
 			push(converted_f);
 		}
 		ssize_t size() const

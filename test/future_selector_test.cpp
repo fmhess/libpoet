@@ -83,6 +83,23 @@ void future_selector_copy_test()
 	assert(selector.selected().ready() == false);
 }
 
+std::string converter(int)
+{
+	return "hello, world!";
+}
+
+void future_selector_other_type_push_test()
+{
+	poet::promise<int> promise;
+	poet::future_selector<std::string> selector;
+	selector.push(&converter, poet::detail::identity(), poet::future<int>(promise));
+	poet::future<std::string> future = selector.selected();
+	assert(future.ready() == false);
+	promise.fulfill(0);
+	assert(future.ready());
+	assert(future.get() == "hello, world!");
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -136,6 +153,7 @@ int main()
 	preready_push_test();
 	future_selector_scope_test();
 	future_selector_copy_test();
+	future_selector_other_type_push_test();
 
 	std::cerr << "OK" << std::endl;
 	return 0;

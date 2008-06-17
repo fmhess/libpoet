@@ -20,6 +20,11 @@ namespace poet
 			{
 				return t;
 			}
+			template<typename T>
+			T& operator()(T &t) const
+			{
+				return t;
+			}
 		};
 	}
 }
