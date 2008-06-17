@@ -14,13 +14,10 @@
 
 #include <boost/mpl/if.hpp>
 #include <boost/type_traits.hpp>
+#include <poet/null_type.hpp>
 
 namespace poet
 {
-	struct null_type
-	{
-	};
-
 	namespace detail
 	{
 
