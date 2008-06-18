@@ -44,6 +44,8 @@ namespace poet
 		typedef typename detail::active_functionN<boost::function_traits<Signature>::arity, Signature>::type base_type;
 
 	public:
+		active_function()
+		{}
 		active_function(const typename base_type::passive_slot_type &passive_function,
 			boost::shared_ptr<scheduler_base> scheduler = boost::shared_ptr<scheduler_base>()):
 			base_type(passive_function, scheduler)

@@ -89,6 +89,10 @@
 						</para>
 					</description>
 				</constructor>
+				<constructor>
+					<description><para>The default constructor creates an empty <code>active_function</code> which cannot be
+						used until it is assigned a useable <code>active_function</code>.</para></description>
+				</constructor>
 				<destructor specifiers="virtual">
 					<description><para>Virtual destructor. </para></description>
 				</destructor>

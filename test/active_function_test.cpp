@@ -10,8 +10,9 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-#include <poet/active_function.hpp>
+#include <functional>
 #include <iostream>
+#include <poet/active_function.hpp>
 #include <vector>
 
 int increment(int value)
@@ -83,6 +84,14 @@ void in_order_activation_queue_test()
 	assert(results.at(1).get() == 2);
 }
 
+void default_construction_test()
+{
+	poet::active_function<int (int, int)> default_constructed;
+	poet::active_function<int (int, int)> adder((std::plus<int>()));
+	default_constructed = adder;
+	assert(default_constructed(1, 2).get() == 3);
+}
+
 int main()
 {
 	std::cerr << __FILE__ << "... ";
@@ -106,6 +115,7 @@ int main()
 	}
 	slot_tracking_test();
 	in_order_activation_queue_test();
+	default_construction_test();
 
 	std::cerr << "OK\n";
 	return 0;

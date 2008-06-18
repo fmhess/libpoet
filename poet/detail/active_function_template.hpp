@@ -114,6 +114,8 @@ namespace poet
 			typedef future<passive_result_type> result_type;
 			typedef boost::slot<Signature> passive_slot_type;
 
+			POET_ACTIVE_FUNCTION_CLASS_NAME()
+			{}
 			POET_ACTIVE_FUNCTION_CLASS_NAME(const passive_slot_type &passive_function,
 				boost::shared_ptr<scheduler_base> scheduler_in):
 				_passive_function(new passive_slot_type(passive_function)),
