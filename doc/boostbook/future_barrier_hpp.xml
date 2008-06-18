@@ -1,6 +1,7 @@
 <header name="poet/future_barrier.hpp">
 	<namespace name="poet">
 		<overloaded-function name="future_barrier">
+			<purpose>construct a future which becomes ready when a group of futures are all ready.</purpose>
 			<signature>
 				<template>
 					<template-type-parameter name="T1"/>
@@ -91,6 +92,7 @@
 			</description>
 		</function>
 		<overloaded-function name="future_combining_barrier">
+			<purpose>construct a future based on the values from a group of futures.</purpose>
 			<signature>
 				<template>
 					<template-type-parameter name="R"/>
@@ -249,5 +251,13 @@
 				</para>
 			</description>
 		</function>
+		<struct name="null_type">
+			<description>
+				<para><code>poet::null_type</code> is a default-constructible, copy-constructible, and assignable type
+					which is sometimes passed as an argument to combiners given to the <functionname>future_combining_barrier</functionname>
+					function.  It is used as a placeholder for the non-existant value associated with a future&lt;void&gt;.
+				</para>
+			</description>
+		</struct>
 	</namespace>
 </header>
