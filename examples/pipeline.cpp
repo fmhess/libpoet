@@ -11,19 +11,10 @@
 
 #include <boost/array.hpp>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <poet/active_function.hpp>
 #include <vector>
-
-double add(double a, double b)
-{
-	return a + b;
-}
-
-double multiply(double a, double b)
-{
-	return a * b;
-}
 
 double square_root(double a)
 {
@@ -45,9 +36,9 @@ int main()
 	}
 
 	// active_functions
-	poet::active_function<double (double, double)> active_adder(&add);
-	poet::active_function<double (double, double)> active_multiplier0(&multiply);
-	poet::active_function<double (double, double)> active_multiplier1(&multiply);
+	poet::active_function<double (double, double)> active_adder((std::plus<double>()));
+	poet::active_function<double (double, double)> active_multiplier0((std::multiplies<double>()));
+	poet::active_function<double (double, double)> active_multiplier1((std::multiplies<double>()));
 	poet::active_function<double (double)> active_sqrt(&square_root);
 
 	std::vector<poet::future<double> > lengths;
