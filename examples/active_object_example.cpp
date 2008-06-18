@@ -1,117 +1,77 @@
-// An example showing how a full active object class can be built
+// An toy example showing how a full active object class can be defined
 // from a servant class, a scheduler, and active_functions.
-// The "chunkifier" is a queue that takes single elements as inputs
-// and outputs chunks of N elements accumulated in a std::vector.
-// The elements in the output chunks are added to a chunk as
-// they became ready, not necessarily in the order their futures
-// were added to the chunkifier.
+// The active_functions all share the same scheduler, so the
+// methods of the servant class are only called by a single
+// scheduler thread.
 
-// Copyright (C) Frank Mori Hess 2007
+// Copyright (C) Frank Mori Hess 2007-2008
 //  Distributed under the Boost Software License, Version 1.0. (See
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <poet/active_function.hpp>
-#include <deque>
-#include <vector>
+#include <iostream>
 
 // servant class
 template <typename T>
-class passive_chunkifier
+class passive_value
 {
 public:
-	passive_chunkifier(unsigned chunk_size): _chunk_size(chunk_size)
+	passive_value(const T& initial_value): _value(initial_value)
 	{}
-	void add_element(const T& value)
+	const T& add(const T& x)
 	{
-		_deque.push_back(value);
+		_value += x;
+		return _value;
 	}
-	std::vector<T> get_chunk()
+	const T& multiply(const T& x)
 	{
-		if(_deque.size() < _chunk_size)
-		{
-			throw std::invalid_argument("Not enough elements to create chunk.");
-		}
-		std::vector<T> chunk;
-		unsigned i;
-		for(i = 0; i < _chunk_size; ++i)
-		{
-			chunk.push_back(_deque.front());
-			_deque.pop_front();
-		}
-		return chunk;
+		_value *= x;
+		return _value;
 	}
-	/* guard function to prevent scheduler from running get_chunk unless
-	there are enough elements available to make a chunk */
-	bool get_chunk_guard() const
+	const T& get() const
 	{
-		return _deque.size() >= _chunk_size;
+		return _value;
 	}
 private:
-
-	std::deque<T> _deque;
-	const unsigned _chunk_size;
+	T _value;
 };
 
-// chunkifying active object class
+// active object class
 template <typename T>
-class active_chunkifier
+class active_value
 {
 private:
-	boost::shared_ptr<passive_chunkifier<T> > _servant;
+	boost::shared_ptr<passive_value<T> > _servant;
 	boost::shared_ptr<poet::scheduler> _scheduler;
 public:
-	typedef typename poet::active_function<void (T)> add_element_type;
-	typedef typename poet::active_function<std::vector<T> ()> get_chunk_type;
+	typedef typename poet::active_function<T (T)> add_type;
+	typedef typename poet::active_function<T (T)> multiply_type;
+	typedef typename poet::active_function<T ()> get_type;
 
-	active_chunkifier(unsigned chunk_size):
-		_servant(new passive_chunkifier<T>(chunk_size)),
+	active_value(const T& initial_value):
+		_servant(new passive_value<T>(initial_value)),
 		_scheduler(new poet::scheduler),
-		add_element(typename add_element_type::passive_slot_type(&passive_chunkifier<T>::add_element, _servant, _1),
+		add(typename add_type::passive_slot_type(&passive_value<T>::add, _servant, _1),
 			_scheduler),
-		get_chunk(typename get_chunk_type::passive_slot_type(&passive_chunkifier<T>::get_chunk, _servant),
-			boost::bind(&passive_chunkifier<T>::get_chunk_guard, _servant),
+		multiply(typename multiply_type::passive_slot_type(&passive_value<T>::multiply, _servant, _1),
+			_scheduler),
+		get(typename get_type::passive_slot_type(&passive_value<T>::get, _servant),
 			_scheduler)
 	{}
-	add_element_type add_element;
-	get_chunk_type get_chunk;
+	add_type add;
+	multiply_type multiply;
+	get_type get;
 };
 
 int main()
 {
-	static const unsigned chunk_size = 10;
-	static const unsigned num_chunks = 2;
-	unsigned i;
+	active_value<int> my_active_object(1);
+	std::cout << "initial value is " << my_active_object.get().get() << std::endl;
 
-	active_chunkifier<int> chunky(chunk_size);
-
-	// get future chunks
-	std::vector<poet::future<std::vector<int> > > future_chunks;
-	for(i = 0; i < num_chunks; ++i)
-	{
-		future_chunks.push_back(chunky.get_chunk());
-	}
-
-	// push elements into chunkifier
-	for(i = 0; i < num_chunks * chunk_size; ++i)
-	{
-		chunky.add_element(i);
-	}
-
-	// wait for future chunks to become ready and dump them
-	for(i = 0; i < future_chunks.size(); ++i)
-	{
-		std::cout << "chunk number " << i << "\n";
-		std::vector<int> value = future_chunks.at(i);
-		unsigned j;
-		for(j = 0; j < value.size(); ++j)
-		{
-			std::cout << "\t" << j << " element = " << value.at(j) << "\n";
-		}
-		std::cout << std::endl;
-	}
+	my_active_object.add(10);
+	std::cout << "adding 10 and multiplying by 2 gives " << my_active_object.multiply(2).get() << std::endl;
 
 	return 0;
 }
