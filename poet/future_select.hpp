@@ -16,6 +16,7 @@
 #define _POET_FUTURE_SELECT_HPP
 
 #include <boost/bind.hpp>
+#include <boost/config.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -267,6 +268,9 @@ namespace poet
 			public virtual future_body_untyped_base
 		{
 			typedef boost::shared_ptr<future_body_untyped_base > future_body_dependency_type;
+			// needed by msvc9
+			template<typename U>
+			friend class future_select_body;
 		public:
 			typedef future_body_untyped_base::update_signal_type update_signal_type;
 
@@ -280,24 +284,24 @@ namespace poet
 
 			virtual bool ready() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(mutex());
 				return nolock_ready();
 			}
 			virtual void join() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				_condition.wait(lock, boost::bind(&future_select_body::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(mutex());
+				condition().wait(lock, boost::bind(&future_select_body::check_if_complete, this, &lock));
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				return _condition.timed_wait(lock, absolute_time, boost::bind(&future_select_body::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(mutex());
+				return condition().timed_wait(lock, absolute_time, boost::bind(&future_select_body::check_if_complete, this, &lock));
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{}
 			virtual exception_ptr get_exception_ptr() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(mutex());
 				if(!_first_complete_dependency) return exception_ptr();
 				return _first_complete_dependency->get_exception_ptr();
 			}
@@ -306,7 +310,7 @@ namespace poet
 				return _waiter_callbacks;
 			}
 		protected:
-			future_select_body(): _waiter_callbacks(this->_mutex, this->_condition)
+			future_select_body(): _waiter_callbacks(future_body_untyped_base::mutex(), future_body_untyped_base::condition())
 			{}
 			template<typename InputIterator>
 			static void init(const boost::shared_ptr<future_select_body> &new_object, InputIterator future_begin, InputIterator future_end)
@@ -335,6 +339,14 @@ namespace poet
 					new_object->_dependencies.push_back(get_future_body(*it));
 				}
 			}
+			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
+			{
+				if(_first_complete_dependency) return true;
+				lock->unlock();
+				_waiter_callbacks.poll();
+				lock->lock();
+				return _first_complete_dependency;
+			}
 
 			mutable future_body_dependency_type _first_complete_dependency;
 		private:
@@ -347,7 +359,7 @@ namespace poet
 				}
 				bool emit_signal = false;
 				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(mutex());
 					if(!_first_complete_dependency)
 					{
 						if(dependency->ready() || dependency->get_exception_ptr())
@@ -355,7 +367,7 @@ namespace poet
 							_first_complete_dependency = dependency;
 							_dependencies.clear();
 							emit_signal = true;
-							_condition.notify_all();
+							condition().notify_all();
 						}
 					}
 				}
@@ -365,14 +377,6 @@ namespace poet
 					_waiter_callbacks.close_posting();
 					throw boost::expired_slot();
 				}
-			}
-			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
-			{
-				if(_first_complete_dependency) return true;
-				lock->unlock();
-				_waiter_callbacks.poll();
-				lock->lock();
-				return _first_complete_dependency;
 			}
 			bool nolock_ready() const
 			{
@@ -404,8 +408,8 @@ namespace poet
 			{
 				boost::shared_ptr<future_body_base<T> > typed_dependency;
 				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
-					_condition.wait(lock, boost::bind(&future_select_body<void>::check_if_complete, this, &lock));
+					boost::unique_lock<boost::mutex> lock(mutex());
+					condition().wait(lock, boost::bind(&future_select_body<void>::check_if_complete, this, &lock));
 					typed_dependency =
 						boost::dynamic_pointer_cast<future_body_base<T> >(_first_complete_dependency);
 				}
@@ -418,6 +422,9 @@ namespace poet
 		private:
 			future_select_body()
 			{}
+#ifdef BOOST_MSVC
+#pragma warning( suppress : 4250 ) // suppress msvc 9 warning
+#endif
 		};
 	} // namespace detail
 

@@ -17,6 +17,7 @@
 #ifndef _POET_FUTURE_BARRIER_HPP
 #define _POET_FUTURE_BARRIER_HPP
 
+#include <boost/config.hpp>
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
@@ -84,24 +85,24 @@ namespace poet
 		public:
 			virtual bool ready() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(mutex());
 				return _ready;
 			}
 			virtual void join() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				_condition.wait(lock, boost::bind(&future_barrier_body_base::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(mutex());
+				condition().wait(lock, boost::bind(&future_barrier_body_base::check_if_complete, this, &lock));
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
-				return _condition.timed_wait(lock, absolute_time, boost::bind(&future_barrier_body_base::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(mutex());
+				return condition().timed_wait(lock, absolute_time, boost::bind(&future_barrier_body_base::check_if_complete, this, &lock));
 			}
 			virtual void cancel(const poet::exception_ptr&)
 			{}
 			virtual exception_ptr get_exception_ptr() const
 			{
-				boost::unique_lock<boost::mutex> lock(_mutex);
+				boost::unique_lock<boost::mutex> lock(mutex());
 				return _exception;
 			}
 			virtual waiter_event_queue& waiter_callbacks() const
@@ -113,7 +114,7 @@ namespace poet
 
 			future_barrier_body_base(const boost::function<void ()> &bound_combiner,
 				const exception_handler_type &exception_handler):
-				_waiter_callbacks(this->_mutex, this->_condition),
+				_waiter_callbacks(future_body_untyped_base::mutex(), future_body_untyped_base::condition()),
 				_ready_count(0), _ready(false), _bound_combiner(bound_combiner),
 				_exception_handler(exception_handler), _combiner_event_posted(false)
 			{}
@@ -177,10 +178,10 @@ namespace poet
 					}
 				}
 				{
-					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					boost::unique_lock<boost::mutex> lock(this->mutex());
 					_exception = ep;
 					_ready = !_exception;
-					_condition.notify_all();
+					condition().notify_all();
 				}
 				this->_updateSignal();
 			}
@@ -191,7 +192,7 @@ namespace poet
 				bool all_ready = false;
 				bool received_first_exception = false;
 				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(mutex());
 
 					if(_combiner_event_posted) return;
 
@@ -336,6 +337,9 @@ namespace poet
 			future_barrier_body(const Combiner &combiner,
 				const barrier_base_class::exception_handler_type &exception_handler,
 				InputFutureIterator future_begin, InputFutureIterator future_end):
+#ifdef BOOST_MSVC
+#pragma warning( suppress : 4355 ) // suppress msvc 9 warning
+#endif
 				barrier_base_class(boost::bind(&future_barrier_body::invoke_combiner, this), exception_handler),
 				_input_futures(future_begin, future_end),
 				_combiner_invoker(combiner)
@@ -346,7 +350,7 @@ namespace poet
 				boost::optional<typename nonvoid<R>::type> result;
 				_combiner_invoker(result, _input_futures.begin(), _input_futures.end());
 				{
-					boost::unique_lock<boost::mutex> lock(_mutex);
+					boost::unique_lock<boost::mutex> lock(mutex());
 					_combiner_result = result;
 				}
 			}
@@ -354,6 +358,9 @@ namespace poet
 			std::vector<future<T> > _input_futures;
 			combiner_invoker<R, Combiner, T> _combiner_invoker;
 			boost::optional<typename nonvoid<R>::type> _combiner_result;
+#ifdef BOOST_MSVC
+#pragma warning( suppress : 4250 ) // suppress msvc 9 warning
+#endif
 		};
 
 		class null_void_combiner

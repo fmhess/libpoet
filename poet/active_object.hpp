@@ -80,6 +80,7 @@ namespace poet
 
 	class out_of_order_activation_queue: public activation_queue_base
 	{
+		typedef future_selector<boost::shared_ptr<method_request_base> > selector_type;
 	public:
 		out_of_order_activation_queue()
 		{}
@@ -89,7 +90,7 @@ namespace poet
 		inline virtual boost::shared_ptr<method_request_base> get_request();
 		virtual size_type size() const
 		{
-			const ssize_t size = _selector.size();
+			const selector_type::difference_type size = _selector.size();
 			BOOST_ASSERT(size >= 0);
 			return size;
 		}
@@ -101,7 +102,7 @@ namespace poet
 		inline virtual void wake();
 	private:
 		mutable boost::mutex _mutex;
-		future_selector<boost::shared_ptr<method_request_base> >_selector;
+		selector_type _selector;
 		promise<boost::shared_ptr<method_request_base> >_wake_promise;
 	};
 

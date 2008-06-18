@@ -61,7 +61,7 @@ int main()
 		myfuture.get();
 		BOOST_ASSERT(false);
 	}
-	catch(const poet::uncertain_future &err)
+	catch(const poet::uncertain_future &)
 	{}
 	catch(...)
 	{

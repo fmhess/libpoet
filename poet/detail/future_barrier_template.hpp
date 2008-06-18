@@ -137,6 +137,9 @@ input_futures.push_back(input_futureN);
 			FUTURE_HETRO_COMBINING_BARRIER_BODY_N(const Combiner &combiner,
 				const barrier_base_class::exception_handler_type &exception_handler,
 				POET_FUTURE_BARRIER_REPEATED_ARG_DECLARATIONS(POET_FUTURE_BARRIER_NUM_ARGS, input_future)):
+#ifdef BOOST_MSVC
+#pragma warning( suppress : 4355 ) // suppress msvc 9 warning
+#endif
 				barrier_base_class(boost::bind(&FUTURE_HETRO_COMBINING_BARRIER_BODY_N::invoke_combiner, this), exception_handler),
 				POET_REPEATED_ARG_CONSTRUCTOR(POET_FUTURE_BARRIER_NUM_ARGS, input_future),
 				_combiner_invoker(combiner)
@@ -160,6 +163,9 @@ future<TN> _input_futureN;
 #undef POET_MISC_STATEMENT
 			POET_COMBINER_INVOKER_N<R, Combiner> _combiner_invoker;
 			boost::optional<typename nonvoid<R>::type> _combiner_result;
+#ifdef BOOST_MSVC
+#pragma warning( suppress : 4250 ) // suppress msvc 9 warning
+#endif
 		};
 	}
 

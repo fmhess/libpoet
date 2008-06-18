@@ -23,9 +23,9 @@ namespace poet
 		{
 		public:
 			typedef boost::function<void ()> event_type;
-			size_t poll_one()
+			std::size_t poll_one()
 			{
-				size_t count = 0;
+				std::size_t count = 0;
 				event_type event;
 				{
 					boost::unique_lock<boost::mutex> lock(_mutex);
@@ -42,9 +42,9 @@ namespace poet
 				event();
 				return count;
 			}
-			size_t poll()
+			std::size_t poll()
 			{
-				size_t count;
+				std::size_t count = 0;
 				while(poll_one() == 1) ++count;
 				return count;
 			}

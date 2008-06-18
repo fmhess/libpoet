@@ -20,16 +20,19 @@ struct identity
 	}
 };
 
-template<typename T1, typename T2>
-boost::tuple<T1, T2> create_tuple(const T1 &a1, const T2 &a2)
+struct tuple_creator
 {
-	return boost::tuple<T1, T2>(a1, a2);
-}
+	template<typename T1, typename T2>
+	boost::tuple<T1, T2> operator()(const T1 &a1, const T2 &a2)
+	{
+		return boost::tuple<T1, T2>(a1, a2);
+	}
+};
 
 template<typename T1, typename T2>
 poet::future<boost::tuple<T1, T2> > operator&&(const poet::future<T1> &f1, const poet::future<T2> &f2)
 {
-	return poet::future_combining_barrier<boost::tuple<T1, T2> >(&create_tuple<T1, T2>, identity(), f1, f2);
+	return poet::future_combining_barrier<boost::tuple<T1, T2> >(tuple_creator(), identity(), f1, f2);
 }
 
 template<typename T1, typename T2>

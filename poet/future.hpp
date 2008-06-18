@@ -180,11 +180,20 @@ namespace poet
 			{
 				return _updateSignal.connect(slot);
 			}
+			boost::mutex & mutex() const
+			{
+				return _mutex;
+			}
+			boost::condition & condition() const
+			{
+				return _condition;
+			}
 		protected:
 			update_signal_type _updateSignal;
+			mutable poet::exception_ptr _exception;
+		private:
 			mutable boost::mutex _mutex;
 			mutable boost::condition _condition;
-			mutable poet::exception_ptr _exception;
 		};
 
 		template <typename T> class future_body_base: public virtual future_body_untyped_base
@@ -215,11 +224,11 @@ namespace poet
 			{
 				bool emit_signal = false;
 				{
-					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					boost::unique_lock<boost::mutex> lock(this->mutex());
 					if(this->_exception == false && !_value)
 					{
 						_value = value;
-						this->_condition.notify_all();
+						this->condition().notify_all();
 						emit_signal = true;
 						clear_dependencies();
 					}
@@ -231,13 +240,13 @@ namespace poet
 			}
 			virtual bool ready() const
 			{
-					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					boost::unique_lock<boost::mutex> lock(this->mutex());
 				return _value;
 			}
 			virtual const T& getValue() const
 			{
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
-				this->_condition.wait(lock, boost::bind(&future_body<T>::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(this->mutex());
+				this->condition().wait(lock, boost::bind(&future_body<T>::check_if_complete, this, &lock));
 				if(this->_exception)
 				{
 					rethrow_exception(this->_exception);
@@ -247,8 +256,8 @@ namespace poet
 			}
 			virtual void join() const
 			{
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
-				this->_condition.wait(lock, boost::bind(&future_body<T>::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(this->mutex());
+				this->condition().wait(lock, boost::bind(&future_body<T>::check_if_complete, this, &lock));
 				if(this->_exception)
 				{
 					rethrow_exception(this->_exception);
@@ -257,18 +266,18 @@ namespace poet
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
-				return this->_condition.timed_wait(lock, absolute_time, boost::bind(&future_body<T>::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(this->mutex());
+				return this->condition().timed_wait(lock, absolute_time, boost::bind(&future_body<T>::check_if_complete, this, &lock));
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{
 				bool emitSignal = false;
 				{
-					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					boost::unique_lock<boost::mutex> lock(this->mutex());
 					if(this->_exception == false && !_value)
 					{
 						emitSignal = true;
-						this->_condition.notify_all();
+						this->condition().notify_all();
 						this->_exception = exp;
 						clear_dependencies();
 					}
@@ -280,7 +289,7 @@ namespace poet
 			}
 			virtual exception_ptr get_exception_ptr() const
 			{
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				boost::unique_lock<boost::mutex> lock(this->mutex());
 				return this->_exception;
 			}
 			virtual waiter_event_queue& waiter_callbacks() const
@@ -289,15 +298,15 @@ namespace poet
 			}
 			void add_dependency(const boost::shared_ptr<void> &dependency)
 			{
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				boost::unique_lock<boost::mutex> lock(this->mutex());
 				if(_value || this->_exception) return;
 				_dependencies.push_back(dependency);
 			}
 		private:
-			future_body(): _waiter_callbacks(this->_mutex, this->_condition)
+			future_body(): _waiter_callbacks(future_body_untyped_base::mutex(), future_body_untyped_base::condition())
 			{}
 			future_body(const T &value): _value(value),
-				_waiter_callbacks(this->_mutex, this->_condition)
+				_waiter_callbacks(future_body_untyped_base::mutex(), future_body_untyped_base::condition())
 			{}
 
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const
@@ -377,14 +386,14 @@ namespace poet
 			}
 			virtual bool ready() const
 			{
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				boost::unique_lock<boost::mutex> lock(this->mutex());
 				return _proxyValue;
 			}
 			virtual const ProxyType& getValue() const
 			{
 				_actualFutureBody->join();
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
-				this->_condition.wait(lock, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(this->mutex());
+				this->condition().wait(lock, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
 				if(this->_exception) rethrow_exception(this->_exception);
 				BOOST_ASSERT(_proxyValue);
 				return _proxyValue.get();
@@ -392,24 +401,24 @@ namespace poet
 			virtual void join() const
 			{
 				_actualFutureBody->join();
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
-				this->_condition.wait(lock, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(this->mutex());
+				this->condition().wait(lock, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
 			}
 			virtual bool timed_join(const boost::system_time &absolute_time) const
 			{
 				if(_actualFutureBody->timed_join(absolute_time) == false) return false;
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
-				return this->_condition.timed_wait(lock, absolute_time, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
+				boost::unique_lock<boost::mutex> lock(this->mutex());
+				return this->condition().timed_wait(lock, absolute_time, boost::bind(&future_body_proxy::check_if_complete, this, &lock));
 			}
 			virtual void cancel(const poet::exception_ptr &exp)
 			{
 				_actualFutureBody->cancel(exp);
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
-				this->_condition.notify_all();
+				boost::unique_lock<boost::mutex> lock(this->mutex());
+				this->condition().notify_all();
 			}
 			virtual exception_ptr get_exception_ptr() const
 			{
-				boost::unique_lock<boost::mutex> lock(this->_mutex);
+				boost::unique_lock<boost::mutex> lock(this->mutex());
 				return this->_exception;
 			}
 			virtual waiter_event_queue& waiter_callbacks() const
@@ -421,7 +430,7 @@ namespace poet
 				const boost::function<ProxyType (const ActualType&)> &conversionFunction):
 				_actualFutureBody(actualFutureBody),
 				_conversionFunction(conversionFunction),
-				_waiter_callbacks(this->_mutex, this->_condition),
+				_waiter_callbacks(future_body_untyped_base::mutex(), future_body_untyped_base::condition()),
 				_conversionEventPosted(false)
 			{}
 
@@ -434,14 +443,14 @@ namespace poet
 				}catch(...)
 				{
 					{
-						boost::unique_lock<boost::mutex> lock(this->_mutex);
+						boost::unique_lock<boost::mutex> lock(this->mutex());
 						this->_exception = current_exception();
 					}
 					this->_updateSignal();
 					return;
 				}
 				{
-					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					boost::unique_lock<boost::mutex> lock(this->mutex());
 					BOOST_ASSERT(!_proxyValue);
 					_proxyValue = value;
 				}
@@ -450,7 +459,7 @@ namespace poet
 			void handle_actual_body_complete()
 			{
 				{
-					boost::unique_lock<boost::mutex> lock(this->_mutex);
+					boost::unique_lock<boost::mutex> lock(this->mutex());
 					if(_conversionEventPosted) return;
 					_conversionEventPosted = true;
 				}
