@@ -150,6 +150,14 @@ cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
 				<programlisting><xi:include href="../../examples/pipeline.cpp"
 						xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
 			</section>
+			<section id="poet.example.transform.cpp">
+				<title>transform.cpp</title>
+				<para>
+					Download <ulink url="../../../examples/transform.cpp">transform.cpp</ulink>.
+				</para>
+				<programlisting><xi:include href="../../examples/transform.cpp"
+						xmlns:xi="http://www.w3.org/2001/XInclude" parse="text"/></programlisting>
+			</section>
 		</section>
 		<section id="poet.example.monitor_objects">
 			<title>Monitor Objects</title>

@@ -19,6 +19,11 @@
 					</listitem>
 					<listitem>
 						<para>
+							<link linkend="poet.example.transform.cpp">pipeline.cpp</link>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
 							<link linkend="poet.example.active_object_example.cpp">active_object_example.cpp</link>
 						</para>
 					</listitem>
