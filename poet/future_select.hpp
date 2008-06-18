@@ -19,6 +19,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <cstddef>
 #include <iterator>
 #include <poet/future.hpp>
 #include <poet/detail/nonvoid.hpp>
@@ -118,7 +119,7 @@ namespace poet
 					_fulfilled_promises.pop_front();
 				}
 			}
-			ssize_t size() const
+			std::ptrdiff_t size() const
 			{
 				boost::unique_lock<boost::mutex> lock(_mutex);
 				return _dependencies_size +_fulfilled_promises.size() - _selected_promises.size() + 1;
@@ -252,7 +253,7 @@ namespace poet
 			fulfilled_container_type _fulfilled_promises;
 			boost::shared_ptr<dependent_type> _selected;
 			dependencies_type _dependencies;
-			size_t _dependencies_size;
+			std::size_t _dependencies_size;
 		};
 
 		/* future_body for void futures returned by future_select.  Becomes ready
@@ -425,6 +426,8 @@ namespace poet
 	{
 	public:
 		typedef future<T> value_type;
+		typedef std::size_t size_type;
+		typedef std::ptrdiff_t difference_type;
 
 		future_selector(): _selector_body(detail::future_selector_body<T>::create())
 		{}
@@ -462,7 +465,7 @@ namespace poet
 			future<T> converted_f = future_combining_barrier<T>(converter, exception_handler, f);
 			push(converted_f);
 		}
-		ssize_t size() const
+		difference_type size() const
 		{
 			return _selector_body->size();
 		}

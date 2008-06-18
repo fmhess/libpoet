@@ -124,6 +124,12 @@
 				<typedef name="value_type">
 					<type>future&lt;T&gt;</type>
 				</typedef>
+				<typedef name="size_type">
+					<type>std::size_t</type>
+				</typedef>
+				<typedef name="difference_type">
+					<type>std::ptrdiff_t</type>
+				</typedef>
 				<constructor>
 					<description>
 						<para>
@@ -241,7 +247,7 @@
 						</description>
 					</overloaded-method>
 					<method name="size" cv="const">
-						<type>ssize_t</type>
+						<type>difference_type</type>
 						<returns>
 							<para>The number of times <methodname>push</methodname> has been called, minus the number of times
 								<methodname>pop_selected</methodname> has been called, since the <code>future_selector</code>
