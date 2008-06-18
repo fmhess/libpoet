@@ -1,6 +1,7 @@
 <header name="poet/future_select.hpp">
 	<namespace name="poet">
 		<overloaded-function name="future_select">
+			<purpose>construct a future from the first complete future of a group.</purpose>
 			<signature>
 				<template>
 					<template-type-parameter name="T"/>
@@ -51,7 +52,7 @@
 					</listitem>
 					<listitem>
 						<para>
-							<functionname>future_selector</functionname>: Efficiently perform repeated waits
+							<classname>future_selector</classname>: Efficiently perform repeated waits
 							on a group of futures, waiting for the next future to become ready.
 						</para>
 					</listitem>
@@ -88,5 +89,200 @@
 				</para>
 			</description>
 		</function>
+		<class name="future_selector">
+			<purpose>efficient repeated waits on a group of futures</purpose>
+			<template>
+				<template-type-parameter name="T"/>
+			</template>
+			<description>
+				<para><code>future_selector</code> allows you to obtain futures which will become ready when
+					any future in a group of futures becomes ready.  It is more efficient than maintaining
+					a separate container of futures and repeatedly passing them to
+					<functionname>future_select_range</functionname>.
+				</para>
+				<para>Thread-safety</para>
+				<itemizedlist>
+					<title>See also</title>
+					<listitem>
+						<para>
+							<functionname>future_select</functionname>: construct a future which becomes ready when
+							any of a group of futures is ready or has an exception.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<functionname>future_barrier</functionname>: construct a future which becomes ready when all of a
+							group of futures are ready or one has an exception.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</description>
+			<access name="public">
+				<typedef name="value_type">
+					<type>future&lt;T&gt;</type>
+				</typedef>
+				<constructor>
+					<description>
+						<para>
+							Constructs a future_selector containing no futures.  Futures may be added to the
+							<code>future_selector</code> with the <methodname>push</methodname> method.
+						</para>
+					</description>
+					<postconditions>
+						<para>
+							<code>size() == 0</code>
+						</para>
+					</postconditions>
+				</constructor>
+				<constructor>
+					<parameter name="other"><paramtype>const future_selector &amp;</paramtype></parameter>
+					<description>
+						<para><code>*this</code> will receive
+							a copy of all the futures in <code>other</code>.  Copy construction has deep copy semantics,
+							so calling methods such as
+							<methodname>push</methodname> or <methodname>pop_selected</methodname>
+							on a future_selector copy will not effect the original, and vice-versa.
+						</para>
+					</description>
+					<postconditions>
+						<para>
+							<code>this->size() == other.size()</code>
+						</para>
+					</postconditions>
+				</constructor>
+				<destructor>
+					<description>
+						<para>
+							Any futures contained in the
+							<code>future_selector</code> at its time of destruction will be kept alive
+							as long as needed and to fulfill any remaining "selected futures" previously obtained
+							from calls to the <methodname>selected</methodname> method,
+							even after the <code>future_selector</code> itself has been destroyed.
+							However, any "selected futures" which no longer have any possibility
+							of being fulfilled, due to an insufficient number of futures contained
+							in the <code>future_selector</code> at the time of its destruction
+							(that is, <methodname>size</methodname> returns a negative value),
+							will be automatically reneged with an <code>uncertain_future</code>
+							exception.
+						</para>
+					</description>
+				</destructor>
+				<copy-assignment>
+					<parameter name="rhs"><paramtype>const future_selector &amp;</paramtype></parameter>
+					<description>
+						<para>Copy-constructs a temporary <code>future_selector</code> from <code>rhs</code>,
+							then swaps it with <code>*this</code>.
+					</para>
+					</description>
+					<postconditions>
+						<para>
+							<code>this->size() == rhs.size()</code>
+						</para>
+					</postconditions>
+				</copy-assignment>
+				<method-group name="public member functions">
+					<method name="selected" cv="const">
+						<type>future&lt;T&gt;</type>
+						<description>
+							<para>
+								Returns a future which will receive the value or exception of the next future
+								in the <code>future_selector</code> to complete.  The "selected future" returned
+								will be fulfilled only after any selected futures obtained prior to the last
+								<methodname>pop_selected</methodname> call are fulfilled.
+							</para>
+						</description>
+					</method>
+					<method name="pop_selected">
+						<type>void</type>
+						<description>
+							<para>
+								Removes a future from the <code>future_selector</code>, so subsequent calls
+								to <methodname>selected</methodname>
+								will return a different "selected future".  The selected futures will
+								be fulfilled in the order they were popped out of the <code>future_selector</code>.
+							</para>
+							<para>
+								This method may be called before the future returned
+								by <methodname>selected</methodname> is actually complete.
+								It may even be called more times than the number of
+								futures which have been pushed into the <code>future_selector</code> with the <methodname>push</methodname>
+								method.  This results in <methodname>size</methodname> returning a negative value,
+								until more futures are pushed into the <code>future_selector</code>.
+							</para>
+						</description>
+					</method>
+					<overloaded-method name="push">
+						<signature>
+							<type>void</type>
+							<parameter name="f"><paramtype>const future&lt;T&gt; &amp;</paramtype></parameter>
+						</signature>
+						<signature>
+							<template>
+								<template-type-parameter name="Converter"/>
+								<template-type-parameter name="U"/>
+							</template>
+							<type>void</type>
+							<parameter name="converter"><paramtype>const Converter &amp;</paramtype></parameter>
+							<parameter name="exception_handler"><paramtype>const ExceptionHandler &amp;</paramtype></parameter>
+							<parameter name="f"><paramtype>const future&lt;U&gt; &amp;</paramtype></parameter>
+						</signature>
+						<description>
+							<para>
+								Adds a future to the <code>future_selector</code>.  When the added future becomes ready or gets an exception,
+								it will be used to fulfill or renege the oldest "selected future" which has not yet completed.
+							</para>
+							<para>
+								The 3 argument overload of this function is provided for convenience, and is equivalent to
+								<code>push(poet::<functionname>future_combining_barrier</functionname>&lt;T&gt;(converter, exception_handler, f))</code>.
+							</para>
+						</description>
+					</overloaded-method>
+					<method name="size" cv="const">
+						<type>ssize_t</type>
+						<returns>
+							<para>The number of times <methodname>push</methodname> has been called, minus the number of times
+								<methodname>pop_selected</methodname> has been called, since the <code>future_selector</code>
+								was default-constructed or reset.  This value may be negative.
+							</para>
+						</returns>
+					</method>
+					<method name="reset">
+						<type>void</type>
+						<description>
+							<para>
+								Default-constructs a temporary <code>future_selector</code> and swaps it with <code>*this</code>.
+							</para>
+						</description>
+						<postconditions>
+							<para>
+								<code>size() == 0</code>
+							</para>
+						</postconditions>
+					</method>
+					<method name="swap">
+						<type>void</type>
+						<parameter name="other"><paramtype>future_selector &amp;</paramtype></parameter>
+						<description>
+							<para>
+								Swaps <code>*this</code> with <code>other</code>.
+							</para>
+						</description>
+					</method>
+				</method-group>
+			</access>
+			<free-function-group name="free functions">
+				<function name="swap">
+					<template>
+						<template-type-parameter name="T"/>
+					</template>
+					<type>void</type>
+					<parameter name="a"><paramtype><classname>future_selector</classname>&lt;T&gt; &amp;</paramtype></parameter>
+					<parameter name="b"><paramtype><classname>future_selector</classname>&lt;T&gt; &amp;</paramtype></parameter>
+					<description>
+						<para>Swaps <classname>future_selector</classname>s a and b.</para>
+					</description>
+				</function>
+			</free-function-group>
+		</class>
 	</namespace>
 </header>
