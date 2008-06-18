@@ -100,7 +100,10 @@
 					a separate container of futures and repeatedly passing them to
 					<functionname>future_select_range</functionname>.
 				</para>
-				<para>Thread-safety</para>
+				<para>Most of the methods of <code>future_selector</code> are thread-safe.  The exceptions
+					to this rule are:
+					<methodname>reset</methodname>, <methodname>swap</methodname>, and the assignment operator.
+				</para>
 				<itemizedlist>
 					<title>See also</title>
 					<listitem>
