@@ -1,3 +1,538 @@
+2008-06-18 16:48  fmhess
+
+	* poet/active_object.hpp, poet/future.hpp, poet/future_barrier.hpp,
+	  poet/future_select.hpp, poet/detail/event_queue.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  test/active_function_test.cpp,
+	  test/future_combining_barrier_test.cpp,
+	  test/promise_count_test.cpp: Fixed some compile warnings/errors
+	  on msvc9.
+
+2008-06-18 14:31  fmhess
+
+	* doc/boostbook/future_select_hpp.xml, poet/future_select.hpp: Got
+	  rid of use of non-standard ssize_t.
+
+2008-06-18 12:36  fmhess
+
+	* doc/boostbook/active_function_hpp.xml, poet/active_function.hpp,
+	  poet/detail/active_function_template.hpp,
+	  test/active_function_test.cpp: Added support for default
+	  constructing active_functions.
+
+2008-06-18 12:29  fmhess
+
+	* examples/active_object_example.cpp: Replaced
+	  active_object_example.cpp with a new one that compiles after
+	  recent changes, and is simpler.
+
+2008-06-18 11:39  fmhess
+
+	* doc/boostbook/future_select_hpp.xml: Added a mention of
+	  future_selector thread-safety.
+
+2008-06-18 11:25  fmhess
+
+	* doc/boostbook/active_function_hpp.xml,
+	  doc/boostbook/libpoet_doc.xml, examples/transform.cpp: Added
+	  transform.cpp example.
+
+2008-06-18 11:12  fmhess
+
+	* examples/pipeline.cpp: Make use of std::plus and std::multiplies.
+
+2008-06-18 09:40  fmhess
+
+	* doc/boostbook/future_select_hpp.xml: Added documentation for
+	  future_selector.
+
+2008-06-18 09:40  fmhess
+
+	* doc/boostbook/future_barrier_hpp.xml: Added documentation for
+	  poet::null_type, and added a couple "purpose" elements.
+
+2008-06-17 15:20  fmhess
+
+	* poet/future_select.hpp, poet/detail/identity.hpp,
+	  test/future_selector_test.cpp: Added test for and fixed overload
+	  of future_selector::push.  Added value_type typedef to
+	  future_selector.
+
+2008-06-17 09:32  fmhess
+
+	* poet/: null_type.hpp, detail/nonvoid.hpp: Split poet::null_type
+	  out of detail/nonvoid.hpp into its own header, since it will need
+	  to be documented as part of the pubic interface.
+
+2008-06-17 09:23  fmhess
+
+	* doc/boostbook/: future_barrier_hpp.xml, future_select_hpp.xml:
+	  Added documentation of FUTURE_BARRIER_MAX_ARGS and
+	  FUTURE_SELECT_MAX_ARGS macros.
+
+2008-06-17 09:05  fmhess
+
+	* doc/boostbook/future_barrier_hpp.xml,
+	  doc/boostbook/future_select_hpp.xml,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  poet/detail/future_select_template.hpp,
+	  test/future_combining_barrier_test.cpp: Decided to get rid of 1
+	  argument future_barrier and future_select, which were only
+	  provided to be consistent with future_combining_barrier.  Renamed
+	  some macros to differentiate them in future_barrier_template.hpp
+	  and future_select_template.hpp.
+
+2008-06-16 15:48  fmhess
+
+	* doc/boostbook/future_barrier_hpp.xml: Added missing end para tag.
+
+2008-06-16 15:46  fmhess
+
+	* doc/boostbook/: future_barrier_hpp.xml, future_select_hpp.xml:
+	  Added documentation for future_combining barrier.  Corrected
+	  documented names for future_barrier_range and
+	  future_select_range.
+
+2008-06-16 14:01  fmhess
+
+	* doc/boostbook/future_hpp.xml: Added documentation for
+	  promise::has_future, reset, and swap.
+
+2008-06-16 14:00  fmhess
+
+	* poet/future.hpp, test/promise_count_test.cpp: Fixed
+	  promise<void>::has_future for void promise constructed from a
+	  non-void promise.
+
+2008-06-16 11:56  fmhess
+
+	* doc/boostbook/active_function_hpp.xml: Removed mentions of guards
+	  and wake from active_function documentation, as they no longer
+	  exist.
+
+2008-06-16 10:59  fmhess
+
+	* doc/boostbook/active_object_hpp.xml: Updated active_object.hpp
+	  documentation to reflect API changes caused by switchover to
+	  waiting on futures for scheduling instead of relying on signals.
+
+2008-06-16 10:49  fmhess
+
+	* poet/active_object.hpp, poet/detail/active_object.cpp,
+	  test/active_function_test.cpp: Got rid of now useless timeout
+	  parameter of scheduler.
+
+2008-06-16 10:49  fmhess
+
+	* test/future_test.cpp: Expanded swap test very slightly.
+
+2008-06-16 09:35  fmhess
+
+	* doc/boostbook/future_hpp.xml: Added documentation for
+	  future::join, swap, and default copy constructor and assignment
+	  operators.
+
+2008-06-13 17:23  fmhess
+
+	* doc/boostbook/future_hpp.xml: Removed documentation for some
+	  member functions which no longer exist.
+
+2008-06-12 16:34  fmhess
+
+	* poet/future.hpp, test/future_test.cpp: Added future::swap.
+
+2008-06-12 15:16  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  test/future_combining_barrier_test.cpp: Added some tests of
+	  futures returned by future barriers properly throwing their
+	  exceptions, and fixed problems they reported.
+
+2008-06-12 13:59  fmhess
+
+	* poet/future_barrier.hpp, poet/future_select.hpp,
+	  test/future_waits_test.cpp: Added some tests for
+	  future_select_range, future_barrier_range, and
+	  future_combining_barrier_range for the case of an empty input
+	  range, and fixed their behavior to pass tests.
+
+2008-06-12 11:54  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp, poet/future_select.hpp,
+	  test/Makefile, test/lazy_future_test.cpp: Disconnect
+	  waiter_event_queue connections once they are no longer needed.
+	  Added test for lazy evaluation behavior of future_select and
+	  future_selector.
+
+2008-06-11 14:30  fmhess
+
+	* poet/future.hpp: Disconnect update connection for
+	  future_body_proxy when observed future completes.
+
+2008-06-11 13:22  fmhess
+
+	* poet/: future.hpp, future_select.hpp: Added factory functions for
+	  future_body<T> where its waiter_event_queue is now initialized.
+
+2008-06-11 11:44  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp:
+	  Refactored setups of waiter_event_queues observing other
+	  waiter_event_queues.
+
+2008-06-11 11:01  fmhess
+
+	* poet/: future_barrier.hpp, future_select.hpp: Did a little better
+	  cleaning up connections as soon as they are no longer needed.
+
+2008-06-11 10:22  fmhess
+
+	* test/active_function_test.cpp: Fixed bug in test of
+	  in_order_activation_queue.
+
+2008-06-11 10:18  fmhess
+
+	* poet/future.hpp, poet/future_select.hpp, test/future_test.cpp:
+	  Fixed promise::fulfill when taking a lazy future argument
+
+2008-06-10 12:57  fmhess
+
+	* test/active_function_test.cpp: Added a new test for
+	  active_function using in_order_activiation_queue (it currently
+	  fails).  Cleaned up output of active_function_test.
+
+2008-06-10 11:38  fmhess
+
+	* test/future_test.cpp: Added new test that exposes recently
+	  introduced bug in promise::fulfill when argument is a future.
+
+2008-06-10 10:37  fmhess
+
+	* poet/future.hpp, test/future_test.cpp: Added test to
+	  future_test.cpp and made it pass.  Made future_test less verbose
+	  in its output.
+
+2008-06-10 10:16  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp: Got rid
+	  of get_weak_future_body by using make_weak.
+
+2008-06-10 10:15  fmhess
+
+	* poet/detail/utility.hpp: Added missing header include guard.
+
+2008-06-10 10:15  fmhess
+
+	* test/Makefile: Added target to run test programs in valgrind.
+
+2008-06-10 10:07  fmhess
+
+	* poet/future_select.hpp, poet/detail/utility.hpp,
+	  test/future_selector_test.cpp: Implemented copy
+	  construction/assignment for future_selector.
+
+2008-06-09 15:18  fmhess
+
+	* poet/future.hpp, test/future_waits_test.cpp: Removed
+	  future::connect_update and future::cancel from the public
+	  interface.
+
+2008-06-09 15:02  fmhess
+
+	* poet/active_function.hpp, poet/active_object.hpp,
+	  poet/future.hpp, poet/future_select.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, test/active_function_test.cpp,
+	  test/active_object_test.cpp, test/future_selector_test.cpp,
+	  test/undead_active_function_test.cpp: Converted scheduler
+	  entirely over to waiting on futures instead of relying on
+	  completion signals.  Simplified method
+	  requests/scheduler/active_function by throwing out less useful
+	  features that were difficult to implement cleanly with the new
+	  scheme (guard functions, manual polling of scheduler,
+	  cancellation of active_function method request through returned
+	  future).  Added promise::reset and swap.  Added future::join.
+	  Added future_selector::size, reset, and swap.  Fixed logic bug in
+	  future_selector::pop_selected.
+
+2008-06-09 14:51  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Updated links to active
+	  object/monitor papers.
+
+2008-06-08 20:34  fmhess
+
+	* test/future_combining_barrier_test.cpp, poet/future_barrier.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  poet/detail/identity.hpp, test/future_waits_test.cpp: Added
+	  ExceptionHandler parameter to future_combining_barrier, which
+	  generates exception_ptr for returned future from exception_ptr of
+	  input future.
+
+2008-06-05 16:52  fmhess
+
+	* poet/future_select.hpp, test/future_selector_test.cpp: Added new
+	  test for future_selector regarding cancelling futures obtained
+	  from a future_selector which no longer exists.  Made changes so
+	  test passes.
+
+2008-06-05 12:21  fmhess
+
+	* poet/active_function.hpp, poet/active_object.hpp,
+	  poet/exception_ptr.cpp, poet/future.hpp, poet/future_barrier.hpp,
+	  poet/future_select.hpp, poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, poet/detail/event_queue.hpp,
+	  poet/detail/future_barrier_template.hpp, test/Makefile,
+	  test/active_object_test.cpp,
+	  test/future_combining_barrier_test.cpp,
+	  test/future_selector_test.cpp: Added support for future_selector.
+	  Futures now execute all user callback code in future-waiting
+	  threads (type conversions and combiners from
+	  future_combining_barrier).  That means some futures are "lazy"
+	  now, and will not emit their complete signals until waited
+	  on/queried.
+
+2008-06-03 10:25  fmhess
+
+	* test/future_combining_barrier_test.cpp: Replaced convert with
+	  identity.
+
+2008-06-02 15:46  fmhess
+
+	* test/: Makefile, future_combining_barrier_test.cpp: Added new
+	  test program.
+
+2008-05-29 17:14  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp,
+	  detail/future_barrier_template.hpp: Fixed problems with
+	  thread-unsafe manual disconnects.
+
+2008-05-29 11:19  fmhess
+
+	* poet/future.hpp, test/promise_count_test.cpp: Added
+	  promise::has_future (not yet documented).
+
+2008-05-29 10:41  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp, poet/future_select.hpp,
+	  poet/detail/future_barrier_template.hpp, poet/detail/nonvoid.hpp,
+	  test/future_waits_test.cpp: Renamed poet::bogus_void to
+	  poet::null_type.  future_combining_barrier functions work now.
+	  Dealt with explosion of friend classes to futures.
+
+2008-05-28 21:31  fmhess
+
+	* poet/detail/active_function_template.hpp: Fixed compile error
+	  caused by last commit.
+
+2008-05-28 21:26  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp,
+	  detail/active_function_template.hpp,
+	  detail/future_barrier_template.hpp,
+	  detail/preprocessor_macros.hpp: Added future_combining_barrier
+	  free functions that accept heterogeneous input futures
+	  (untested).
+
+2008-05-28 17:07  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp,
+	  detail/nonvoid.hpp: Using empty bogus_void class as place holder
+	  for values from future<void>, instead of using int.  Trying to
+	  make some changes to handle future<void> specializations without
+	  so much work.
+
+2008-05-28 16:03  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp, poet/future_select.hpp,
+	  poet/detail/nonvoid.hpp, test/future_waits_test.cpp:
+	  future_combining_barrier_range seems to be working now.
+
+2008-05-27 13:13  fmhess
+
+	* doc/boostbook/Makefile, doc/boostbook/future_barrier_hpp.xml,
+	  doc/boostbook/future_select_hpp.xml,
+	  doc/boostbook/future_waits_hpp.xml,
+	  doc/boostbook/libpoet_reference.xml, poet/future.hpp,
+	  poet/future_barrier.hpp, poet/future_select.hpp,
+	  poet/future_waits.hpp, poet/detail/future_barrier_template.hpp,
+	  poet/detail/future_select_template.hpp,
+	  poet/detail/future_waits_template.hpp: Split future_waits.hpp
+	  into future_barrier.hpp and future_select.hpp.  Added beginnings
+	  of support for future barrier which takes a combiner function to
+	  return a non-void return value.
+
+2008-05-27 11:17  fmhess
+
+	* doc/boostbook/future_waits_hpp.xml: Some more corrections for
+	  updated future_select prototype.
+
+2008-05-27 09:55  fmhess
+
+	* poet/future_waits.hpp, test/future_waits_test.cpp: Fixed emission
+	  of signals by composite futures produced by
+	  future_barrier/future_select.
+
+2008-05-27 09:54  fmhess
+
+	* poet/future.hpp: Moved a condition::notify_all inside locked
+	  section.
+
+2008-05-26 19:02  fmhess
+
+	* doc/boostbook/future_waits_hpp.xml: Updated with changes to
+	  future_select prototype.
+
+2008-05-25 19:43  fmhess
+
+	* poet/future.hpp, poet/future_waits.hpp,
+	  poet/detail/future_waits_template.hpp,
+	  test/future_waits_test.cpp: Changed prototype of future_select to
+	  take input future with a uniform type and return a future of the
+	  same type, instead of accepting heterogeneous input futures and
+	  returning a future<void>.  Also renamed future_barrier and
+	  future_select overloads that accept iteratotors to avoid
+	  ambiguous overload problems.	Still need to update documentation
+	  to reflect changes.
+
+2008-05-23 18:47  fmhess
+
+	* poet/active_function.hpp: Resolved ambiguous overload problem
+	  seen on msvc 9.
+
+2008-05-23 18:47  fmhess
+
+	* examples/active_object_example.cpp: Removed spurious typename.
+
+2008-05-23 17:57  fmhess
+
+	* test/timed_join_test.cpp: More unistd.h cleanup.
+
+2008-05-23 17:54  fmhess
+
+	* test/new_mutex_api_test.cpp: Catch lock error by const instead of
+	  non-const reference.
+
+2008-05-23 17:52  fmhess
+
+	* poet/monitor_locks.hpp: Fixed compile error on msvc 9.
+
+2008-05-23 17:40  fmhess
+
+	* test/monitor_test.cpp: No __PRETTY_FUNCTION__ on msvc.
+
+2008-05-23 17:31  fmhess
+
+	* test/future_void_test.cpp: Fixed msvc compile warning.
+
+2008-05-23 17:29  fmhess
+
+	* test/: future_test.cpp, monitor_test.cpp, new_mutex_api_test.cpp,
+	  timed_join_test.cpp, undead_active_function_test.cpp: Got rid of
+	  more non-portable unistd.h usage.
+
+2008-05-23 17:17  fmhess
+
+	* poet/monitor_locks.hpp: Fixed compile error on msvc 9.
+
+2008-05-23 17:16  fmhess
+
+	* poet/monitor_ptr.hpp: Added private monitor_ptr::get_syncer
+	  method which throws if _syncer member is null.
+
+2008-05-23 17:04  fmhess
+
+	* poet/detail/mutex_grapher.ipp: Fixed compile error due to lack of
+	  __PRETTY_FUNCTION__ on msvc.	Fixed msvc compile warning due to
+	  unused parameter.
+
+2008-05-23 16:55  fmhess
+
+	* poet/detail/mutex_grapher.ipp: Removed include of stdint.h, which
+	  doesn't seem to be used.  If needed, use boost/stdint.hpp instead
+	  since msvc does support stdint.h.
+
+2008-05-23 16:48  fmhess
+
+	* test/active_object_test.cpp: Got rid of unix-ism (unistd.h)
+
+2008-05-23 16:32  fmhess
+
+	* test/active_function_test.cpp: Removed unix-ism (unistd.h)
+
+2008-05-23 14:04  fmhess
+
+	* poet/detail/active_function_template.hpp: Fixed compile error
+	  under msvc 9
+
+2008-05-23 14:03  fmhess
+
+	* poet/active_object.hpp: Fixed compiler warning under msvc 9.
+
+2008-05-23 12:50  fmhess
+
+	* poet/future_waits.hpp: Made future_select slightly more
+	  efficient.
+
+2008-05-21 17:02  fmhess
+
+	* poet/: future_waits.hpp, detail/future_waits_template.hpp: Fixed
+	  comments at tops of new future_waits files.
+
+2008-05-21 16:50  fmhess
+
+	* doc/boostbook/: future_hpp.xml, future_waits_hpp.xml,
+	  libpoet_reference.xml: Added some minimal documentation on
+	  future_barrier/future_select.
+
+2008-05-21 15:13  fmhess
+
+	* poet/future.hpp, poet/future_waits.hpp,
+	  poet/detail/future_waits_template.hpp, test/Makefile,
+	  test/future_waits_test.cpp: Added support for waiting on groups
+	  of futures (future_barrier and future_select).  No documentation
+	  yet.
+
+2008-05-20 16:39  fmhess
+
+	* poet/future.hpp: Replaced some scoped_lock with unique_lock.
+
+2008-05-20 15:31  fmhess
+
+	* poet/future.hpp: Added detail::bogus_future_void_type typedef,
+	  and fixed what appears to be a logic error in the template
+	  assignment operator of future<void>.
+
+2008-05-20 14:41  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: A little tweaking of the note
+	  on monitor_ptr's thread-safety.
+
+2008-05-20 14:41  fmhess
+
+	* doc/boostbook/active_function_hpp.xml: Documented the copy
+	  semantics of active_function.
+
+2008-05-19 13:23  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added note about monitor_ptr
+	  thread safety.
+
+2008-05-16 15:13  fmhess
+
+	* doc/boostbook/future_hpp.xml, poet/future.hpp,
+	  poet/detail/active_object.cpp, poet/detail/condition.hpp:
+	  Replaced use of obsoleted boost::xtime with boost::system_time.
+
+2008-05-16 11:46  tag v2008_05_16
+
+2008-05-16 11:46  fmhess
+
+	* ChangeLog: Regenerated ChangeLog with "cvs2cl -T"
+
 2008-05-16 11:42  fmhess
 
 	* README: Made some minor updates to README.
