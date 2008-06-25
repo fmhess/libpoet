@@ -18,18 +18,18 @@ namespace poet
 {
 	namespace detail
 	{
-		boost::shared_ptr<method_request_base> method_request_future_combiner(const boost::shared_ptr<method_request_base> &request, null_type)
+		inline boost::shared_ptr<method_request_base> method_request_future_combiner(const boost::shared_ptr<method_request_base> &request, null_type)
 		{
 			return request;
 		};
-		exception_ptr method_request_future_exception_handler(const boost::shared_ptr<method_request_base> &request,
+		inline exception_ptr method_request_future_exception_handler(const boost::shared_ptr<method_request_base> &request,
 			const exception_ptr &)
 		{
 			exception_ptr ep = copy_exception(request);
 			return ep;
 		};
 
-		future<boost::shared_ptr<method_request_base> > make_method_request_future(
+		inline future<boost::shared_ptr<method_request_base> > make_method_request_future(
 			const boost::shared_ptr<method_request_base> &request)
 		{
 			BOOST_ASSERT(request);

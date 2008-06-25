@@ -252,7 +252,7 @@ namespace poet
 			return f.get();
 		}
 		template<>
-		const nonvoid<void>::type& nonvoid_future_get<void>(const future<void> &f)
+			inline const nonvoid<void>::type& nonvoid_future_get<void>(const future<void> &f)
 		{
 			return template_static<nonvoid<void>, nonvoid<void>::type>::object;
 		}

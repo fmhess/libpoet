@@ -40,7 +40,7 @@ namespace poet
 		{
 			return body.getValue();
 		}
-		const nonvoid<void>::type& nonvoid_future_body_get(const future_body_untyped_base &body)
+		inline const nonvoid<void>::type& nonvoid_future_body_get(const future_body_untyped_base &body)
 		{
 			return template_static<nonvoid<void>, nonvoid<void>::type>::object;
 		}

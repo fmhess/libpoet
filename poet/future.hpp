@@ -929,7 +929,7 @@ namespace poet
 			return future<T>(dynamic_pointer_cast<future_body_base<T> >(body));
 		}
 		template<>
-			future<void> create_future<void>(const boost::shared_ptr<future_body_untyped_base> &body)
+			inline future<void> create_future<void>(const boost::shared_ptr<future_body_untyped_base> &body)
 		{
 			return future<void>(body);
 		}
