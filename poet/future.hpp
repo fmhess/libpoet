@@ -730,6 +730,9 @@ namespace poet
 			_future_body = detail::future_body_proxy<T, OtherType>::create(
 				other._future_body, typedConversionFunction);
 		}
+		template <typename OtherType>
+			future(const OtherType &other): _future_body(detail::future_body<T>::create(other))
+		{}
 		future()
 		{}
 		virtual ~future() {}

@@ -88,6 +88,16 @@
 					<description><para>Creates a new future with an initialized value, and provides implicit conversion from a value to the corresponding future. </para></description>
 				</constructor>
 				<constructor>
+					<template><template-type-parameter name="OtherType"/></template>
+					<parameter name="value"><paramtype>const OtherType &amp;</paramtype></parameter>
+					<description>
+						<para>
+							Creates a new future with an initialized value, and provides implicit conversion from a value to the corresponding future.
+							The <code>OtherType</code> type must be implicitly convertible to <code>T</code>.
+						</para>
+					</description>
+				</constructor>
+				<constructor>
 					<parameter name="other"><paramtype>const <classname>future</classname> &amp;</paramtype></parameter>
 					<description><para>Creates a future from another future with an identical template type.
 						The two futures will both reference the same <classname>promise</classname>.</para></description>
