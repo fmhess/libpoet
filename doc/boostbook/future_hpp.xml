@@ -236,14 +236,30 @@
 				</typedef>
 				<method-group name="public member functions">
 					<method name="fulfill" cv="">
+						<template>
+							<template-type-parameter name="U"/>
+						</template>
 						<type>void</type>
-						<parameter name="value"><paramtype>const T &amp;</paramtype></parameter>
-						<description><para>Fulfill the promise by giving it a value. All futures which reference this promise will become ready. </para></description>
+						<parameter name="value"><paramtype>const U &amp;</paramtype></parameter>
+						<description>
+							<para>Fulfill the promise by giving it a value. All futures which reference this promise will become ready.
+								The type <code>U</code> must be implicitly convertible to the promise's template type <code>T</code>.
+							</para>
+						</description>
 					</method>
 					<method name="fulfill" cv="">
+						<template>
+							<template-type-parameter name="U"/>
+						</template>
 						<type>void</type>
-						<parameter name="future_value"><paramtype>const <classname>future</classname>&lt;T&gt; &amp;</paramtype></parameter>
-						<description><para>Chain the promise to another promise by giving it a future. All futures which reference this promise will receive the value from future_value when it becomes ready. If the promise referenced by future_value is broken, this promise will also be broken. </para></description>
+						<parameter name="future_value"><paramtype>const <classname>future</classname>&lt;U&gt; &amp;</paramtype></parameter>
+						<description>
+							<para>Chain the promise to another promise by giving it a future.
+								All futures which reference this promise will receive the value from future_value when it becomes ready.
+								If the promise referenced by future_value is broken, this promise will also be broken.
+								The type <code>U</code> must be implicitly convertible to the promise's template type <code>T</code>.
+							</para>
+						</description>
 					</method>
 					<method name="has_future" cv="const">
 						<type>bool</type>

@@ -510,7 +510,7 @@ namespace poet
 			{
 				_future_body->setValue(value);
 			}
-			void fulfill(const future<T> &future_value)
+			void future_fulfill(const future<T> &future_value)
 			{
 				typedef typename future_body_untyped_base::update_slot_type slot_type;
 				slot_type update_slot(&promise_body::handle_future_fulfillment, _future_body.get(), get_future_body(future_value).get());
@@ -591,13 +591,15 @@ namespace poet
 		promise(): _pimpl(new detail::promise_body<T>)
 		{}
 		virtual ~promise() {}
-		void fulfill(const T &value)
+		template<typename U>
+			void fulfill(const U &value)
 		{
 			_pimpl->fulfill(value);
 		}
-		void fulfill(const future<T> &future_value)
+		template<typename U>
+			void fulfill(const future<U> &future_value)
 		{
-			_pimpl->fulfill(future_value);
+			_pimpl->future_fulfill(future_value);
 		}
 		template <typename E>
 		void renege(const E &exception)
@@ -701,6 +703,8 @@ namespace poet
 	{
 		friend future<T> detail::create_future<T>(const boost::shared_ptr<detail::future_body_untyped_base> &body);
 		friend const boost::shared_ptr<typename detail::nonvoid_future_body_base<T>::type>& detail::get_future_body<T>(const poet::future<T> &f);
+
+		typedef boost::shared_ptr<detail::future_body_base<T> > future_body_type;
 	public:
 		template <typename OtherType> friend class future;
 		friend class future<void>;
@@ -792,7 +796,7 @@ namespace poet
 		future(const boost::shared_ptr<detail::future_body_base<T> > &future_body):_future_body(future_body)
 		{}
 
-		boost::shared_ptr<detail::future_body_base<T> > _future_body;
+		future_body_type _future_body;
 	};
 
 	template <>
@@ -800,6 +804,8 @@ namespace poet
 	{
 		friend future<void> detail::create_future<void>(const boost::shared_ptr<detail::future_body_untyped_base> &body);
 		friend const boost::shared_ptr<detail::nonvoid_future_body_base<void>::type>& detail::get_future_body<void>(const poet::future<void> &f);
+
+		typedef boost::shared_ptr<detail::future_body_untyped_base > future_body_type;
 	public:
 		template <typename OtherType> friend class future;
 		friend class promise<void>;
@@ -884,7 +890,7 @@ namespace poet
 		future(const boost::shared_ptr<detail::future_body_untyped_base > &future_body):_future_body(future_body)
 		{}
 
-		boost::shared_ptr<detail::future_body_untyped_base > _future_body;
+		future_body_type _future_body;
 	};
 
 	template<typename T>
