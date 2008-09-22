@@ -14,6 +14,7 @@
 #define _POET_MONITOR_LOCKS_HPP
 
 #include <boost/bind.hpp>
+#include <boost/config.hpp>
 #include <boost/function.hpp>
 #include <boost/ref.hpp>
 #include <boost/shared_ptr.hpp>
@@ -164,9 +165,11 @@ namespace poet
 				}
 				return *_mon.direct().get();
 			}
+#ifndef BOOST_NO_MEMBER_TEMPLATE_FRIENDS
 		protected:
+#endif	// BOOST_NO_MEMBER_TEMPLATE_FRIENDS
 			monitor_ptr_type _mon;
-
+#ifndef BOOST_NO_MEMBER_TEMPLATE_FRIENDS
 		private:
 			template<typename Lockable>
 			friend class monitor_shared_lock;
@@ -176,7 +179,8 @@ namespace poet
 			friend class monitor_upgrade_to_unique_lock;
 			template<typename M, typename MH, typename L>
 			friend class lock_wrapper;
-
+#endif	// BOOST_NO_MEMBER_TEMPLATE_FRIENDS
+			
 			void set_wait_function()
 			{
 				if(_lock.owns_lock())
