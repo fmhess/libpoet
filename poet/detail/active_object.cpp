@@ -64,6 +64,11 @@ namespace poet
 		{
 			result = method_request;
 		}
+		catch(const std::exception &err)
+		{
+			std::cerr << "caught unexpected exception: " << err.what() << std::endl;
+			BOOST_ASSERT(false);
+		}
 		catch(...)
 		{
 			BOOST_ASSERT(false);

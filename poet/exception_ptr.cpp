@@ -13,9 +13,9 @@
 // for bad_weak_ptr
 #include <boost/weak_ptr.hpp>
 // for no_slots_error
-#include <boost/last_value.hpp>
+#include <boost/signals2/last_value.hpp>
 // for expired_slot
-#include <boost/signals/slot.hpp>
+#include <boost/signals2/slot.hpp>
 
 namespace poet
 {
@@ -57,10 +57,10 @@ static poet::exception_ptr poet::detail::_exp_current_exception()
 	_CATCH_AND_RETURN_WHAT( std::range_error )
 	_CATCH_AND_RETURN_WHAT( std::runtime_error )
 
-	_CATCH_AND_RETURN( boost::expired_slot )
+	_CATCH_AND_RETURN( boost::signals2::expired_slot )
 	_CATCH_AND_RETURN( boost::bad_weak_ptr )
 
-	_CATCH_AND_RETURN( boost::no_slots_error )
+	_CATCH_AND_RETURN( boost::signals2::no_slots_error )
 	_CATCH_AND_RETURN( std::bad_alloc )
 	_CATCH_AND_RETURN( std::bad_cast )
 	_CATCH_AND_RETURN( std::bad_typeid )

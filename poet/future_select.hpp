@@ -56,7 +56,7 @@ namespace poet
 			{
 				dependency_eraser_info(): iterator_valid(false)
 				{}
-				boost::signalslib::connection waiter_connection;
+				boost::signals2::connection waiter_connection;
 				typename dependencies_type::iterator iterator;
 				bool iterator_valid;
 			};
@@ -196,12 +196,14 @@ namespace poet
 				}
 			}
 			void check_dependency(const boost::weak_ptr<typename nonvoid_future_body_base<T>::type> &weak_dependency,
-				const boost::shared_ptr<dependency_eraser_info> &dependency_eraser_info)
+				const boost::shared_ptr<dependency_eraser_info> &dependency_eraser_info,
+				const boost::shared_ptr<boost::signals2::connection> &connection)
 			{
 				boost::shared_ptr<typename nonvoid_future_body_base<T>::type> dependency = weak_dependency.lock();
 				if(!dependency)
 				{
-					throw boost::expired_slot();
+					connection->disconnect();
+					return;
 				}
 
 				const bool dep_ready = dependency->ready();
@@ -215,13 +217,15 @@ namespace poet
 						boost::unique_lock<boost::mutex> lock(_mutex);
 						if(dependency_eraser_info->iterator_valid == false)
 						{
-							throw boost::expired_slot();
+							connection->disconnect();
+							return;
 						}
 						dependency_eraser_info->iterator_valid = false;
 						dependency_eraser_info->waiter_connection.disconnect();
 					}
 					_waiter_callbacks.post(boost::bind(&future_selector_body::wait_event, this, dependency_eraser_info->iterator));
-					throw boost::expired_slot();
+					connection->disconnect();
+					return;
 				}
 			}
 			void connect_to_dependency(typename dependencies_type::iterator dep_it)
@@ -233,18 +237,14 @@ namespace poet
 				eraser_info->iterator_valid = true;
 				eraser_info->waiter_connection = _waiter_callbacks.observe(body->waiter_callbacks());
 
+				boost::shared_ptr<boost::signals2::connection> conn(new boost::signals2::connection);
 				typedef typename future_body_untyped_base::update_signal_type::slot_type update_slot_type;
 				update_slot_type update_slot(&future_selector_body::check_dependency, this,
-					make_weak(body), eraser_info);
+					make_weak(body), eraser_info, conn);
 				update_slot.track(this->shared_from_this());
-				body->connectUpdate(update_slot);
+				*conn = body->connectUpdate(update_slot);
 				// deal with futures which completed before we got them
-				try
-				{
-					update_slot();
-				}
-				catch(const boost::expired_slot &)
-				{}
+				update_slot();
 			}
 
 			waiter_event_queue _waiter_callbacks;
@@ -320,19 +320,14 @@ namespace poet
 				InputIterator it;
 				for(it = future_begin; it != future_end; ++it)
 				{
+					boost::shared_ptr<boost::signals2::connection> conn(new boost::signals2::connection);
 					typedef update_signal_type::slot_type update_slot_type;
 					update_slot_type update_slot(&future_select_body::check_dependency, new_object.get(),
-						make_weak(get_future_body(*it)));
+						make_weak(get_future_body(*it)), conn);
 					update_slot.track(new_object);
-					get_future_body(*it)->connectUpdate(update_slot);
-					try
-					{
-						new_object->check_dependency(get_future_body(*it));
-					}
-					catch(const boost::expired_slot&)
-					{
-						break;
-					}
+					*conn = get_future_body(*it)->connectUpdate(update_slot);
+					update_slot();
+					if(conn->connected() == false) break;
 
 					new_object->waiter_callbacks().observe(get_future_body(*it)->waiter_callbacks());
 
@@ -350,12 +345,14 @@ namespace poet
 
 			mutable future_body_dependency_type _first_complete_dependency;
 		private:
-			void check_dependency(const boost::weak_ptr<future_body_untyped_base> &weak_dependency) const
+			void check_dependency(const boost::weak_ptr<future_body_untyped_base> &weak_dependency,
+				const boost::shared_ptr<boost::signals2::connection> &connection) const
 			{
 				boost::shared_ptr<future_body_untyped_base> dependency(weak_dependency);
 				if(dependency == false)
 				{
-					throw boost::expired_slot();
+					connection->disconnect();
+					return;
 				}
 				bool emit_signal = false;
 				{
@@ -375,7 +372,8 @@ namespace poet
 				{
 					this->_updateSignal();
 					_waiter_callbacks.close_posting();
-					throw boost::expired_slot();
+					connection->disconnect();
+					return;
 				}
 			}
 			bool nolock_ready() const

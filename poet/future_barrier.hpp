@@ -137,19 +137,14 @@ namespace poet
 				unsigned i = 0;
 				for(it = future_begin; it != future_end; ++it, ++i)
 				{
+					boost::shared_ptr<boost::signals2::connection> conn(new boost::signals2::connection);
 					owner->_dependency_completes.push_back(false);
-					update_signal_type::slot_type update_slot(&future_barrier_body_base::check_dependency, owner.get(),
-						make_weak(get_future_body(*it)), i);
+					update_signal_type::slot_type update_slot(&future_barrier_body_base::check_dependency,
+						owner.get(), make_weak(get_future_body(*it)), i, conn);
 					update_slot.track(owner);
-					get_future_body(*it)->connectUpdate(update_slot);
-					try
-					{
-						owner->check_dependency(get_future_body(*it), i);
-					}
-					catch(const boost::expired_slot &)
-					{
-						break;
-					}
+					*conn = get_future_body(*it)->connectUpdate(update_slot);
+					owner->check_dependency(get_future_body(*it), i, conn);
+					if(conn->connected() == false) break;
 
 					owner->waiter_callbacks().observe(get_future_body(*it)->waiter_callbacks());
 				}
@@ -185,7 +180,9 @@ namespace poet
 				}
 				this->_updateSignal();
 			}
-			void check_dependency(const boost::weak_ptr<future_body_untyped_base > &weak_dependency, unsigned dependency_index)
+			void check_dependency(const boost::weak_ptr<future_body_untyped_base > &weak_dependency,
+				unsigned dependency_index,
+				const boost::shared_ptr<boost::signals2::connection> &connection)
 			{
 				boost::shared_ptr<future_body_untyped_base> dependency(weak_dependency);
 				exception_ptr dependency_exception;
@@ -222,7 +219,7 @@ namespace poet
 				{
 					_waiter_callbacks.post(boost::bind(&future_barrier_body_base::waiter_event, this, dependency_exception));
 					_waiter_callbacks.close_posting();
-					throw boost::expired_slot();
+					connection->disconnect();
 				}
 			}
 			bool check_if_complete(boost::unique_lock<boost::mutex> *lock) const

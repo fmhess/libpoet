@@ -49,11 +49,11 @@ namespace poet
 		public:
 			typedef typename boost::function_traits<Signature>::result_type passive_result_type;
 			typedef method_request_base base_type;
-			typedef typename boost::slot<Signature> passive_slot_type;
+			typedef typename boost::signals2::slot<Signature> passive_slot_type;
 
 			POET_AF_METHOD_REQUEST_CLASS_NAME(const promise<passive_result_type> &returnValue,
 				POET_ACTIVE_FUNCTION_FULL_ARGS(POET_ACTIVE_FUNCTION_NUM_ARGS, Signature) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
-				const boost::shared_ptr<boost::slot<Signature> > &passive_function): _return_value(returnValue),
+				const boost::shared_ptr<boost::signals2::slot<Signature> > &passive_function): _return_value(returnValue),
 				POET_REPEATED_ARG_CONSTRUCTOR(POET_ACTIVE_FUNCTION_NUM_ARGS, arg) BOOST_PP_COMMA_IF(POET_ACTIVE_FUNCTION_NUM_ARGS)
 				_passive_function(passive_function)
 			{}
@@ -103,7 +103,7 @@ namespace poet
 			// ...
 			// typename poet::future<boost::function_traits<Signature>::argN_type> _argN;
 			BOOST_PP_REPEAT(POET_ACTIVE_FUNCTION_NUM_ARGS, POET_ACTIVE_FUNCTION_ARG_DECLARATION, Signature)
-			boost::shared_ptr<boost::slot<Signature> > _passive_function;
+			boost::shared_ptr<boost::signals2::slot<Signature> > _passive_function;
 		};
 
 		template<typename Signature>
@@ -112,7 +112,7 @@ namespace poet
 		public:
 			typedef typename boost::function_traits<Signature>::result_type passive_result_type;
 			typedef future<passive_result_type> result_type;
-			typedef boost::slot<Signature> passive_slot_type;
+			typedef boost::signals2::slot<Signature> passive_slot_type;
 
 			POET_ACTIVE_FUNCTION_CLASS_NAME()
 			{}

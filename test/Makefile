@@ -16,7 +16,7 @@ PROGRAMS = active_function_test active_object_test acyclic_mutex_test \
 	not_default_constructible_test promise_count_test timed_join_test undead_active_function_test
 
 CPPFLAGS= -pthread -I.. -I$(THREAD_SAFE_SIGNALS_DIR) -I$(BOOST_INC_DIR)
-CXXFLAGS= -O0 -g -Wall
+CXXFLAGS= -O0 -Wall
 LDFLAGS= -L$(BOOST_LIB_DIR) -lboost_thread-gcc41-mt -pthread
 .PHONY: all clean dep test valgrind_test
 
