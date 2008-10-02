@@ -361,14 +361,18 @@ namespace poet
 				typedef typename future_body_untyped_base::update_slot_type slot_type;
 				slot_type update_slot(&future_body_proxy::handle_actual_body_complete, new_object.get());
 				update_slot.track(new_object);
-				new_object->_actualFutureBody->connectUpdate(update_slot);
+				boost::signals2::connection conn;
+				conn = new_object->_actualFutureBody->connectUpdate(update_slot);
 				if(actualFutureBody->ready() || actualFutureBody->get_exception_ptr())
 				{
 					try
 					{
 						update_slot();
 					}
-					catch(const boost::signals2::expired_slot &) {}
+					catch(const boost::signals2::expired_slot &)
+					{
+						conn.disconnect();
+					}
 					/* we don't need to bother observing actualFutureBody's waiter_event_queue
 					if it was already complete */
 					return new_object;
@@ -548,14 +552,18 @@ namespace poet
 				void future_fulfill_guts(const boost::shared_ptr<U> &fulfiller_body,
 				const future_body_untyped_base::update_slot_type &update_slot)
 			{
-				fulfiller_body->connectUpdate(update_slot);
+				boost::signals2::connection conn;
+				conn = fulfiller_body->connectUpdate(update_slot);
 				if(fulfiller_body->ready() || fulfiller_body->get_exception_ptr())
 				{
 					try
 					{
 						update_slot();
 					}
-					catch(const boost::signals2::expired_slot &) {}
+					catch(const boost::signals2::expired_slot &)
+					{
+						conn.disconnect();
+					}
 					/* if fulfiller_body was already complete, we are finished. */
 					return;
 				}

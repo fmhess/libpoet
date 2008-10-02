@@ -141,13 +141,15 @@ namespace poet
 					update_signal_type::slot_type update_slot(&future_barrier_body_base::check_dependency,
 						owner.get(), make_weak(get_future_body(*it)), i);
 					update_slot.track(owner);
-					get_future_body(*it)->connectUpdate(update_slot);
+					boost::signals2::connection conn;
+					conn = get_future_body(*it)->connectUpdate(update_slot);
 					try
 					{
 						update_slot();
 					}
 					catch(const boost::signals2::expired_slot &)
 					{
+						conn.disconnect();
 						break;
 					}
 

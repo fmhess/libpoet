@@ -237,13 +237,17 @@ namespace poet
 				update_slot_type update_slot(&future_selector_body::check_dependency, this,
 					make_weak(body), eraser_info);
 				update_slot.track(this->shared_from_this());
-				body->connectUpdate(update_slot);
+				boost::signals2::connection conn;
+				conn = body->connectUpdate(update_slot);
 				// deal with futures which completed before we got them
 				try
 				{
 					update_slot();
 				}
-				catch(const boost::signals2::expired_slot &) {}
+				catch(const boost::signals2::expired_slot &)
+				{
+					conn.disconnect();
+				}
 			}
 
 			waiter_event_queue _waiter_callbacks;
@@ -323,13 +327,15 @@ namespace poet
 					update_slot_type update_slot(&future_select_body::check_dependency, new_object.get(),
 						make_weak(get_future_body(*it)));
 					update_slot.track(new_object);
-					get_future_body(*it)->connectUpdate(update_slot);
+					boost::signals2::connection conn;
+					conn = get_future_body(*it)->connectUpdate(update_slot);
 					try
 					{
 						update_slot();
 					}
 					catch(const boost::signals2::expired_slot &)
 					{
+						conn.disconnect();
 						break;
 					}
 
