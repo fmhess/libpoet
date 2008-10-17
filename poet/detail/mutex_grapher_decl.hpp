@@ -17,6 +17,7 @@
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/optional.hpp>
+#include <boost/thread/once.hpp>
 #include <boost/thread/tss.hpp>
 #include <boost/noncopyable.hpp>
 #include <cassert>
@@ -37,6 +38,14 @@ namespace poet
 	{
 		template<typename AcyclicMutex>
 		class acyclic_scoped_lock;
+
+		template<typename AssociatedClass> class template_static_once_flag
+		{
+		public:
+			static boost::once_flag flag;
+		};
+		template<typename AssociatedClass>
+			boost::once_flag template_static_once_flag<AssociatedClass>::flag = BOOST_ONCE_INIT;
 	};
 
 	class mutex_grapher: public boost::noncopyable
@@ -141,10 +150,14 @@ namespace poet
 		// static functions
 		static monitor_type& instance()
 		{
-			boost::mutex::scoped_lock lock(detail::template_static<mutex_grapher, boost::mutex>::object);
-			static monitor_type grapher;
-			if(grapher == 0) grapher.reset(new mutex_grapher);
-			return grapher;
+			static monitor_type *grapher;
+			boost::call_once(detail::template_static_once_flag<mutex_grapher>::flag,
+				boost::bind(&mutex_grapher::init_grapher_instance, &grapher));
+			return *grapher;
+		}
+		static void init_grapher_instance(monitor_type **grapher)
+		{
+			*grapher = new monitor_type(new mutex_grapher);
 		}
 		inline static void default_cycle_handler();
 
@@ -198,18 +211,23 @@ namespace poet
 			// static functions
 			static monitor_type& instance()
 			{
-				static monitor_type finder;
+				static monitor_type *finder;
 
-				boost::mutex::scoped_lock lock(_singleton_mutex);
-				if(finder == 0) finder.reset(new vertex_finder);
-				return finder;
+				boost::call_once(_instance_init_flag,
+					boost::bind(&vertex_finder::init_finder_instance, &finder));
+
+				return *finder;
+			}
+			static void init_finder_instance(monitor_type **finder)
+			{
+				*finder = new monitor_type(new vertex_finder);
 			}
 
 			vertex_map_type _vertex_map;
-			static boost::mutex _singleton_mutex;
+			static boost::once_flag _instance_init_flag;
 		};
 		template<typename Key, typename KeyCompare>
-		boost::mutex vertex_finder<Key, KeyCompare>::_singleton_mutex;
+			boost::once_flag vertex_finder<Key, KeyCompare>::_instance_init_flag;
 	};
 };
 
