@@ -1,6 +1,5 @@
-THREAD_SAFE_SIGNALS_DIR=/home/fhess/svn/thread_safe_signals
-BOOST_INC_DIR=/usr/local/boost_r45175/include/boost-1_35
-BOOST_LIB_DIR=/usr/local/lib
+BOOST_INC_DIR=/home/fhess/svn/boost_switch
+BOOST_LIB_DIR=/home/fhess/svn/boost_switch/stage/lib
 CXX=g++
 #set CC since it is used for linking .o files by built-in rule
 CC=$(CXX)
@@ -15,9 +14,9 @@ PROGRAMS = active_function_test active_object_test acyclic_mutex_test \
 	monitor_test new_mutex_api_test \
 	not_default_constructible_test promise_count_test timed_join_test undead_active_function_test
 
-CPPFLAGS= -pthread -I.. -I$(THREAD_SAFE_SIGNALS_DIR) -I$(BOOST_INC_DIR)
+CPPFLAGS= -pthread -I.. -I$(BOOST_INC_DIR)
 CXXFLAGS= -O0 -Wall
-LDFLAGS= -L$(BOOST_LIB_DIR) -lboost_thread-gcc41-mt -pthread
+LDFLAGS= -L$(BOOST_LIB_DIR) -lboost_thread-gcc43-mt -pthread
 .PHONY: all clean dep test valgrind_test
 
 all: $(PROGRAMS)
