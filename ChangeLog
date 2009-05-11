@@ -1,3 +1,72 @@
+2009-05-11 16:00  tag v2009_05_11
+
+2009-05-11 16:00  fmhess
+
+	* doc/boostbook/: Makefile, libpoet_doc.xml: Updated dependencies.
+	  We now depend on Signals2 from boost 1.39 instead of
+	  thread_safe_signals.
+
+2009-03-30 11:49  fmhess
+
+	* test/Makefile: Updated my Makefile to deal with Signals2
+	  inclusion into boost.
+
+2008-10-17 09:41  fmhess
+
+	* poet/detail/mutex_grapher_decl.hpp: Fixed some "static
+	  initialization order fiasco" with mutex_grapher singletons.
+
+2008-10-01 22:09  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp: Added
+	  some probably not really needed manual disconnections when
+	  initial call of slot throws expired_slot.
+
+2008-10-01 21:57  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp: Went
+	  back to throwing expired_slot for thread-safe slot
+	  self-disconnection.
+
+2008-10-01 13:47  fmhess
+
+	* poet/active_function.hpp, poet/active_object.hpp,
+	  poet/exception_ptr.cpp, poet/future.hpp, poet/future_barrier.hpp,
+	  poet/future_select.hpp, poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, test/Makefile,
+	  test/active_function_test.cpp: Ported from thread_safe_signals to
+	  signals2 API.  Docs still need some updating.
+
+2008-09-22 18:28  fmhess
+
+	* poet/monitor_locks.hpp: Added a workaround for msvc8 compiler bug
+
+2008-08-28 16:47  fmhess
+
+	* doc/boostbook/future_hpp.xml, poet/future.hpp: Tweaked
+	  promise::fulfill to avoid ambiguous overload problems introduced
+	  with recent support for implicit conversion from U to future<T>.
+
+2008-08-27 11:16  fmhess
+
+	* doc/boostbook/future_hpp.xml, poet/future.hpp: Added support for
+	  implicit conversion from any type U to future<T> as long as U is
+	  implicitly convertible to T.
+
+2008-06-25 10:44  tag v2008_06_25
+
+2008-06-25 10:44  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp,
+	  detail/active_object.cpp: Added some inline keywords to fix
+	  multiple definition problems.
+
+2008-06-19 10:14  tag v2008_06_19
+
+2008-06-19 10:14  fmhess
+
+	* ChangeLog: Updated ChangeLog with "cvs2cl -T"
+
 2008-06-18 16:48  fmhess
 
 	* poet/active_object.hpp, poet/future.hpp, poet/future_barrier.hpp,
