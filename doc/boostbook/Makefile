@@ -1,5 +1,5 @@
 PROJECT_ROOT="../../.."
-BOOST_SRC_DIR=~/svn/boost/
+BOOST_SRC_DIR=~/svn/boost_docs/
 BOOSTBOOK_TOOL_DIR=$(BOOST_SRC_DIR)/tools/boostbook
 
 XML_SRCS=\
