@@ -16,8 +16,6 @@
 #include <boost/bind.hpp>
 #include <boost/config.hpp>
 #include <boost/function.hpp>
-#include <boost/ref.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/exceptions.hpp>
 #include <boost/thread/locks.hpp>
@@ -180,7 +178,7 @@ namespace poet
 			template<typename M, typename MH, typename L>
 			friend class lock_wrapper;
 #endif	// BOOST_NO_MEMBER_TEMPLATE_FRIENDS
-			
+
 			void set_wait_function()
 			{
 				if(_lock.owns_lock())
