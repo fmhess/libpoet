@@ -25,7 +25,7 @@ namespace poet
 		inline exception_ptr method_request_future_exception_handler(const boost::shared_ptr<method_request_base> &request,
 			const exception_ptr &)
 		{
-			exception_ptr ep = copy_exception(request);
+			exception_ptr ep = poet::copy_exception(request);
 			return ep;
 		};
 
