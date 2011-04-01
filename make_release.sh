@@ -6,7 +6,7 @@ TOP_DIR=$(pwd)
 TOP_DIST_DIR=$TOP_DIR/test/libpoet-$(date +%F)
 
 cd test
-cvs export -rHEAD libpoet
+svn export -rHEAD https://svn.boost.org/svn/boost/sandbox/libpoet/trunk libpoet
 mv libpoet $TOP_DIST_DIR
 cd $TOP_DIST_DIR/doc
 cp -a $TOP_DIR/doc/style .
