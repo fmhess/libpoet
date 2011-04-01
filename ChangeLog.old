@@ -1,0 +1,1979 @@
+2009-05-11 16:00  tag v2009_05_11
+
+2009-05-11 16:00  fmhess
+
+	* doc/boostbook/: Makefile, libpoet_doc.xml: Updated dependencies.
+	  We now depend on Signals2 from boost 1.39 instead of
+	  thread_safe_signals.
+
+2009-03-30 11:49  fmhess
+
+	* test/Makefile: Updated my Makefile to deal with Signals2
+	  inclusion into boost.
+
+2008-10-17 09:41  fmhess
+
+	* poet/detail/mutex_grapher_decl.hpp: Fixed some "static
+	  initialization order fiasco" with mutex_grapher singletons.
+
+2008-10-01 22:09  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp: Added
+	  some probably not really needed manual disconnections when
+	  initial call of slot throws expired_slot.
+
+2008-10-01 21:57  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp: Went
+	  back to throwing expired_slot for thread-safe slot
+	  self-disconnection.
+
+2008-10-01 13:47  fmhess
+
+	* poet/active_function.hpp, poet/active_object.hpp,
+	  poet/exception_ptr.cpp, poet/future.hpp, poet/future_barrier.hpp,
+	  poet/future_select.hpp, poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, test/Makefile,
+	  test/active_function_test.cpp: Ported from thread_safe_signals to
+	  signals2 API.  Docs still need some updating.
+
+2008-09-22 18:28  fmhess
+
+	* poet/monitor_locks.hpp: Added a workaround for msvc8 compiler bug
+
+2008-08-28 16:47  fmhess
+
+	* doc/boostbook/future_hpp.xml, poet/future.hpp: Tweaked
+	  promise::fulfill to avoid ambiguous overload problems introduced
+	  with recent support for implicit conversion from U to future<T>.
+
+2008-08-27 11:16  fmhess
+
+	* doc/boostbook/future_hpp.xml, poet/future.hpp: Added support for
+	  implicit conversion from any type U to future<T> as long as U is
+	  implicitly convertible to T.
+
+2008-06-25 10:44  tag v2008_06_25
+
+2008-06-25 10:44  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp,
+	  detail/active_object.cpp: Added some inline keywords to fix
+	  multiple definition problems.
+
+2008-06-19 10:14  tag v2008_06_19
+
+2008-06-19 10:14  fmhess
+
+	* ChangeLog: Updated ChangeLog with "cvs2cl -T"
+
+2008-06-18 16:48  fmhess
+
+	* poet/active_object.hpp, poet/future.hpp, poet/future_barrier.hpp,
+	  poet/future_select.hpp, poet/detail/event_queue.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  test/active_function_test.cpp,
+	  test/future_combining_barrier_test.cpp,
+	  test/promise_count_test.cpp: Fixed some compile warnings/errors
+	  on msvc9.
+
+2008-06-18 14:31  fmhess
+
+	* doc/boostbook/future_select_hpp.xml, poet/future_select.hpp: Got
+	  rid of use of non-standard ssize_t.
+
+2008-06-18 12:36  fmhess
+
+	* doc/boostbook/active_function_hpp.xml, poet/active_function.hpp,
+	  poet/detail/active_function_template.hpp,
+	  test/active_function_test.cpp: Added support for default
+	  constructing active_functions.
+
+2008-06-18 12:29  fmhess
+
+	* examples/active_object_example.cpp: Replaced
+	  active_object_example.cpp with a new one that compiles after
+	  recent changes, and is simpler.
+
+2008-06-18 11:39  fmhess
+
+	* doc/boostbook/future_select_hpp.xml: Added a mention of
+	  future_selector thread-safety.
+
+2008-06-18 11:25  fmhess
+
+	* doc/boostbook/active_function_hpp.xml,
+	  doc/boostbook/libpoet_doc.xml, examples/transform.cpp: Added
+	  transform.cpp example.
+
+2008-06-18 11:12  fmhess
+
+	* examples/pipeline.cpp: Make use of std::plus and std::multiplies.
+
+2008-06-18 09:40  fmhess
+
+	* doc/boostbook/future_select_hpp.xml: Added documentation for
+	  future_selector.
+
+2008-06-18 09:40  fmhess
+
+	* doc/boostbook/future_barrier_hpp.xml: Added documentation for
+	  poet::null_type, and added a couple "purpose" elements.
+
+2008-06-17 15:20  fmhess
+
+	* poet/future_select.hpp, poet/detail/identity.hpp,
+	  test/future_selector_test.cpp: Added test for and fixed overload
+	  of future_selector::push.  Added value_type typedef to
+	  future_selector.
+
+2008-06-17 09:32  fmhess
+
+	* poet/: null_type.hpp, detail/nonvoid.hpp: Split poet::null_type
+	  out of detail/nonvoid.hpp into its own header, since it will need
+	  to be documented as part of the pubic interface.
+
+2008-06-17 09:23  fmhess
+
+	* doc/boostbook/: future_barrier_hpp.xml, future_select_hpp.xml:
+	  Added documentation of FUTURE_BARRIER_MAX_ARGS and
+	  FUTURE_SELECT_MAX_ARGS macros.
+
+2008-06-17 09:05  fmhess
+
+	* doc/boostbook/future_barrier_hpp.xml,
+	  doc/boostbook/future_select_hpp.xml,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  poet/detail/future_select_template.hpp,
+	  test/future_combining_barrier_test.cpp: Decided to get rid of 1
+	  argument future_barrier and future_select, which were only
+	  provided to be consistent with future_combining_barrier.  Renamed
+	  some macros to differentiate them in future_barrier_template.hpp
+	  and future_select_template.hpp.
+
+2008-06-16 15:48  fmhess
+
+	* doc/boostbook/future_barrier_hpp.xml: Added missing end para tag.
+
+2008-06-16 15:46  fmhess
+
+	* doc/boostbook/: future_barrier_hpp.xml, future_select_hpp.xml:
+	  Added documentation for future_combining barrier.  Corrected
+	  documented names for future_barrier_range and
+	  future_select_range.
+
+2008-06-16 14:01  fmhess
+
+	* doc/boostbook/future_hpp.xml: Added documentation for
+	  promise::has_future, reset, and swap.
+
+2008-06-16 14:00  fmhess
+
+	* poet/future.hpp, test/promise_count_test.cpp: Fixed
+	  promise<void>::has_future for void promise constructed from a
+	  non-void promise.
+
+2008-06-16 11:56  fmhess
+
+	* doc/boostbook/active_function_hpp.xml: Removed mentions of guards
+	  and wake from active_function documentation, as they no longer
+	  exist.
+
+2008-06-16 10:59  fmhess
+
+	* doc/boostbook/active_object_hpp.xml: Updated active_object.hpp
+	  documentation to reflect API changes caused by switchover to
+	  waiting on futures for scheduling instead of relying on signals.
+
+2008-06-16 10:49  fmhess
+
+	* poet/active_object.hpp, poet/detail/active_object.cpp,
+	  test/active_function_test.cpp: Got rid of now useless timeout
+	  parameter of scheduler.
+
+2008-06-16 10:49  fmhess
+
+	* test/future_test.cpp: Expanded swap test very slightly.
+
+2008-06-16 09:35  fmhess
+
+	* doc/boostbook/future_hpp.xml: Added documentation for
+	  future::join, swap, and default copy constructor and assignment
+	  operators.
+
+2008-06-13 17:23  fmhess
+
+	* doc/boostbook/future_hpp.xml: Removed documentation for some
+	  member functions which no longer exist.
+
+2008-06-12 16:34  fmhess
+
+	* poet/future.hpp, test/future_test.cpp: Added future::swap.
+
+2008-06-12 15:16  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  test/future_combining_barrier_test.cpp: Added some tests of
+	  futures returned by future barriers properly throwing their
+	  exceptions, and fixed problems they reported.
+
+2008-06-12 13:59  fmhess
+
+	* poet/future_barrier.hpp, poet/future_select.hpp,
+	  test/future_waits_test.cpp: Added some tests for
+	  future_select_range, future_barrier_range, and
+	  future_combining_barrier_range for the case of an empty input
+	  range, and fixed their behavior to pass tests.
+
+2008-06-12 11:54  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp, poet/future_select.hpp,
+	  test/Makefile, test/lazy_future_test.cpp: Disconnect
+	  waiter_event_queue connections once they are no longer needed.
+	  Added test for lazy evaluation behavior of future_select and
+	  future_selector.
+
+2008-06-11 14:30  fmhess
+
+	* poet/future.hpp: Disconnect update connection for
+	  future_body_proxy when observed future completes.
+
+2008-06-11 13:22  fmhess
+
+	* poet/: future.hpp, future_select.hpp: Added factory functions for
+	  future_body<T> where its waiter_event_queue is now initialized.
+
+2008-06-11 11:44  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp:
+	  Refactored setups of waiter_event_queues observing other
+	  waiter_event_queues.
+
+2008-06-11 11:01  fmhess
+
+	* poet/: future_barrier.hpp, future_select.hpp: Did a little better
+	  cleaning up connections as soon as they are no longer needed.
+
+2008-06-11 10:22  fmhess
+
+	* test/active_function_test.cpp: Fixed bug in test of
+	  in_order_activation_queue.
+
+2008-06-11 10:18  fmhess
+
+	* poet/future.hpp, poet/future_select.hpp, test/future_test.cpp:
+	  Fixed promise::fulfill when taking a lazy future argument
+
+2008-06-10 12:57  fmhess
+
+	* test/active_function_test.cpp: Added a new test for
+	  active_function using in_order_activiation_queue (it currently
+	  fails).  Cleaned up output of active_function_test.
+
+2008-06-10 11:38  fmhess
+
+	* test/future_test.cpp: Added new test that exposes recently
+	  introduced bug in promise::fulfill when argument is a future.
+
+2008-06-10 10:37  fmhess
+
+	* poet/future.hpp, test/future_test.cpp: Added test to
+	  future_test.cpp and made it pass.  Made future_test less verbose
+	  in its output.
+
+2008-06-10 10:16  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp: Got rid
+	  of get_weak_future_body by using make_weak.
+
+2008-06-10 10:15  fmhess
+
+	* poet/detail/utility.hpp: Added missing header include guard.
+
+2008-06-10 10:15  fmhess
+
+	* test/Makefile: Added target to run test programs in valgrind.
+
+2008-06-10 10:07  fmhess
+
+	* poet/future_select.hpp, poet/detail/utility.hpp,
+	  test/future_selector_test.cpp: Implemented copy
+	  construction/assignment for future_selector.
+
+2008-06-09 15:18  fmhess
+
+	* poet/future.hpp, test/future_waits_test.cpp: Removed
+	  future::connect_update and future::cancel from the public
+	  interface.
+
+2008-06-09 15:02  fmhess
+
+	* poet/active_function.hpp, poet/active_object.hpp,
+	  poet/future.hpp, poet/future_select.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, test/active_function_test.cpp,
+	  test/active_object_test.cpp, test/future_selector_test.cpp,
+	  test/undead_active_function_test.cpp: Converted scheduler
+	  entirely over to waiting on futures instead of relying on
+	  completion signals.  Simplified method
+	  requests/scheduler/active_function by throwing out less useful
+	  features that were difficult to implement cleanly with the new
+	  scheme (guard functions, manual polling of scheduler,
+	  cancellation of active_function method request through returned
+	  future).  Added promise::reset and swap.  Added future::join.
+	  Added future_selector::size, reset, and swap.  Fixed logic bug in
+	  future_selector::pop_selected.
+
+2008-06-09 14:51  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Updated links to active
+	  object/monitor papers.
+
+2008-06-08 20:34  fmhess
+
+	* test/future_combining_barrier_test.cpp, poet/future_barrier.hpp,
+	  poet/detail/future_barrier_template.hpp,
+	  poet/detail/identity.hpp, test/future_waits_test.cpp: Added
+	  ExceptionHandler parameter to future_combining_barrier, which
+	  generates exception_ptr for returned future from exception_ptr of
+	  input future.
+
+2008-06-05 16:52  fmhess
+
+	* poet/future_select.hpp, test/future_selector_test.cpp: Added new
+	  test for future_selector regarding cancelling futures obtained
+	  from a future_selector which no longer exists.  Made changes so
+	  test passes.
+
+2008-06-05 12:21  fmhess
+
+	* poet/active_function.hpp, poet/active_object.hpp,
+	  poet/exception_ptr.cpp, poet/future.hpp, poet/future_barrier.hpp,
+	  poet/future_select.hpp, poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, poet/detail/event_queue.hpp,
+	  poet/detail/future_barrier_template.hpp, test/Makefile,
+	  test/active_object_test.cpp,
+	  test/future_combining_barrier_test.cpp,
+	  test/future_selector_test.cpp: Added support for future_selector.
+	  Futures now execute all user callback code in future-waiting
+	  threads (type conversions and combiners from
+	  future_combining_barrier).  That means some futures are "lazy"
+	  now, and will not emit their complete signals until waited
+	  on/queried.
+
+2008-06-03 10:25  fmhess
+
+	* test/future_combining_barrier_test.cpp: Replaced convert with
+	  identity.
+
+2008-06-02 15:46  fmhess
+
+	* test/: Makefile, future_combining_barrier_test.cpp: Added new
+	  test program.
+
+2008-05-29 17:14  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp,
+	  detail/future_barrier_template.hpp: Fixed problems with
+	  thread-unsafe manual disconnects.
+
+2008-05-29 11:19  fmhess
+
+	* poet/future.hpp, test/promise_count_test.cpp: Added
+	  promise::has_future (not yet documented).
+
+2008-05-29 10:41  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp, poet/future_select.hpp,
+	  poet/detail/future_barrier_template.hpp, poet/detail/nonvoid.hpp,
+	  test/future_waits_test.cpp: Renamed poet::bogus_void to
+	  poet::null_type.  future_combining_barrier functions work now.
+	  Dealt with explosion of friend classes to futures.
+
+2008-05-28 21:31  fmhess
+
+	* poet/detail/active_function_template.hpp: Fixed compile error
+	  caused by last commit.
+
+2008-05-28 21:26  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp,
+	  detail/active_function_template.hpp,
+	  detail/future_barrier_template.hpp,
+	  detail/preprocessor_macros.hpp: Added future_combining_barrier
+	  free functions that accept heterogeneous input futures
+	  (untested).
+
+2008-05-28 17:07  fmhess
+
+	* poet/: future.hpp, future_barrier.hpp, future_select.hpp,
+	  detail/nonvoid.hpp: Using empty bogus_void class as place holder
+	  for values from future<void>, instead of using int.  Trying to
+	  make some changes to handle future<void> specializations without
+	  so much work.
+
+2008-05-28 16:03  fmhess
+
+	* poet/future.hpp, poet/future_barrier.hpp, poet/future_select.hpp,
+	  poet/detail/nonvoid.hpp, test/future_waits_test.cpp:
+	  future_combining_barrier_range seems to be working now.
+
+2008-05-27 13:13  fmhess
+
+	* doc/boostbook/Makefile, doc/boostbook/future_barrier_hpp.xml,
+	  doc/boostbook/future_select_hpp.xml,
+	  doc/boostbook/future_waits_hpp.xml,
+	  doc/boostbook/libpoet_reference.xml, poet/future.hpp,
+	  poet/future_barrier.hpp, poet/future_select.hpp,
+	  poet/future_waits.hpp, poet/detail/future_barrier_template.hpp,
+	  poet/detail/future_select_template.hpp,
+	  poet/detail/future_waits_template.hpp: Split future_waits.hpp
+	  into future_barrier.hpp and future_select.hpp.  Added beginnings
+	  of support for future barrier which takes a combiner function to
+	  return a non-void return value.
+
+2008-05-27 11:17  fmhess
+
+	* doc/boostbook/future_waits_hpp.xml: Some more corrections for
+	  updated future_select prototype.
+
+2008-05-27 09:55  fmhess
+
+	* poet/future_waits.hpp, test/future_waits_test.cpp: Fixed emission
+	  of signals by composite futures produced by
+	  future_barrier/future_select.
+
+2008-05-27 09:54  fmhess
+
+	* poet/future.hpp: Moved a condition::notify_all inside locked
+	  section.
+
+2008-05-26 19:02  fmhess
+
+	* doc/boostbook/future_waits_hpp.xml: Updated with changes to
+	  future_select prototype.
+
+2008-05-25 19:43  fmhess
+
+	* poet/future.hpp, poet/future_waits.hpp,
+	  poet/detail/future_waits_template.hpp,
+	  test/future_waits_test.cpp: Changed prototype of future_select to
+	  take input future with a uniform type and return a future of the
+	  same type, instead of accepting heterogeneous input futures and
+	  returning a future<void>.  Also renamed future_barrier and
+	  future_select overloads that accept iteratotors to avoid
+	  ambiguous overload problems.	Still need to update documentation
+	  to reflect changes.
+
+2008-05-23 18:47  fmhess
+
+	* poet/active_function.hpp: Resolved ambiguous overload problem
+	  seen on msvc 9.
+
+2008-05-23 18:47  fmhess
+
+	* examples/active_object_example.cpp: Removed spurious typename.
+
+2008-05-23 17:57  fmhess
+
+	* test/timed_join_test.cpp: More unistd.h cleanup.
+
+2008-05-23 17:54  fmhess
+
+	* test/new_mutex_api_test.cpp: Catch lock error by const instead of
+	  non-const reference.
+
+2008-05-23 17:52  fmhess
+
+	* poet/monitor_locks.hpp: Fixed compile error on msvc 9.
+
+2008-05-23 17:40  fmhess
+
+	* test/monitor_test.cpp: No __PRETTY_FUNCTION__ on msvc.
+
+2008-05-23 17:31  fmhess
+
+	* test/future_void_test.cpp: Fixed msvc compile warning.
+
+2008-05-23 17:29  fmhess
+
+	* test/: future_test.cpp, monitor_test.cpp, new_mutex_api_test.cpp,
+	  timed_join_test.cpp, undead_active_function_test.cpp: Got rid of
+	  more non-portable unistd.h usage.
+
+2008-05-23 17:17  fmhess
+
+	* poet/monitor_locks.hpp: Fixed compile error on msvc 9.
+
+2008-05-23 17:16  fmhess
+
+	* poet/monitor_ptr.hpp: Added private monitor_ptr::get_syncer
+	  method which throws if _syncer member is null.
+
+2008-05-23 17:04  fmhess
+
+	* poet/detail/mutex_grapher.ipp: Fixed compile error due to lack of
+	  __PRETTY_FUNCTION__ on msvc.	Fixed msvc compile warning due to
+	  unused parameter.
+
+2008-05-23 16:55  fmhess
+
+	* poet/detail/mutex_grapher.ipp: Removed include of stdint.h, which
+	  doesn't seem to be used.  If needed, use boost/stdint.hpp instead
+	  since msvc does support stdint.h.
+
+2008-05-23 16:48  fmhess
+
+	* test/active_object_test.cpp: Got rid of unix-ism (unistd.h)
+
+2008-05-23 16:32  fmhess
+
+	* test/active_function_test.cpp: Removed unix-ism (unistd.h)
+
+2008-05-23 14:04  fmhess
+
+	* poet/detail/active_function_template.hpp: Fixed compile error
+	  under msvc 9
+
+2008-05-23 14:03  fmhess
+
+	* poet/active_object.hpp: Fixed compiler warning under msvc 9.
+
+2008-05-23 12:50  fmhess
+
+	* poet/future_waits.hpp: Made future_select slightly more
+	  efficient.
+
+2008-05-21 17:02  fmhess
+
+	* poet/: future_waits.hpp, detail/future_waits_template.hpp: Fixed
+	  comments at tops of new future_waits files.
+
+2008-05-21 16:50  fmhess
+
+	* doc/boostbook/: future_hpp.xml, future_waits_hpp.xml,
+	  libpoet_reference.xml: Added some minimal documentation on
+	  future_barrier/future_select.
+
+2008-05-21 15:13  fmhess
+
+	* poet/future.hpp, poet/future_waits.hpp,
+	  poet/detail/future_waits_template.hpp, test/Makefile,
+	  test/future_waits_test.cpp: Added support for waiting on groups
+	  of futures (future_barrier and future_select).  No documentation
+	  yet.
+
+2008-05-20 16:39  fmhess
+
+	* poet/future.hpp: Replaced some scoped_lock with unique_lock.
+
+2008-05-20 15:31  fmhess
+
+	* poet/future.hpp: Added detail::bogus_future_void_type typedef,
+	  and fixed what appears to be a logic error in the template
+	  assignment operator of future<void>.
+
+2008-05-20 14:41  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: A little tweaking of the note
+	  on monitor_ptr's thread-safety.
+
+2008-05-20 14:41  fmhess
+
+	* doc/boostbook/active_function_hpp.xml: Documented the copy
+	  semantics of active_function.
+
+2008-05-19 13:23  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added note about monitor_ptr
+	  thread safety.
+
+2008-05-16 15:13  fmhess
+
+	* doc/boostbook/future_hpp.xml, poet/future.hpp,
+	  poet/detail/active_object.cpp, poet/detail/condition.hpp:
+	  Replaced use of obsoleted boost::xtime with boost::system_time.
+
+2008-05-16 11:46  tag v2008_05_16
+
+2008-05-16 11:46  fmhess
+
+	* ChangeLog: Regenerated ChangeLog with "cvs2cl -T"
+
+2008-05-16 11:42  fmhess
+
+	* README: Made some minor updates to README.
+
+2008-05-16 11:15  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Fixed version date of lib
+	  mentioned in docs.
+
+2008-05-15 16:22  fmhess
+
+	* examples/acyclic_mutex_demo.cpp: Updated acyclic_mutex example
+	  code to boost.thread 1.35 api.
+
+2008-05-15 15:44  fmhess
+
+	* examples/monitor_demo.cpp: Updated monitor example code.
+
+2008-05-15 13:40  fmhess
+
+	* doc/boostbook/acyclic_mutex_hpp.xml: Updated acyclic_mutex docs
+	  for boost.thread 1.35 api.
+
+2008-05-15 10:33  fmhess
+
+	* doc/boostbook/mutex_grapher_hpp.xml,
+	  poet/detail/mutex_grapher_decl.hpp: Changed
+	  mutex_grapher::scoped_lock to mutex_grapher::unique_lock, to
+	  follow new boost.thread api.
+
+2008-05-15 10:32  fmhess
+
+	* doc/boostbook/acyclic_mutex_base_hpp.xml: Fixed link to
+	  locking_order_graph typedef.
+
+2008-05-12 16:34  fmhess
+
+	* doc/boostbook/: monitor_hpp.xml, monitor_ptr_hpp.xml: Added
+	  wrappers for Boost.Thread mutex concepts to synopsis of monitor
+	  and monitor_ptr, and added some brief discussion of the concepts
+	  in the class descriptions.
+
+2008-05-12 14:35  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp: Made
+	  monitor::operator-> return a monitor_unique_lock instead of a
+	  monitor_ptr.	Updated monitor docs, including boost.thread 1.35
+	  api and other changes.
+
+2008-05-12 13:21  fmhess
+
+	* test/Makefile: Need extra $ for shell variable to escape
+	  makefile.
+
+2008-05-12 13:11  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml, poet/monitor_ptr.hpp: Got rid
+	  of unneeded monitor_ptr::call_proxy, and instead use
+	  monitor_unique_lock directly.
+
+2008-05-12 13:03  fmhess
+
+	* poet/monitor_locks.hpp: Need to call set_wait_function method
+	  after move-constructing a lock.
+
+2008-05-12 11:00  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Updated monitor_ptr docs wrt
+	  to changes to match boost.thread 1.35 api.
+
+2008-05-09 16:52  fmhess
+
+	* test/: Makefile, lock_move_test.cpp: Added lock_move_test.cpp
+
+2008-05-09 16:52  fmhess
+
+	* poet/monitor_locks.hpp: Fixed some subtle problems with
+	  moving/swapping locks and their associated monitors.
+
+2008-05-09 10:24  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added docs for free swap and
+	  move functions that take monitor locks as parameters.
+
+2008-05-09 09:11  fmhess
+
+	* poet/monitor_locks.hpp: Added monitor_type typedef to
+	  monitor_upgrade_to_unique_lock.
+
+2008-05-08 15:52  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Tweaked lock constructor
+	  descriptions.
+
+2008-05-08 15:39  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added documentation for
+	  monitor_upgrade_to_unique_lock.
+
+2008-05-08 13:38  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added docs for
+	  monitor_upgrade_lock.
+
+2008-05-08 11:26  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added default lock
+	  constructors to documentation.
+
+2008-05-08 11:12  fmhess
+
+	* poet/monitor_locks.hpp: Added default lock constructors.
+
+2008-05-08 11:04  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added missing assignment
+	  operator for monitor_unique_lock, and corrected a couple typos.
+	  Added documentation for monitor_shared_lock.
+
+2008-04-24 11:40  fmhess
+
+	* test/new_mutex_api_test.cpp: Added a little test for non-boost
+	  mutex with monitor_ptr and monitor_base
+
+2008-04-23 16:32  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Some updates to the front page of
+	  the documentation.
+
+2008-04-23 16:31  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Used "copy-assignment" element to
+	  document operator=, instead of "method" element.  Added
+	  documentation of additional assignment operator overload which
+	  suppresses default assignment operator.
+
+2008-04-23 16:30  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Used "copy-assignment" element
+	  to document assignment operator, instead of "method".
+
+2008-04-23 16:29  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added documentation for
+	  monitor_unique_lock.
+
+2008-04-23 11:18  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added monitor_ptr::swap
+	  documentation, and sorted public member functions.
+
+2008-04-23 11:06  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Updated monitor swap
+	  documentation.  Sorted some method documentation entries by
+	  method name.
+
+2008-04-23 09:56  fmhess
+
+	* poet/monitor_locks.hpp: Avoid potential conflicts with future
+	  boost.thread revisions.
+
+2008-04-23 09:45  fmhess
+
+	* test/new_mutex_api_test.cpp: Made test of lock release a little
+	  more complete.
+
+2008-04-23 08:57  fmhess
+
+	* poet/monitor_ptr.hpp, test/new_mutex_api_test.cpp: Throw
+	  boost::lock_error if user attempts to use an empty monitor_ptr as
+	  a mutex.
+
+2008-04-17 16:47  fmhess
+
+	* poet/monitor_locks.hpp: Reset monitor handle when releasing a
+	  lock.
+
+2008-04-17 16:43  fmhess
+
+	* poet/monitor_locks.hpp, test/new_mutex_api_test.cpp: Added test
+	  for lock release() method.  Fixed bug with mutex() method not
+	  returning NULL after release.
+
+2008-04-17 15:49  fmhess
+
+	* poet/monitor_locks.hpp, test/new_mutex_api_test.cpp: Added free
+	  move functions.
+
+2008-04-17 14:12  fmhess
+
+	* poet/monitor_locks.hpp, test/new_mutex_api_test.cpp: Added free
+	  swap functions for monitor locks.  Added move/swap support to
+	  monitor_upgrade_to_unique_lock.
+
+2008-04-17 11:36  fmhess
+
+	* test/new_mutex_api_test.cpp: Slightly expanded lock move tests to
+	  excercise assignment operator.
+
+2008-04-16 17:01  fmhess
+
+	* poet/acyclic_mutex.hpp, poet/monitor.hpp, poet/monitor_locks.hpp,
+	  poet/monitor_ptr.hpp, test/Makefile,
+	  test/acyclic_mutex_upgrade_lock_test.cpp,
+	  test/new_mutex_api_test.cpp: Added move support for monitor
+	  locks.  Fixed mutex() and release() methods for locks.  Fixed
+	  some problems with counts of a thread's upgrade/shared locks in
+	  acyclic_mutex.
+
+2008-04-14 17:16  fmhess
+
+	* poet/acyclic_mutex.hpp, test/Makefile,
+	  test/acyclic_mutex_upgrade_lock_test.cpp: Fixed some problems
+	  with acyclic_mutex and upgrade locks.
+
+2008-04-14 11:27  fmhess
+
+	* poet/exception_ptr.cpp: Fixed static initialization problem with
+	  s_bad_alloc.
+
+2008-04-13 19:19  fmhess
+
+	* poet/: monitor.hpp, monitor_locks.hpp, detail/utility.hpp: Made
+	  monitor swap and assigment lock both monitors simultaneously,
+	  which is possible safely without extra specializations now that
+	  the base Lockable concept requires try locking.
+
+2008-04-13 16:00  fmhess
+
+	* poet/acyclic_mutex.hpp, poet/mutex_properties.hpp, test/Makefile,
+	  test/acyclic_shared_mutex_test.cpp: Added support for wrapping
+	  boost::shared_mutex in poet::acyclic_mutex.
+
+2008-04-12 14:53  fmhess
+
+	* poet/monitor.hpp, poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  test/new_mutex_api_test.cpp: Added monitor_upgrade_lock and
+	  monitor_upgrade_to_unique_lock.  Restored fixed swap member
+	  functions to monitor and monitor_ptr after Peter Dimov told me
+	  why they were broken before.
+
+2008-04-11 16:50  fmhess
+
+	* poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  test/new_mutex_api_test.cpp: Added implementation of
+	  monitor_shared_lock.
+
+2008-04-10 15:56  fmhess
+
+	* poet/: acyclic_mutex.hpp, detail/mutex_grapher.ipp,
+	  detail/mutex_grapher_decl.hpp: Ported acyclic_mutex to
+	  boost.thread 1.35.0 api.
+
+2008-04-10 13:48  fmhess
+
+	* poet/monitor.hpp, test/new_mutex_api_test.cpp: Added support for
+	  using monitor as mutex with boost.thread locks.  Added some tests
+	  for using boost.thread locks with monitor and monitor_ptr.
+
+2008-04-09 15:33  fmhess
+
+	* poet/monitor.hpp, poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  test/Makefile, test/new_mutex_api_test.cpp: Made
+	  monitor_unique_lock<monitor> work correctly.	Added test for
+	  monitor_unique_lock.
+
+2008-04-08 17:21  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp,
+	  poet/monitor_locks.hpp, poet/monitor_ptr.hpp,
+	  poet/detail/monitor_locks.hpp, test/Makefile: Added
+	  poet::monitor_unique_lock to start moving towards new
+	  Boost.Thread api.  Converted monitor_ptr to use
+	  monitor_unique_lock.
+
+2008-04-08 13:41  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, doc/boostbook/monitor_ptr_hpp.xml,
+	  doc/boostbook/mutex_properties_hpp.xml, poet/acyclic_mutex.hpp,
+	  poet/monitor.hpp, poet/monitor_ptr.hpp,
+	  poet/mutex_properties.hpp, poet/detail/monitor_locks.hpp:
+	  Compiles against boost.thread 1.35.0 now.  Haven't updated API to
+	  conform to changes in new boost.thread api yet.
+
+2008-04-07 15:03  fmhess
+
+	* poet/: monitor.hpp, monitor_base.hpp, monitor_ptr.hpp: Cleaned up
+	  a lot of unnecessary specialized base classes of monitor and
+	  monitor_ptr.
+
+2008-04-04 14:29  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp,
+	  test/monitor_test.cpp: Added support for operator-> to
+	  poet::monitor for convenience.  Made
+	  poet::monitor::get_monitor_ptr more const-correct.
+
+2008-03-25 16:28  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, doc/boostbook/monitor_ptr_hpp.xml,
+	  poet/monitor.hpp, poet/monitor_ptr.hpp, test/monitor_test.cpp:
+	  Added aliasing constructor/reset to monitor_ptr.  Added
+	  no-argument monitor_ptr::reset.  Added
+	  monitor::get_monitor_ptr().  Added swap overload for monitor_ptr.
+	  Remove monitor::swap method from interface because it interfered
+	  with argument dependent lookup for swap inside of monitor class.
+	  Updated docs to reflect changes.  Added tests for aliasing
+	  constructor and swap.
+
+2008-01-28 11:49  fmhess
+
+	* README: Updated location of libpoet web site.
+
+2008-01-28 11:49  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: updated link to libpoet web site.
+
+2008-01-28 09:51  tag v2008_01_28
+
+2008-01-28 09:51  fmhess
+
+	* ChangeLog: Regenerated ChangeLog with "cvs2cl -T"
+
+2008-01-25 08:46  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Added a word.
+
+2008-01-23 10:18  fmhess
+
+	* poet/acyclic_mutex.hpp, poet/detail/mutex_grapher.ipp,
+	  poet/detail/mutex_grapher_decl.hpp, test/acyclic_mutex_test.cpp:
+	  Added support for disconnecting unused nodes in the locking order
+	  graph and reusing them, to prevent unbounded growth of the
+	  locking order graph when mutexes are continually created and
+	  destroyed.
+
+2008-01-22 15:06  fmhess
+
+	* poet/monitor_ptr.hpp: Actually, the default copy constructor for
+	  monitor_ptr was fine.  Got rid of a bunch of unneeded
+	  set_monitor_ptr() calls in monitor_ptr constructors.
+
+2008-01-22 14:58  fmhess
+
+	* poet/monitor.hpp, test/monitor_test.cpp: Fixed problem with
+	  monitor default assignment operator getting used.
+
+2008-01-22 14:31  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Fixed monitor docs with respect to
+	  wrapped object (not) needing to be copy-constructible.
+
+2008-01-22 14:13  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, doc/boostbook/monitor_ptr_hpp.xml,
+	  poet/monitor.hpp, poet/monitor_ptr.hpp, test/monitor_test.cpp:
+	  Made copy constructors for monitor and monitor_ptr take const
+	  references.  Fixed some problems with default copy constructors
+	  getting called.
+
+2008-01-22 13:29  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp,
+	  test/monitor_test.cpp: Made poet::monitor assignment operator
+	  take a const reference.  Got rid of pointless overload.
+
+2008-01-22 12:22  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Added documentation for new
+	  templated poet::monitor constructors.
+
+2008-01-22 11:43  fmhess
+
+	* poet/monitor.hpp, poet/monitor_ptr.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/preprocessor_macros.hpp, test/acyclic_mutex_test.cpp,
+	  test/monitor_test.cpp: Added support for forwarding poet::monitor
+	  constructor arguments to constructor for its templated value
+	  type.
+
+2008-01-21 19:57  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Used "returns" elements
+	  instead of "description" for monitor_ptr comparison operators.
+
+2008-01-21 19:25  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added docs for monitor_ptr
+	  cast and comparison functions.
+
+2008-01-21 19:24  fmhess
+
+	* poet/monitor_ptr.hpp: Allow comparison operators to be applied to
+	  two monitor_ptr with different mutex types.
+
+2008-01-21 17:44  fmhess
+
+	* poet/monitor_ptr.hpp, test/monitor_test.cpp: Added support for
+	  static/dynamic/const_pointer_cast to poet::monitor_ptr.
+
+2008-01-15 16:21  fmhess
+
+	* doc/boostbook/libpoet_doc.xml, poet/monitor.hpp,
+	  poet/monitor_ptr.hpp, poet/detail/mutex_grapher.ipp,
+	  poet/detail/mutex_grapher_decl.hpp: Updated some copyright
+	  notices with year 2008
+
+2008-01-14 11:59  fmhess
+
+	* poet/monitor.hpp, poet/monitor_ptr.hpp, test/monitor_test.cpp:
+	  Added const overloads to make const monitor and monitor_ptr
+	  objects useable.  Fixed monitor::scoped_timed_lock constructor to
+	  take timeout.
+
+2007-12-31 13:28  tag v2007_12_31
+
+2007-12-31 13:28  fmhess
+
+	* ChangeLog: Added ChangeLog, generated with "cvs2cl -T"
+
+2007-12-31 13:13  fmhess
+
+	* doc/boostbook/mutex_grapher_hpp.xml: mutex_grapher mutex isn't
+	  recursive any more.
+
+2007-12-31 13:10  fmhess
+
+	* poet/detail/: mutex_grapher.ipp, mutex_grapher_decl.hpp: Run user
+	  cycle handler with no locks held, to eliminate chance of deadlock
+	  with user's code.  Mutex for mutex_grapher doesn't need to be
+	  recursive any more.
+
+2007-12-31 11:21  fmhess
+
+	* poet/monitor_ptr.hpp, test/monitor_test.cpp: Made comparisons of
+	  monitor_ptr work.
+
+2007-12-21 14:08  fmhess
+
+	* poet/mutex_properties.hpp: Leave mutex_properties as an
+	  incomplete type.
+
+2007-12-21 12:28  fmhess
+
+	* test/: Makefile, monitor_test.cpp: Added test program for monitor
+	  and monitor_ptr.
+
+2007-12-21 12:21  fmhess
+
+	* poet/monitor.hpp: Added missing include.
+
+2007-12-21 12:02  fmhess
+
+	* test/: Makefile, acyclic_mutex_test.cpp: Added test for
+	  acyclic_mutex.
+
+2007-12-20 17:50  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Updated docs for changes to
+	  monitor::swap.
+
+2007-12-20 16:27  fmhess
+
+	* poet/: future.hpp, monitor.hpp: Use koenig lookup for swap()
+	  calls.  Moved overload of std::swap (illegal) into poet
+	  namespace.
+
+2007-12-20 15:58  fmhess
+
+	* doc/boostbook/: libpoet_doc.xml, monitor_hpp.xml: Some minor
+	  documentation tweaks.
+
+2007-12-19 16:48  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp: Added
+	  specialization of std::swap for monitor class.
+
+2007-12-19 15:44  fmhess
+
+	* poet/monitor.hpp: Used std::swap<T> to (possibly) optimize
+	  monitor assignment.
+
+2007-12-19 15:18  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Added some caveats
+
+2007-12-19 14:51  fmhess
+
+	* doc/boostbook/mutex_grapher_hpp.xml: Added link to example
+	  program and acyclic_mutex to mutex_grapher description.
+
+2007-12-19 14:51  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Slight expansion of status
+	  section.
+
+2007-12-19 14:38  fmhess
+
+	* doc/boostbook/: Makefile, demo_locking_order_graph.png,
+	  libpoet_doc.xml: Added png of graphviz file produced by acyclic
+	  mutex example program.
+
+2007-12-19 14:05  fmhess
+
+	* doc/boostbook/Makefile, doc/boostbook/acyclic_mutex_base_hpp.xml,
+	  doc/boostbook/acyclic_mutex_hpp.xml,
+	  doc/boostbook/libpoet_doc.xml,
+	  doc/boostbook/libpoet_reference.xml,
+	  doc/boostbook/mutex_grapher_hpp.xml,
+	  examples/acyclic_mutex_demo.cpp: Added initial documentation for
+	  acyclic_mutex and friends.
+
+2007-12-19 14:05  fmhess
+
+	* poet/detail/: mutex_grapher.ipp, mutex_grapher_decl.hpp: Label
+	  vertices for default constructed acyclic_mutexes as "mutex N"
+	  instead of "vertex N".  Added some needed quoting to graphviz
+	  output file.
+
+2007-12-19 14:02  fmhess
+
+	* examples/monitor_demo.cpp: Added some comments describing example
+	  and copyright header
+
+2007-12-19 14:00  fmhess
+
+	* poet/monitor.hpp: Adding a default constructor to monitor class
+	  shouldn't cause any problems.
+
+2007-12-19 13:46  fmhess
+
+	* poet/detail/: mutex_grapher.ipp, mutex_grapher_decl.hpp: Renamed
+	  private, non-const overload of mutex_grapher::locked_mutexes() to
+	  internal_locked_mutexes() to avoid compilation error.
+
+2007-12-19 09:53  fmhess
+
+	* poet/detail/: mutex_grapher.ipp, mutex_grapher_decl.hpp: Made
+	  mutex_grapher::write_graphviz() const
+
+2007-12-18 10:45  fmhess
+
+	* poet/detail/mutex_grapher_decl.hpp: Made mutex_grapher
+	  noncopyable for good measure.
+
+2007-12-17 15:53  fmhess
+
+	* poet/: acyclic_mutex_base.hpp, detail/mutex_grapher.ipp: Renamed
+	  acyclic_mutex_base::vertex_descriptor() method to just vertex().
+
+2007-12-17 14:56  fmhess
+
+	* poet/: acyclic_mutex.hpp, acyclic_mutex_base.hpp: Made
+	  acyclic_mutex::node_key() and
+	  acyclic_mutex_base::vertex_descriptor() methods return
+	  boost::optional<>s instead of pointers.
+
+2007-12-17 14:14  fmhess
+
+	* poet/acyclic_mutex.hpp: Renamed acyclic_mutex::wrapped_mutex_type
+	  to mutex_type, for better consistency with monitor/monitor_ptr
+	  classes.
+
+2007-12-14 17:18  fmhess
+
+	* doc/boostbook/mutex_properties_hpp.xml: Use "purpose" elements
+	  instead of "description" for static-constants, since boostbook
+	  doesn't generate anything for descriptions.
+
+2007-12-14 15:21  fmhess
+
+	* doc/boostbook/: Makefile, libpoet_reference.xml,
+	  mutex_properties_hpp.xml: Added some documentation for
+	  mutex_properties template.
+
+2007-12-14 15:12  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Removed some obsolete
+	  references to try/timed monitors.
+
+2007-12-14 14:21  fmhess
+
+	* doc/boostbook/monitor_hpp.xml: Updated monitor docs to reflect
+	  dropping of try_monitor and timed_monitor.
+
+2007-12-14 14:21  fmhess
+
+	* doc/boostbook/active_function_hpp.xml: Removed some useless
+	  "classname" elements.
+
+2007-12-14 13:33  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Updated monitor_ptr
+	  documentation to reflect dropping of try_monitor_ptr and
+	  timed_monitor_ptr.
+
+2007-12-14 13:33  fmhess
+
+	* doc/boostbook/monitor_locks_hpp.xml: Added an entry for scoped
+	  lock destructor.
+
+2007-12-13 13:49  fmhess
+
+	* poet/: acyclic_mutex.hpp, acyclic_mutex_base.hpp,
+	  detail/acyclic_mutex_base.hpp, detail/mutex_grapher.ipp,
+	  detail/mutex_grapher_decl.hpp: Moved acyclic_mutex_base out of
+	  detail namespace.  Got rid of acyclic_mutex_keyed_base.  Added
+	  public mutex_grapher::mutex_list().
+
+2007-12-13 12:04  fmhess
+
+	* poet/: acyclic_mutex.hpp, mutex_properties.hpp,
+	  detail/acyclic_mutex_base.hpp, detail/mutex_grapher.ipp,
+	  detail/mutex_grapher_decl.hpp: Added support for recursive
+	  mutexes as the template type parameter of acyclic_mutex.
+
+2007-12-12 17:10  fmhess
+
+	* poet/: acyclic_mutex.hpp, mutex_grapher.hpp,
+	  detail/acyclic_mutex_base.hpp, detail/mutex_grapher.ipp,
+	  detail/mutex_grapher_decl.hpp: Made templating of Key and
+	  KeyCompare types for acyclic mutexes actually work.  Brought
+	  detail/mutex_grapher_decl.hpp back from the dead to resolve a
+	  circular header dependency.
+
+2007-12-11 16:23  fmhess
+
+	* poet/acyclic_mutex.hpp: Condensed acyclic_mutex,
+	  try_acyclic_mutex, and timed_acyclic_mutex into a single
+	  acyclic_mutex class by using partial template specialization and
+	  mutex_properties<>.
+
+2007-12-09 17:48  fmhess
+
+	* poet/: monitor.hpp, monitor_base.hpp, monitor_ptr.hpp,
+	  detail/monitor_locks.hpp: Condensed monitor_ptr, try_monitor_ptr,
+	  and timed_monitor_ptr into a single monitor_ptr class.
+
+2007-12-09 16:52  fmhess
+
+	* poet/: monitor.hpp, mutex_properties.hpp: Collapsed monitor,
+	  try_monitor, and timed_monitor into a single monitor class with
+	  the magic of new mutex_properties<> class, and partial template
+	  specialization.
+
+2007-12-05 13:27  fmhess
+
+	* doc/boostbook/: libpoet_doc.xml, monitor_base_hpp.xml: Added
+	  mention of poet::monitor where only poet::monitor_ptr was
+	  mentioned before.
+
+2007-12-05 11:50  fmhess
+
+	* examples/monitor_demo.cpp, doc/boostbook/monitor_hpp.xml: Added
+	  example of using poet::monitor to monitor_demo.cpp.
+
+2007-12-05 11:18  fmhess
+
+	* doc/boostbook/: Makefile, libpoet_reference.xml: Split reference
+	  section into subsections.
+
+2007-12-05 10:57  fmhess
+
+	* doc/boostbook/monitor_hpp.xml, poet/monitor.hpp: Made monitor
+	  destructor virtual.  Made try_monitor::scoped_try_lock and
+	  timed_monitor::scoped_timed_lock constructors more particular
+	  about their parameter.
+
+2007-12-05 10:55  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added "see also" sections to
+	  monitor_ptr descriptions.
+
+2007-12-05 10:36  fmhess
+
+	* doc/boostbook/: monitor_hpp.xml, monitor_locks_hpp.xml: Updated
+	  docs for monitor to reflect split into
+	  monitor/try_monitor/timed_monitor
+
+2007-12-04 16:48  fmhess
+
+	* poet/: mutex_grapher.hpp, detail/mutex_grapher.ipp: Wrapped
+	  mutex_grapher singleton in a monitor_ptr, accessible only though
+	  mutex_grapher::scoped_lock objects.  Made default cycle handler
+	  print out a message to stderr before aborting.
+
+2007-12-04 15:59  fmhess
+
+	* poet/detail/monitor_locks.hpp: Gave up on trying to clear
+	  synchronizer's wait function on unlock for now, since it will
+	  break with recursive mutexes.
+
+2007-12-04 09:37  fmhess
+
+	* poet/detail/monitor_locks.hpp: Crash cleanly (or whatever happens
+	  when you try to call a null boost::function) if user code for a
+	  monitor object attempts to wait() without being locked.  Fixed
+	  comments describing monitor_locks.hpp.
+
+2007-12-01 23:28  fmhess
+
+	* poet/monitor.hpp: Simplified monitor/try_monitor/timed_monitor
+	  implementation by realizing they can all use plain monitor_ptr.
+
+2007-12-01 21:19  fmhess
+
+	* poet/monitor.hpp: Split off poet::try_monitor and
+	  poet::timed_monitor variants off from poet::monitor.
+
+2007-12-01 18:56  fmhess
+
+	* poet/detail/monitor_locks.hpp: Made monitor scoped locks keep
+	  shared_ptr for value instead of raw pointer, to be safe agains
+	  locks outliving the monitor_ptr they were made from.
+
+2007-12-01 13:34  fmhess
+
+	* doc/boostbook/active_object_hpp.xml, poet/active_object.hpp,
+	  poet/detail/active_object.cpp: Reworked how
+	  out_of_order_activation_queue works, so it scales better with
+	  number of pending requests.
+
+2007-11-30 17:54  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Added documentation of
+	  monitor_ptr::reset(), and for changes to one of the constructors.
+
+2007-11-30 17:25  fmhess
+
+	* doc/boostbook/: Makefile, libpoet_reference.xml, monitor_hpp.xml,
+	  monitor_locks_hpp.xml, monitor_ptr_hpp.xml: Reworked docs for
+	  scoped locks so they are closer to reality.  Added docs for
+	  poet::monitor.
+
+2007-11-30 17:05  fmhess
+
+	* poet/: monitor.hpp, monitor_ptr.hpp, detail/monitor_locks.hpp:
+	  Moved scoped locks into their own file
+	  (detail/monitor_locks.hpp).  Fixed assignment to a
+	  default-constructed monitor.	Made monitor assignment operator
+	  and copy constructor take non-const references when copying from
+	  other monitors, since they lock their arguments before copying
+	  out their values.  Fixed crash in monitor_ptr::reset().  Added
+	  conversion to bool for monitor_ptr.
+
+2007-11-30 17:02  fmhess
+
+	* poet/monitor_base.hpp: Made sure _syncer pointer is not disturbed
+	  by assignments.
+
+2007-11-30 10:53  fmhess
+
+	* poet/monitor.hpp: Made poet::monitor provide scoped_try_lock and
+	  scoped_timed_lock, it is now based off timed_monitor_ptr and used
+	  boost::timed_mutex as its default mutex type.  The mutex type
+	  must now be a model of the TimedMutex concept from Boost Thread.
+
+2007-11-30 10:49  fmhess
+
+	* poet/monitor_ptr.hpp: Fixed compile warning.
+
+2007-11-30 09:57  fmhess
+
+	* poet/monitor.hpp: Added poet::monitor, which stores the wrapped
+	  object by value and does deep copies, instead of acting like a
+	  smart pointer (as monitor_ptr does).	This implementation took
+	  the quick and easy route of being based on monitor_ptr.
+
+2007-11-30 09:38  fmhess
+
+	* poet/monitor_ptr.hpp: Made constructors from raw pointers
+	  template functions, to take advantage of cleverness of shared_ptr
+	  constructors.  Added reset().  Made
+	  monitor_ptr_scoped_lock::wait_function private.
+
+2007-11-27 17:42  fmhess
+
+	* doc/boostbook/monitor_ptr_hpp.xml: Updated monitor_ptr docs to
+	  reflect recent additions/changes.
+
+2007-11-27 13:43  fmhess
+
+	* poet/monitor_ptr.hpp: Made scoped locks in monitor_ptr
+	  noncopyable.	Added monitor_ptr::call_proxy which is a thin
+	  wrapper around monitor_ptr::scoped_lock that makes it suitable
+	  (that is, copyable) for return from the monitor_ptr member access
+	  operator.  Fixed a mis-named constructor for timed_monitor_ptr.
+
+2007-11-27 12:04  fmhess
+
+	* poet/: monitor_ptr.hpp, detail/monitor_synchronizer.hpp: Added
+	  scoped lock types to monitor_ptr, and try_monitor_ptr and
+	  timed_monitor_ptr.  Scoped locks provide member access operator
+	  and dereference operator.  Replaced monitor_call_proxy with
+	  scoped lock (plan make scoped locks noncopyable and use
+	  shared_ptr<scoped_lock> instead).  Had to replace weak_ptr to
+	  scoped_lock in monitor_synchronizer to support different types of
+	  scoped locks, since the current version of boost::condition
+	  requires a lock object from boost.thread.
+
+2007-11-27 11:50  fmhess
+
+	* poet/acyclic_mutex.hpp: Made names of acyclic lock classes more
+	  distinguished by adding "acyclic_" to the beginnings.
+
+2007-11-26 14:21  fmhess
+
+	* poet/acyclic_mutex.hpp: re-added some missing "typename"
+	  keywords.
+
+2007-11-26 14:13  fmhess
+
+	* poet/acyclic_mutex.hpp: Actually, we do need to template acyclic
+	  locks on underlying lock type.
+
+2007-11-26 11:29  fmhess
+
+	* poet/: monitor_base.hpp, monitor_ptr.hpp, mutex_grapher.hpp,
+	  detail/monitor_base.ipp, detail/monitor_base_decl.hpp,
+	  detail/mutex_grapher.ipp, detail/mutex_grapher_decl.hpp: Don't
+	  need separate .hpp and _decl.hpp files.
+
+2007-11-26 10:31  fmhess
+
+	* poet/detail/: mutex_grapher.ipp, mutex_grapher_decl.hpp: Added
+	  mutex_grapher::set_cycle_hander() and made default handler call
+	  std::abort().
+
+2007-11-26 10:14  fmhess
+
+	* poet/acyclic_mutex.hpp: Fixed compile error.
+
+2007-11-23 09:43  fmhess
+
+	* poet/acyclic_mutex.hpp: acyclic lock types don't need Lock
+	  template parameter.
+
+2007-11-21 14:40  fmhess
+
+	* poet/: acyclic_mutex.hpp, detail/acyclic_mutex_base.hpp,
+	  detail/mutex_grapher_decl.hpp, detail/static_mutex.hpp,
+	  detail/template_static.hpp: Replaced static_mutex with more
+	  general template_static.  Included a skeleton implementation of
+	  acyclic_mutex_base when ACYCLIC_MUTEX_NDEBUG is defined.
+
+2007-11-21 11:47  fmhess
+
+	* poet/: acyclic_mutex.hpp, mutex_grapher.hpp,
+	  detail/acyclic_mutex_base.hpp, detail/mutex_grapher.ipp,
+	  detail/mutex_grapher_decl.hpp, detail/static_mutex.hpp: Initial
+	  pass at supporting mutexes which automatically detect lock-order
+	  violations.
+
+2007-11-21 11:01  fmhess
+
+	* poet/monitor_ptr.hpp: Made monitor_ptr constructor from raw
+	  pointer explicit.
+
+2007-11-18 12:53  fmhess
+
+	* poet/: monitor_ptr.hpp, detail/monitor_synchronizer.hpp: Fixed
+	  bug where synchronizer's _current_lock would be wrong after
+	  returning from a wait().
+
+2007-11-18 12:20  fmhess
+
+	* poet/detail/monitor_synchronizer_base.hpp: Removed obsolete file.
+
+2007-11-15 11:39  fmhess
+
+	* README, doc/boostbook/libpoet_doc.xml: Specify programming
+	  language at the beginning of the docs.
+
+2007-11-15 11:11  tag v2007_11-15
+
+2007-11-15 11:11  fmhess
+
+	* doc/boostbook/: monitor_base_hpp.xml, monitor_ptr_hpp.xml: Fixed
+	  hyperlinks to monitor.pdf.
+
+2007-11-15 10:59  fmhess
+
+	* doc/boostbook/: monitor_base_hpp.xml, monitor_ptr_hpp.xml: Fixed
+	  text on links to monitor_demo.cpp
+
+2007-11-15 10:52  fmhess
+
+	* README: Added a line about monitor objects to the README
+
+2007-11-15 10:44  fmhess
+
+	* examples/monitor_demo.cpp: Added demo code for monitor classes.
+
+2007-11-15 10:43  fmhess
+
+	* doc/boostbook/: active_function_hpp.xml, active_object_hpp.xml,
+	  libpoet_doc.xml, monitor_base_hpp.xml, monitor_ptr_hpp.xml: Added
+	  a little to the descriptions of active_function and scheduler
+	  classes.  Added links to example code in relevant class
+	  descriptions.
+
+2007-11-15 09:14  fmhess
+
+	* doc/boostbook/: Makefile, libpoet_doc.xml, libpoet_reference.xml,
+	  monitor_base_hpp.xml, monitor_ptr_hpp.xml: Added documentation
+	  for monitor_base.
+
+2007-11-14 10:32  fmhess
+
+	* poet/: monitor_base.hpp, monitor_ptr.hpp,
+	  detail/monitor_base.ipp, detail/monitor_base_decl.hpp,
+	  detail/monitor_synchronizer.hpp,
+	  detail/monitor_synchronizer_base.hpp: Added poet::monitor_ptr and
+	  poet::monitor_base which support monitor objects.
+
+2007-10-23 16:23  fmhess
+
+	* doc/boostbook/: Makefile, libpoet_reference.xml,
+	  monitor_ptr_hpp.xml: Added documentation for monitor_ptr.
+
+2007-10-23 16:22  fmhess
+
+	* doc/boostbook/future_hpp.xml: Added a missing <para> element.
+
+2007-10-23 16:21  fmhess
+
+	* poet/monitor_ptr.hpp: Added typedef for
+	  monitor_ptr::element_type.  Removed monitor_ptr::set_value() and
+	  get_value() since they don't really behave the same as the
+	  locking done for operator->().
+
+2007-10-23 10:49  fmhess
+
+	* poet/monitor_ptr.hpp: Added monitor_ptr class.
+
+2007-10-13 22:55  fmhess
+
+	* doc/boostbook/active_object_hpp.xml: connectUpdate is called
+	  connect_update now.  Also added missing <para> that was producing
+	  invalid docbook.
+
+2007-10-12 09:24  fmhess
+
+	* poet/active_object.hpp: Added some missing 'inline's to prevent
+	  multiple definition linker errors.
+
+2007-09-20 13:30  tag v2007_09_20
+
+2007-09-20 13:30  fmhess
+
+	* doc/boostbook/libpoet_doc.xml: Updated boostbook version, since
+	  we are using the new <access> tags.
+
+2007-09-20 13:29  fmhess
+
+	* README: Updated location of html docs, and removed mention of
+	  doxygen.
+
+2007-09-11 16:53  fmhess
+
+	* doc/boostbook/: exception_ptr_hpp.xml, future_hpp.xml: Added a
+	  little exposition on the fact that future::get() can throw
+	  exceptions that got dropped in the doxygen->boostbook transition.
+
+2007-09-11 15:33  fmhess
+
+	* doc/boostbook/: active_function_hpp.xml, active_object_hpp.xml,
+	  exception_ptr_hpp.xml, exceptions_hpp.xml, future_hpp.xml,
+	  libpoet_doc.xml: Some tweaks to make the xml conform more closely
+	  to the boostbook.dtd (modified to add support for access
+	  elements).  Validated with xmllint.
+
+2007-09-11 09:13  fmhess
+
+	* poet/: active_object.hpp, exception_ptr.cpp, exception_ptr.hpp,
+	  exceptions.hpp, future.hpp: Stripped out obsolete doxygen
+	  comments.
+
+2007-09-11 09:03  fmhess
+
+	* doc/: Doxyfile, doxygen_bogus.h, doxygen_future_void.h,
+	  doxygen_mainpage.h: Removed obsolete Doxygen files.
+
+2007-09-10 16:26  fmhess
+
+	* doc/boostbook/: active_object_hpp.xml, exceptions_hpp.xml: Added
+	  <classname> elements to <inherit> elements.
+
+2007-09-10 15:58  fmhess
+
+	* doc/boostbook/: active_function_hpp.xml, active_object_hpp.xml,
+	  exceptions_hpp.xml, future_hpp.xml: Some minor documentation
+	  cleanups.
+
+2007-09-10 12:40  fmhess
+
+	* doc/boostbook/future_hpp.xml: Got rid of a couple "throws
+	  unspecified" documentation lines.
+
+2007-09-10 11:53  fmhess
+
+	* doc/boostbook/: exceptions_hpp.xml, future_hpp.xml: Added more
+	  use of the <access> element, and some other minor documentation
+	  enhancements.
+
+2007-09-10 10:51  fmhess
+
+	* doc/boostbook/active_object_hpp.xml: Added use of my new <access>
+	  boostbook element, and made a few other minor documentation
+	  enhancements.
+
+2007-09-07 17:52  fmhess
+
+	* doc/boostbook/: active_function_hpp.xml, active_object_hpp.xml,
+	  libpoet_doc.xml: More improvements to boostbook docs.  Starting
+	  to make use of new <access> element I've added to boostbook.
+
+2007-09-07 17:23  fmhess
+
+	* poet/active_object.hpp, poet/detail/active_function_template.hpp,
+	  test/active_object_test.cpp: Renamed
+	  method_request_base::_updateSignal to update_signal.
+
+2007-09-06 16:16  fmhess
+
+	* doc/boostbook/: Makefile, active_function_hpp.xml,
+	  exception_ptr_hpp.xml, exceptions_hpp.xml, future_hpp.xml,
+	  libpoet_doc.xml: boostbook version of documentation is shaping up
+	  nicely now.
+
+2007-09-06 13:46  fmhess
+
+	* poet/future.hpp: Made promise destructor virtual.
+
+2007-09-05 17:38  fmhess
+
+	* doc/boostbook/: Makefile, active_function_hpp.xml,
+	  active_object_hpp.xml, exception_ptr_hpp.xml, exceptions_hpp.xml,
+	  future_hpp.xml, libpoet_doc.xml, libpoet_reference.xml: Some more
+	  work improving boostbook-based docs.
+
+2007-09-05 17:36  fmhess
+
+	* poet/: active_object.hpp, detail/active_function_template.hpp:
+	  method_request::_returnValue has to be protected after all.  Also
+	  renamed it to return_value.
+
+2007-09-05 16:30  fmhess
+
+	* poet/: active_object.hpp, detail/active_object.cpp: Renamed
+	  getRequest() to get_request() for consistency.
+
+2007-09-05 16:19  fmhess
+
+	* poet/active_object.hpp: Made some bits of method_request private.
+
+2007-09-05 11:19  fmhess
+
+	* doc/boostbook/: Makefile, catalog.xml, libpoet_reference.xml:
+	  First pass at porting documentation from docbook to boostbook.
+
+2007-04-03 14:26  tag v2007_04_03
+
+2007-04-03 14:26  fmhess
+
+	* doc/doxygen_future_void.h: New file for doxygen docs on
+	  future<void> and promise<void> specializations.
+
+2007-04-03 14:25  fmhess
+
+	* doc/Doxyfile, doc/doxygen_bogus.h, doc/doxygen_mainpage.h,
+	  poet/exception_ptr.hpp, poet/future.hpp: Documentation updates.
+
+2007-04-02 15:59  fmhess
+
+	* poet/detail/active_function_template.hpp: Moved
+	  active_function_method_request back into poet::detail namespace,
+	  as it isn't very useful by itself after all.
+
+2007-04-02 15:26  fmhess
+
+	* test/active_function_test.cpp: Gave myclass a data member to make
+	  tracking slightly more meaningful.
+
+2007-04-02 15:22  fmhess
+
+	* test/active_function_test.cpp: Added test of passive slot
+	  tracking.
+
+2007-04-02 13:39  fmhess
+
+	* examples/active_object_example.cpp, poet/active_function.hpp,
+	  poet/detail/active_function_template.hpp: Moved
+	  active_function_method_requestN classes into main poet namespace.
+	  Added overload of active_function constructor that is convenient
+	  if you want to specifiy the scheduler but no guard.
+
+2007-03-30 16:30  fmhess
+
+	* poet/future.hpp: Tweaked promise<void> copy constructor.
+
+2007-03-30 16:28  fmhess
+
+	* poet/future.hpp, test/Makefile, test/active_object_test.cpp,
+	  test/future_void_test.cpp: Added support for conversion from
+	  promise with arbitrary template type to promise<void>
+
+2007-03-30 15:43  fmhess
+
+	* test/not_default_constructible_test.cpp: New test.
+
+2007-03-30 11:15  fmhess
+
+	* poet/future.hpp: Replaced some equality tests using optional with
+	  optional::operator! since the equality tests seemed to be testing
+	  something I didn't intend.
+
+2007-03-30 10:50  fmhess
+
+	* test/: Makefile, future_void_test.cpp, timed_join_test.cpp: Added
+	  new test.
+
+2007-03-30 10:45  fmhess
+
+	* poet/future.hpp: Make future<anything> convertible to
+	  future<void>
+
+2007-03-30 10:45  fmhess
+
+	* examples/active_object_example.cpp: More exposition in comments.
+
+2007-03-30 10:09  fmhess
+
+	* doc/doxygen_mainpage.h, examples/active_object_example.cpp,
+	  poet/future.hpp, test/Makefile, test/timed_join_test.cpp: Added
+	  future::timed_join()
+
+2007-03-29 15:24  fmhess
+
+	* doc/doxygen_bogus.h: Added new example to doxygen documentation.
+
+2007-03-29 15:19  fmhess
+
+	* examples/active_object_example.cpp: Added new example program
+
+2007-03-29 10:42  fmhess
+
+	* examples/pipeline.cpp: Added a little more exposition.
+
+2007-03-29 10:33  fmhess
+
+	* examples/pipeline.cpp: Added explicit use of promise class to
+	  pipline example program.
+
+2007-03-22 10:15  fmhess
+
+	* poet/detail/active_function_template.hpp: Added missing call to
+	  base class's postconstruct in active_function_method_request.
+	  Made active_function_method_request::ready return true if any of
+	  its input futures have exceptions.
+
+2007-03-22 10:14  fmhess
+
+	* poet/active_object.hpp: Removed pointless temporary variable.
+
+2007-03-22 10:12  fmhess
+
+	* test/active_function_test.cpp: Added test of cancellation of an
+	  active_function method request.
+
+2007-03-20 14:09  fmhess
+
+	* doc/doxygen_mainpage.h: Added a missing word, and tweaked a
+	  sentence.
+
+2007-03-20 13:26  fmhess
+
+	* doc/doxygen_bogus.h: Use pipeline.cpp as example program.
+
+2007-03-20 13:25  fmhess
+
+	* doc/Doxyfile: Look in examples subdir for example programs.
+
+2007-03-20 13:25  fmhess
+
+	* doc/doxygen_mainpage.h: Use pipeline.cpp as example, instead of
+	  test program.
+
+2007-03-20 13:24  fmhess
+
+	* examples/pipeline.cpp: tweaked comments.
+
+2007-03-20 12:12  fmhess
+
+	* examples/pipeline.cpp: Added example.
+
+2007-03-20 10:59  fmhess
+
+	* poet/exception_ptr.cpp: Moved some exception_ptr implementation
+	  details out of global namespace.
+
+2007-03-20 10:53  fmhess
+
+	* test/: Makefile, undead_active_function_test.cpp: Added new test.
+
+2007-03-20 10:52  fmhess
+
+	* poet/detail/active_object.cpp: Initialize
+	  scheduler_impl::_wakePending member variable.
+
+2007-03-20 10:29  fmhess
+
+	* test/: Makefile, promise_count_test.cpp: Added test of promise
+	  reference counting.
+
+2007-03-20 10:29  fmhess
+
+	* test/exception_test.cpp: Added some more assertions to exception
+	  test.
+
+2007-03-20 10:15  fmhess
+
+	* poet/exception_ptr.cpp, poet/exception_ptr.hpp,
+	  poet/exceptions.hpp, poet/future.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, poet/detail/condition.hpp,
+	  test/active_function_test.cpp, test/active_object_test.cpp,
+	  test/exception_test.cpp, test/future_test.cpp: Added boost
+	  licence to file comments.
+
+2007-03-20 10:04  fmhess
+
+	* poet/future.hpp, test/exception_test.cpp: Added explicit get()
+	  function to get a future's value.
+
+2007-03-20 09:32  fmhess
+
+	* poet/future.hpp: Work around compiler bug in g++ 3.3.5
+
+2007-03-20 09:25  fmhess
+
+	* test/: Makefile, exception_test.cpp: Added test of exception
+	  forwarding.
+
+2007-03-20 09:17  fmhess
+
+	* poet/detail/active_function_template.hpp: Fixed breakage of
+	  non-void return values with active_function.
+
+2007-03-20 09:10  fmhess
+
+	* poet/: future.hpp, detail/active_function_template.hpp: Add
+	  support for void return values.
+
+2007-03-19 16:13  fmhess
+
+	* poet/: exception_ptr.cpp, exception_ptr.hpp, exceptions.hpp,
+	  future.hpp: Split exception classes into their own header file.
+	  Added support for more types of exceptions to exception_ptr.
+
+2007-03-19 16:12  fmhess
+
+	* README, doc/doxygen_mainpage.h: Tweaked docs.
+
+2007-03-19 14:49  fmhess
+
+	* doc/doxygen_bogus.h, doc/doxygen_mainpage.h,
+	  poet/active_object.hpp, poet/future.hpp: doxygen documentation
+	  updates.
+
+2007-03-19 14:11  fmhess
+
+	* poet/future.hpp: Throw uncertain_future if an attempt is made to
+	  dereference a future whose promise has already been destroyed
+	  without fulfillment.
+
+2007-03-19 11:39  fmhess
+
+	* poet/: active_object.hpp, detail/active_object.cpp: Use a more
+	  boost-like naming scheme for activation queue classes.
+
+2007-03-19 11:18  fmhess
+
+	* poet/active_object.hpp, poet/detail/active_object.cpp,
+	  test/Makefile: Don't kill scheduler thread when scheduler object
+	  is destroyed.  Instead, allow scheduler to continue running until
+	  its activation queue is empty.
+
+2007-03-19 10:04  fmhess
+
+	* poet/future.hpp, test/future_test.cpp: Removed future constructor
+	  that takes a conversion function, as the same functionality is
+	  already available through active_function.
+
+2007-03-16 17:15  fmhess
+
+	* doc/doxygen_bogus.h, poet/active_function.hpp,
+	  poet/active_object.hpp, poet/exception_ptr.cpp,
+	  poet/exception_ptr.hpp, poet/future.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, test/active_object_test.cpp,
+	  test/future_test.cpp: doxygen documentation updates.	Split off
+	  promise class from future class.  Tweaked some method names.
+	  Added support for transporting exceptions from passive functions
+	  in the scheduler thread to futures.
+
+2007-03-15 13:26  fmhess
+
+	* README: Added a little README
+
+2007-03-15 11:23  fmhess
+
+	* poet/: exception_ptr.cpp, exception_ptr.hpp: Imported unmodified
+	  exception_ptr code from Peter Dimov's exception_ptr proposal.
+	  Will modify to suit libpoet's needs better.
+
+2007-03-13 16:45  fmhess
+
+	* doc/doxygen_bogus.h: Added a documentation stub for boost::slot,
+	  and some links to the thread_safe_signals documentation.
+
+2007-03-13 16:25  fmhess
+
+	* doc/doxygen_bogus.h, poet/active_function.hpp,
+	  poet/detail/active_function_template.hpp: Use a boost::slot from
+	  thread_safe_signals to handle tracking of object lifetimes.
+
+2007-03-13 16:23  fmhess
+
+	* poet/active_object.hpp: Declared a bunch of functions inline,
+	  since active_object.cpp is #include'd now.
+
+2007-03-13 16:22  fmhess
+
+	* test/Makefile: Removed misplaced doc target.
+
+2007-03-09 20:58  fmhess
+
+	* doc/doxygen_mainpage.h: Added dependencies section.
+
+2007-03-09 20:52  fmhess
+
+	* doc/doxygen_mainpage.h: Added status and discussion sections to
+	  main page.
+
+2007-03-09 20:45  fmhess
+
+	* doc/doxygen_mainpage.h: Filled out main page of doxygen docs
+
+2007-03-09 17:24  tag initial_import
+
+2007-03-09 17:24  fmhess
+
+	* LICENSE_1_0.txt, doc/Doxyfile, doc/doxygen_bogus.h,
+	  doc/doxygen_mainpage.h, poet/active_function.hpp,
+	  poet/active_object.hpp, poet/future.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, poet/detail/condition.hpp,
+	  test/Makefile, test/active_function_test.cpp,
+	  test/active_object_test.cpp, test/future_test.cpp: Initial import
+	  of libpoet "Parallel Object Execution Threads"  active object
+	  framework.
+
+2007-03-09 17:24  fmhess
+
+	* LICENSE_1_0.txt, doc/Doxyfile, doc/doxygen_bogus.h,
+	  doc/doxygen_mainpage.h, poet/active_function.hpp,
+	  poet/active_object.hpp, poet/future.hpp,
+	  poet/detail/active_function_template.hpp,
+	  poet/detail/active_object.cpp, poet/detail/condition.hpp,
+	  test/Makefile, test/active_function_test.cpp,
+	  test/active_object_test.cpp, test/future_test.cpp: Initial
+	  revision
+
