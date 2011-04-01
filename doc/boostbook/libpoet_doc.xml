@@ -83,19 +83,13 @@
 			<title>Download</title>
 			<para>
 				The most recent release is available from the
-				<ulink url="http://www.boost-consulting.com/vault/index.php?&amp;direction=0&amp;order=&amp;directory=Concurrent%20Programming/Active%20Objects">
+				<ulink url="http://www.boostpro.com/vault/index.php?order=nom&amp;direction=1&amp;directory=Concurrent%20Programming/Active%20Objects">
 				Boost Vault</ulink>
 				(get the latest "libpoet-xxxx-xx-xx.tgz" file).
 			</para>
 			<para>
-				The current source code is also availabe via anonymous cvs:
-				<programlisting>cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi login
-cvs -d:pserver:anonymous@cvs.comedi.org:/cvs/comedi co libpoet</programlisting>
-				When prompted for a password, hit enter.
-			</para>
-			<para>
-				You can also
-				<ulink url="http://www.comedi.org/cgi-bin/viewcvs.cgi/libpoet/">browse the cvs online</ulink>.
+				The current source code is also availabe via Subversion:
+<programlisting>svn co http://svn.boost.org/svn/boost/sandbox/libpoet/trunk libpoet</programlisting>
 			</para>
 			<para>
 				The code (and this documentation) is licensed under the <ulink url="http://www.boost.org/LICENSE_1_0.txt">Boost Software License, Version 1.0</ulink>.
