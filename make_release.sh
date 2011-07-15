@@ -9,8 +9,8 @@ cd test
 svn export -rHEAD https://svn.boost.org/svn/boost/sandbox/libpoet/trunk libpoet
 mv libpoet $TOP_DIST_DIR
 cd $TOP_DIST_DIR/doc
-cp -a $TOP_DIR/doc/style .
-cp -a $TOP_DIR/doc/javascript .
+rsync -a --exclude ".svn" $TOP_DIR/doc/style .
+rsync -a --exclude ".svn" $TOP_DIR/doc/javascript .
 cd boostbook
 make
 cd $TOP_DIST_DIR/..
