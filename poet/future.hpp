@@ -113,7 +113,10 @@ namespace poet
 
 					if(_posting_closed) return connection;
 
-					slot_type slot(&waiter_event_queue::post<event_queue::event_type>, this, _1);
+					//The following static_cast is just there to work around what I think is a g++ 4.4.5 bug when
+					//compiling in c++0x mode (it gives a compile error without the cast)
+					slot_type slot(static_cast<void (waiter_event_queue::*)(const event_queue::event_type &)>
+						(&waiter_event_queue::post<event_queue::event_type>), this, _1);
 					BOOST_ASSERT(_weak_this.expired() == false);
 					slot.track(_weak_this);
 					connection = other._event_posted.connect(slot);
@@ -505,7 +508,7 @@ namespace poet
 			{}
 			~promise_body()
 			{
-				renege(copy_exception(uncertain_future()));
+				renege(poet::copy_exception(uncertain_future()));
 			}
 
 			void fulfill(const T &value)
@@ -960,7 +963,7 @@ namespace poet
 			{
 				boost::shared_ptr<typename nonvoid_future_body_base<T>::type> new_object(
 					future_body<typename nonvoid<T>::type>::create());
-				new_object->cancel(copy_exception(uncertain_future()));
+				new_object->cancel(poet::copy_exception(uncertain_future()));
 				return new_object;
 			}
 		};

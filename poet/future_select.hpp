@@ -137,7 +137,7 @@ namespace poet
 				for(i = 0; i < extra_selected; ++i)
 				{
 					dependent = _selected_promises.back().lock();
-					if(dependent) dependent->cancel(copy_exception(uncertain_future()));
+					if(dependent) dependent->cancel(poet::copy_exception(uncertain_future()));
 					_selected_promises.pop_back();
 				}
 

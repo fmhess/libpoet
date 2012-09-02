@@ -76,9 +76,16 @@ namespace poet
 			{
 				set_wait_function();
 			}
+			//move constructors
 			template<typename OtherLock>
+			#if BOOST_NO_RVALUE_REFERENCES
 			lock_wrapper(boost::detail::thread_move_t<OtherLock> other):
 				_mon(other->_mon), _mon_raw_ptr(other->_mon_raw_ptr), _lock(other->_lock.move())
+			#else
+			lock_wrapper(OtherLock &&other):
+				_mon(std::move(other._mon)), _mon_raw_ptr(std::move(other._mon_raw_ptr)),
+				_lock(std::move(other._lock))
+			#endif
 			{
 				set_wait_function();
 			}
@@ -222,6 +229,8 @@ namespace poet
 		monitor_unique_lock(Monitor &mon, const U &arg):
 			base_class(mon, arg)
 		{}
+
+		#ifdef BOOST_NO_RVALUE_REFERENCES
 		// move constructors
 		monitor_unique_lock(boost::detail::thread_move_t<monitor_unique_lock> other):
 			base_class(other)
@@ -235,6 +244,7 @@ namespace poet
 		{
 			return boost::detail::thread_move_t<monitor_unique_lock>(*this);
 		}
+
 		template<typename Lock>
 		monitor_unique_lock& operator=(boost::detail::thread_move_t<Lock> other)
 		{
@@ -246,6 +256,30 @@ namespace poet
 		{
 			return move();
 		}
+		
+		#else
+		monitor_unique_lock(monitor_unique_lock &&other):
+			base_class(std::move(other))
+		{}
+		monitor_unique_lock(monitor_upgrade_lock<Monitor> &&other):
+			base_class(std::move(other))
+		{}
+
+		// move emulation
+		monitor_unique_lock&& move()
+		{
+			return std::move(*this);
+		}
+
+		template<typename Lock>
+		monitor_unique_lock& operator=(Lock &&other)
+		{
+			monitor_unique_lock temp(std::move(other));
+			this->swap(temp);
+			return *this;
+		}
+		#endif
+
 	};
 
 	template<typename Monitor>
@@ -254,12 +288,21 @@ namespace poet
 		lockA.swap(lockB);
 	}
 
+#ifdef BOOST_NO_RVALUE_REFERENCES
 	template<typename Monitor>
 	boost::detail::thread_move_t<monitor_unique_lock<Monitor> >
 		move(monitor_unique_lock<Monitor> &lock)
 	{
 		return lock.move();
 	}
+#else
+	template<typename Monitor>
+	monitor_unique_lock<Monitor> &&
+		move(monitor_unique_lock<Monitor> &lock)
+	{
+		return std::move(lock);
+	}
+#endif
 
 	template<typename Monitor>
 	class monitor_shared_lock: public detail::lock_wrapper<Monitor,
@@ -279,6 +322,7 @@ namespace poet
 		monitor_shared_lock(Monitor &mon, const U &arg):
 			base_class(mon, arg)
 		{}
+		#ifdef BOOST_NO_RVALUE_REFERENCES
 		// move constructors
 		monitor_shared_lock(boost::detail::thread_move_t<monitor_shared_lock> other):
 			base_class(other)
@@ -289,6 +333,48 @@ namespace poet
 		monitor_shared_lock(boost::detail::thread_move_t<monitor_unique_lock<Monitor> > other):
 			base_class(other)
 		{}
+
+		// move emulation
+		boost::detail::thread_move_t<monitor_shared_lock> move()
+		{
+			return boost::detail::thread_move_t<monitor_shared_lock>(*this);
+		}
+		template<typename Lock>
+		monitor_shared_lock& operator=(boost::detail::thread_move_t<Lock> other)
+		{
+			monitor_shared_lock temp(other);
+			this->swap(temp);
+			return *this;
+		}
+		operator boost::detail::thread_move_t<monitor_shared_lock>()
+		{
+			return move();
+		}
+		#else
+		// move constructors
+		monitor_shared_lock(monitor_shared_lock<Monitor> &&other):
+			base_class(std::move(other))
+		{}
+		monitor_shared_lock(monitor_upgrade_lock<Monitor> &&other):
+			base_class(std::move(other))
+		{}
+		monitor_shared_lock(monitor_unique_lock<Monitor> &&other):
+			base_class(std::move(other))
+		{}
+
+		// move emulation
+		monitor_shared_lock&& move()
+		{
+			return std::move(*this);
+		}
+		template<typename Lock>
+		monitor_shared_lock& operator=(Lock &&other)
+		{
+			monitor_shared_lock temp(std::move(other));
+			this->swap(temp);
+			return *this;
+		}
+		#endif
 
 		// monitor extensions to lock interface, only allow pointer to const access for shared_lock
 		const typename base_class::element_type* operator->() const
@@ -307,23 +393,6 @@ namespace poet
 			}
 			return *this->_mon.direct().get();
 		}
-
-		// move emulation
-		boost::detail::thread_move_t<monitor_shared_lock> move()
-		{
-			return boost::detail::thread_move_t<monitor_shared_lock>(*this);
-		}
-		template<typename Lock>
-		monitor_shared_lock& operator=(boost::detail::thread_move_t<Lock> other)
-		{
-			monitor_shared_lock temp(other);
-			this->swap(temp);
-			return *this;
-		}
-		operator boost::detail::thread_move_t<monitor_shared_lock>()
-		{
-			return move();
-		}
 	};
 
 	template<typename Monitor>
@@ -332,12 +401,21 @@ namespace poet
 		lockA.swap(lockB);
 	}
 
+#ifdef BOOST_NO_RVALUE_REFERENCES
 	template<typename Monitor>
 	boost::detail::thread_move_t<monitor_shared_lock<Monitor> >
 		move(monitor_shared_lock<Monitor> &lock)
 	{
 		return lock.move();
 	}
+#else
+	template<typename Monitor>
+	monitor_shared_lock<Monitor> &&
+		move(monitor_shared_lock<Monitor> &lock)
+	{
+		return std::move(lock);
+	}
+#endif
 
 	template<typename Monitor>
 	class monitor_upgrade_lock: public detail::lock_wrapper<Monitor,
@@ -357,6 +435,7 @@ namespace poet
 		monitor_upgrade_lock(Monitor &mon, const U &arg):
 			base_class(mon, arg)
 		{}
+		#ifdef BOOST_NO_RVALUE_REFERENCES
 		// move constructors
 		monitor_upgrade_lock(boost::detail::thread_move_t<monitor_upgrade_lock> other):
 			base_class(other)
@@ -364,6 +443,45 @@ namespace poet
 		monitor_upgrade_lock(boost::detail::thread_move_t<monitor_unique_lock<Monitor> > other):
 			base_class(other)
 		{}
+
+		// move emulation
+		boost::detail::thread_move_t<monitor_upgrade_lock> move()
+		{
+			return boost::detail::thread_move_t<monitor_upgrade_lock>(*this);
+		}
+		template<typename Lock>
+		monitor_upgrade_lock& operator=(boost::detail::thread_move_t<Lock> other)
+		{
+			monitor_upgrade_lock temp(other);
+			this->swap(temp);
+			return *this;
+		}
+		operator boost::detail::thread_move_t<monitor_upgrade_lock>()
+		{
+			return move();
+		}
+		#else
+		// move constructors
+		monitor_upgrade_lock(monitor_upgrade_lock<Monitor> && other):
+			base_class(std::move(other))
+		{}
+		monitor_upgrade_lock(monitor_unique_lock<Monitor> && other):
+			base_class(std::move(other))
+		{}
+
+		// move emulation
+		monitor_upgrade_lock && move()
+		{
+			return std::move(*this);
+		}
+		template<typename Lock>
+		monitor_upgrade_lock& operator=(Lock && other)
+		{
+			monitor_upgrade_lock temp(std::move(other));
+			this->swap(temp);
+			return *this;
+		}
+		#endif
 
 		// monitor extensions to lock interface, only allow pointer to const access for upgrade_lock
 		const typename base_class::element_type* operator->() const
@@ -382,23 +500,6 @@ namespace poet
 			}
 			return *this->_mon.direct().get();
 		}
-
-		// move emulation
-		boost::detail::thread_move_t<monitor_upgrade_lock> move()
-		{
-			return boost::detail::thread_move_t<monitor_upgrade_lock>(*this);
-		}
-		template<typename Lock>
-		monitor_upgrade_lock& operator=(boost::detail::thread_move_t<Lock> other)
-		{
-			monitor_upgrade_lock temp(other);
-			this->swap(temp);
-			return *this;
-		}
-		operator boost::detail::thread_move_t<monitor_upgrade_lock>()
-		{
-			return move();
-		}
 	};
 
 	template<typename Monitor>
@@ -407,12 +508,21 @@ namespace poet
 		lockA.swap(lockB);
 	}
 
+#ifdef BOOST_NO_RVALUE_REFERENCES
 	template<typename Monitor>
 	boost::detail::thread_move_t<monitor_upgrade_lock<Monitor> >
 		move(monitor_upgrade_lock<Monitor> &lock)
 	{
 		return lock.move();
 	}
+#else
+	template<typename Monitor>
+	monitor_upgrade_lock<Monitor> &&
+		move(monitor_upgrade_lock<Monitor> &lock)
+	{
+		return std::move(lock);
+	}
+#endif
 
 	template<typename Monitor>
 	class monitor_upgrade_to_unique_lock
@@ -427,10 +537,43 @@ namespace poet
 			_mon(upgrade_lock._mon),
 			_lock(upgrade_lock._lock)
 		{}
+		#ifdef BOOST_NO_RVALUE_REFERENCES
 		// move constructor
 		monitor_upgrade_to_unique_lock(boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> other):
 			_mon(other->_mon), _lock(boost::detail::thread_move_t<wrapped_lock_type>(other->_lock))
 		{}
+		// move emulation
+		boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> move()
+		{
+			return boost::detail::thread_move_t<monitor_upgrade_to_unique_lock>(*this);
+		}
+		monitor_upgrade_to_unique_lock& operator=(boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> other)
+		{
+			monitor_upgrade_to_unique_lock temp(other);
+			swap(temp);
+			return *this;
+		}
+		operator boost::detail::thread_move_t<monitor_upgrade_to_unique_lock>()
+		{
+			return move();
+		}
+		#else
+		// move constructor
+		monitor_upgrade_to_unique_lock(monitor_upgrade_to_unique_lock<Monitor> &&other):
+			_mon(std::move(other._mon)), _lock(std::move(other._lock))
+		{}
+		// move emulation
+		monitor_upgrade_to_unique_lock&& move()
+		{
+			return std::move(*this);
+		}
+		monitor_upgrade_to_unique_lock& operator=(monitor_upgrade_to_unique_lock<Monitor> &&other)
+		{
+			monitor_upgrade_to_unique_lock temp(std::move(other));
+			swap(temp);
+			return *this;
+		}
+		#endif
 
 		void swap(monitor_upgrade_to_unique_lock &other)
 		{
@@ -471,21 +614,6 @@ namespace poet
 			return *_mon.direct().get();
 		}
 
-		// move emulation
-		boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> move()
-		{
-			return boost::detail::thread_move_t<monitor_upgrade_to_unique_lock>(*this);
-		}
-		monitor_upgrade_to_unique_lock& operator=(boost::detail::thread_move_t<monitor_upgrade_to_unique_lock> other)
-		{
-			monitor_upgrade_to_unique_lock temp(other);
-			swap(temp);
-			return *this;
-		}
-		operator boost::detail::thread_move_t<monitor_upgrade_to_unique_lock>()
-		{
-			return move();
-		}
 	private:
 		monitor_ptr_type _mon;
 		wrapped_lock_type _lock;
@@ -497,16 +625,27 @@ namespace poet
 		lockA.swap(lockB);
 	}
 
+#ifdef BOOST_NO_RVALUE_REFERENCES
 	template<typename Monitor>
 	boost::detail::thread_move_t<monitor_upgrade_to_unique_lock<Monitor> >
 		move(monitor_upgrade_to_unique_lock<Monitor> &lock)
 	{
 		return lock.move();
 	}
+#else
+	template<typename Monitor>
+	monitor_upgrade_to_unique_lock<Monitor> &&
+		move(monitor_upgrade_to_unique_lock<Monitor> &lock)
+	{
+		return std::move(lock);
+	}
+#endif
+	
 };
 
 namespace boost
 {
+#ifdef BOOST_NO_RVALUE_REFERENCES
 	template<typename T>
 	detail::thread_move_t<poet::monitor_unique_lock<T> >
 		move(const detail::thread_move_t<poet::monitor_unique_lock<T> > &x)
@@ -531,6 +670,7 @@ namespace boost
 	{
 		return x;
 	}
+#endif
 }
 
 #endif // _POET_MONITOR_LOCKS_HPP
