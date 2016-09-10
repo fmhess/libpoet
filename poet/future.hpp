@@ -244,7 +244,7 @@ namespace poet
 			virtual bool ready() const
 			{
 					boost::unique_lock<boost::mutex> lock(this->mutex());
-				return _value;
+				return static_cast<bool>(_value);
 			}
 			virtual const T& getValue() const
 			{
@@ -392,7 +392,7 @@ namespace poet
 			virtual bool ready() const
 			{
 				boost::unique_lock<boost::mutex> lock(this->mutex());
-				return _proxyValue;
+				return static_cast<bool>(_proxyValue);
 			}
 			virtual const ProxyType& getValue() const
 			{
@@ -795,7 +795,7 @@ namespace poet
 			bool result = _future_body->get_exception_ptr();
 			if(result == true) return result;
 			_future_body->waiter_callbacks().poll();
-			return _future_body->get_exception_ptr();
+			return _future_body->get_exception_ptr().get() != 0;
 		}
 		void swap(future &other)
 		{
@@ -889,7 +889,7 @@ namespace poet
 		{
 			if(_future_body == 0) return true;
 			_future_body->waiter_callbacks().poll();
-			return _future_body->get_exception_ptr();
+			return _future_body->get_exception_ptr().get() != 0;
 		}
 		void swap(future &other)
 		{

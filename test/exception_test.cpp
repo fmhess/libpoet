@@ -118,7 +118,7 @@ int main()
 		poet::future<void> result = thrower();
 		try
 		{
-			static_cast<void>(result);
+			result.get();
 			BOOST_ASSERT(false);
 		}
 		catch(const poet::unknown_exception &err)
@@ -137,7 +137,7 @@ int main()
 		poet::future<void> result = thrower();
 		try
 		{
-			static_cast<void>(result);
+			result.get();
 			BOOST_ASSERT(false);
 		}
 		catch(const poet::unknown_exception &err)

@@ -166,7 +166,7 @@ namespace poet
 			set_monitor_ptr(_pointer.get());
 		};
 
-		operator bool() const {return _pointer;}
+		operator bool() const {return _pointer.get() != 0;}
 
 		void swap(monitor_ptr &other)
 		{

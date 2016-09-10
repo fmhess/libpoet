@@ -47,8 +47,7 @@ void slot_tracking_test()
 	myobj.reset();
 	try
 	{
-		int retval;
-		retval = myfunc();
+		myfunc().get();
 		BOOST_ASSERT(false);
 	}
 	catch(const boost::signals2::expired_slot &)

@@ -149,7 +149,7 @@ namespace poet
 		{
 			boost::shared_ptr<method_request_base> methodRequest = _activationQueue->get_request();
 			if(methodRequest) methodRequest->run();
-			return methodRequest;
+			return methodRequest.get() != 0;
 		}
 
 		void scheduler_impl::dispatcherThreadFunction(const boost::shared_ptr<scheduler_impl> &shared_this_in)

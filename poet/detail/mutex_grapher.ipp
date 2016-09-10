@@ -40,7 +40,7 @@ namespace poet
 		// we want to ignore all locking events after the first cycle is detected.
 		if(_cycle_detected) return false;
 
-		if(mutex.vertex() == 0)
+		if(!mutex.vertex())
 		{
 			acquire_vertex(mutex);
 		}

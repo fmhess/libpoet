@@ -350,7 +350,7 @@ namespace poet
 				lock->unlock();
 				_waiter_callbacks.poll();
 				lock->lock();
-				return _first_complete_dependency;
+				return _first_complete_dependency.get() != 0;
 			}
 
 			mutable future_body_dependency_type _first_complete_dependency;
